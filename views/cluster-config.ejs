@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Cluster Link Configuration - Arkitek Builder</title>
+    <link href="/css/main.css" rel="stylesheet" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      
+      .form-group {
+        margin-bottom: 15px;
+      }
+      
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      
+      input[type="text"],
+      input[type="password"],
+      textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      
+      button {
+        padding: 10px 20px;
+        background-color: #0366d6;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+      
+      button:hover {
+        background-color: #0256c4;
+      }
+      
+      .cluster-link-item {
+        border: 1px solid #e1e4e8;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 6px;
+        background-color: #f6f8fa;
+      }
+      
+      .cluster-link-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      
+      .cluster-link-name {
+        font-size: 18px;
+        font-weight: bold;
+      }
+      
+      .cluster-link-endpoint {
+        color: #586069;
+        margin-bottom: 5px;
+      }
+      
+      .status-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+      }
+      
+      .status-active {
+        background-color: #28a745;
+        color: white;
+      }
+      
+      .delete-btn {
+        background-color: #d73a49;
+      }
+      
+      .delete-btn:hover {
+        background-color: #cb2431;
+      }
+      
+      .message {
+        padding: 10px;
+        margin-bottom: 15px;
+        border-radius: 4px;
+      }
+      
+      .message.success {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+      }
+      
+      .message.error {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+      }
+      
+      .back-link {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: #0366d6;
+        text-decoration: none;
+      }
+      
+      .back-link:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <a href="/" class="back-link">← Back to Home</a>
+      
+      <h1>Cluster Link Configuration</h1>
+      
+      <div id="message"></div>
+      
+      <h2>Add New Cluster Link</h2>
+      <form id="clusterLinkForm">
+        <div class="form-group">
+          <label for="name">Link Name</label>
+          <input type="text" id="name" name="name" required placeholder="e.g., Production Cluster">
+        </div>
+        
+        <div class="form-group">
+          <label for="endpoint">Endpoint URL</label>
+          <input type="text" id="endpoint" name="endpoint" required placeholder="e.g., https://cluster.example.com:9092">
+        </div>
+        
+        <div class="form-group">
+          <label for="credentials">Credentials (optional)</label>
+          <textarea id="credentials" name="credentials" rows="3" placeholder="API key, token, or connection string"></textarea>
+        </div>
+        
+        <button type="submit">Add Cluster Link</button>
+        <button type="button" onclick="document.getElementById('clusterLinkForm').reset()">Clear</button>
+      </form>
+      
+      <h2>Existing Cluster Links</h2>
+      <div id="clusterLinksList">
+        <% if (clusterLinks && clusterLinks.length > 0) { %>
+          <% clusterLinks.forEach(function(link) { %>
+            <div class="cluster-link-item" data-id="<%= link.id %>">
+              <div class="cluster-link-header">
+                <div>
+                  <div class="cluster-link-name"><%= link.name %></div>
+                  <span class="status-badge status-<%= link.status %>"><%= link.status %></span>
+                </div>
+                <button class="delete-btn" onclick="deleteClusterLink('<%= link.id %>')">Delete</button>
+              </div>
+              <div class="cluster-link-endpoint"><strong>Endpoint:</strong> <%= link.endpoint %></div>
+              <div style="color: #586069; font-size: 12px;">Created: <%= new Date(link.createdAt).toLocaleString() %></div>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <p>No cluster links configured yet. Add one above to get started.</p>
+        <% } %>
+      </div>
+    </div>
+    
+    <script>
+      document.getElementById('clusterLinkForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = {
+          name: document.getElementById('name').value,
+          endpoint: document.getElementById('endpoint').value,
+          credentials: document.getElementById('credentials').value
+        };
+        
+        try {
+          const response = await fetch('/api/cluster-links', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok) {
+            showMessage('Cluster link added successfully!', 'success');
+            document.getElementById('clusterLinkForm').reset();
+            setTimeout(() => location.reload(), 1000);
+          } else {
+            showMessage(data.error || 'Failed to add cluster link', 'error');
+          }
+        } catch (error) {
+          showMessage('Error: ' + error.message, 'error');
+        }
+      });
+      
+      async function deleteClusterLink(id) {
+        if (!confirm('Are you sure you want to delete this cluster link?')) {
+          return;
+        }
+        
+        try {
+          const response = await fetch(`/api/cluster-links/${id}`, {
+            method: 'DELETE'
+          });
+          
+          if (response.ok) {
+            showMessage('Cluster link deleted successfully!', 'success');
+            setTimeout(() => location.reload(), 1000);
+          } else {
+            const data = await response.json();
+            showMessage(data.error || 'Failed to delete cluster link', 'error');
+          }
+        } catch (error) {
+          showMessage('Error: ' + error.message, 'error');
+        }
+      }
+      
+      function showMessage(text, type) {
+        const messageDiv = document.getElementById('message');
+        messageDiv.className = 'message ' + type;
+        messageDiv.textContent = text;
+        messageDiv.style.display = 'block';
+        
+        setTimeout(() => {
+          messageDiv.style.display = 'none';
+        }, 5000);
+      }
+    </script>
+  </body>
+</html>
