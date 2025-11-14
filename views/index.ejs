@@ -53,9 +53,20 @@
       <h3>🔗 Arkitek Builder - Cluster Status</h3>
       <% if (clusterLinks && clusterLinks.length > 0) { %>
         <p>Connected clusters: <span class="cluster-count"><%= clusterLinks.length %></span></p>
-        <ul>
+        <ul style="list-style: none; padding-left: 0;">
           <% clusterLinks.forEach(function(link) { %>
-            <li><strong><%= link.name %></strong> - <%= link.endpoint %></li>
+            <li style="margin-bottom: 10px;">
+              <strong><%= link.name %></strong>
+              <% if (link.builderType === 'docker-cloud') { %>
+                <span style="background-color: #2496ed; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px; font-weight: bold; margin-left: 5px;">🐳 Docker Cloud</span>
+              <% } else if (link.builderType === 'kubernetes') { %>
+                <span style="background-color: #326ce5; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px; font-weight: bold; margin-left: 5px;">☸️ K8s</span>
+              <% } else if (link.builderType === 'openshift') { %>
+                <span style="background-color: #ee0000; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px; font-weight: bold; margin-left: 5px;">OpenShift</span>
+              <% } %>
+              <br>
+              <span style="color: #586069; font-size: 12px;"><%= link.endpoint %></span>
+            </li>
           <% }); %>
         </ul>
       <% } else { %>

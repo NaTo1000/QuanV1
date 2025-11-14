@@ -40,7 +40,7 @@ app.get('/api/cluster-links', (req, res) => {
 
 // API endpoint to create a new cluster link
 app.post('/api/cluster-links', (req, res) => {
-  const { name, endpoint, credentials } = req.body;
+  const { name, endpoint, credentials, builderType } = req.body;
   
   if (!name || !endpoint) {
     return res.status(400).json({ error: 'Name and endpoint are required' });
@@ -58,6 +58,7 @@ app.post('/api/cluster-links', (req, res) => {
     name,
     endpoint,
     credentials: credentials || '',
+    builderType: builderType || 'generic',
     createdAt: new Date().toISOString(),
     status: 'active'
   };

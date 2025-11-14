@@ -137,6 +137,16 @@
         </div>
         
         <div class="form-group">
+          <label for="builderType">Builder Type</label>
+          <select id="builderType" name="builderType" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+            <option value="generic">Generic Cluster</option>
+            <option value="docker-cloud">Docker Cloud Builder</option>
+            <option value="kubernetes">Kubernetes</option>
+            <option value="openshift">OpenShift</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
           <label for="endpoint">Endpoint URL</label>
           <input type="text" id="endpoint" name="endpoint" required placeholder="e.g., https://cluster.example.com:9092">
         </div>
@@ -159,6 +169,13 @@
                 <div>
                   <div class="cluster-link-name"><%= link.name %></div>
                   <span class="status-badge status-<%= link.status %>"><%= link.status %></span>
+                  <% if (link.builderType === 'docker-cloud') { %>
+                    <span style="background-color: #2496ed; color: white; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-left: 5px;">🐳 Docker Cloud</span>
+                  <% } else if (link.builderType === 'kubernetes') { %>
+                    <span style="background-color: #326ce5; color: white; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-left: 5px;">☸️ Kubernetes</span>
+                  <% } else if (link.builderType === 'openshift') { %>
+                    <span style="background-color: #ee0000; color: white; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-left: 5px;">OpenShift</span>
+                  <% } %>
                 </div>
                 <button class="delete-btn" onclick="deleteClusterLink('<%= link.id %>')">Delete</button>
               </div>
@@ -178,6 +195,7 @@
         
         const formData = {
           name: document.getElementById('name').value,
+          builderType: document.getElementById('builderType').value,
           endpoint: document.getElementById('endpoint').value,
           credentials: document.getElementById('credentials').value
         };
