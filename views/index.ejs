@@ -7,9 +7,74 @@
     <meta property="og:title" content="Haikus for Mona">
     <meta property="og:description" content="Some of the best haikus you'll ever read about our rescue dog June">
     <meta property="og:image" content="/images/sunlight.jpg">
+    <style>
+      .cluster-status {
+        background-color: #f6f8fa;
+        border: 1px solid #e1e4e8;
+        border-radius: 6px;
+        padding: 15px;
+        margin: 20px auto;
+        max-width: 600px;
+      }
+      
+      .cluster-status h3 {
+        margin-top: 0;
+        margin-bottom: 10px;
+      }
+      
+      .cluster-status a {
+        display: inline-block;
+        padding: 8px 16px;
+        background-color: #0366d6;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        margin-top: 10px;
+      }
+      
+      .cluster-status a:hover {
+        background-color: #0256c4;
+      }
+      
+      .cluster-count {
+        color: #28a745;
+        font-weight: bold;
+      }
+      
+      .no-cluster {
+        color: #d73a49;
+      }
+    </style>
   </head>
   <body>
     <h1>Haikus for Mona</h1>
+    
+    <div class="cluster-status">
+      <h3>🔗 Arkitek Builder - Cluster Status</h3>
+      <% if (clusterLinks && clusterLinks.length > 0) { %>
+        <p>Connected clusters: <span class="cluster-count"><%= clusterLinks.length %></span></p>
+        <ul style="list-style: none; padding-left: 0;">
+          <% clusterLinks.forEach(function(link) { %>
+            <li style="margin-bottom: 10px;">
+              <strong><%= link.name %></strong>
+              <% if (link.builderType === 'docker-cloud') { %>
+                <span style="background-color: #2496ed; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px; font-weight: bold; margin-left: 5px;">🐳 Docker Cloud</span>
+              <% } else if (link.builderType === 'kubernetes') { %>
+                <span style="background-color: #326ce5; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px; font-weight: bold; margin-left: 5px;">☸️ K8s</span>
+              <% } else if (link.builderType === 'openshift') { %>
+                <span style="background-color: #ee0000; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px; font-weight: bold; margin-left: 5px;">OpenShift</span>
+              <% } %>
+              <br>
+              <span style="color: #586069; font-size: 12px;"><%= link.endpoint %></span>
+            </li>
+          <% }); %>
+        </ul>
+      <% } else { %>
+        <p class="no-cluster">No cluster links configured</p>
+      <% } %>
+      <a href="/cluster-config">Configure Cluster Links</a>
+    </div>
+    
     <div>
       <% for(var i=0; i < haikus.length; i++) { %>
         <img
@@ -23,4 +88,5 @@
         </div>
       <% } %>
     </div>
+  </body>
 </html>
