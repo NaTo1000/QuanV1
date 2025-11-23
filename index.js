@@ -39,7 +39,8 @@ function readClusterLinks() {
 function writeClusterLinks(links) {
   const content = JSON.stringify(links, null, 2);
   // Normalize line endings for current platform
-  const normalized = os.EOL === '\r\n' ? content.replace(/\n/g, '\r\n') : content;
+  // First normalize to LF, then convert to platform-specific
+  const normalized = content.replace(/\r\n/g, '\n').replace(/\n/g, os.EOL);
   fs.writeFileSync(CLUSTER_LINKS_FILE, normalized, 'utf8');
 }
 
