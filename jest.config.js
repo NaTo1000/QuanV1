@@ -2,8 +2,10 @@ module.exports = {
   testEnvironment: 'node',
   coverageDirectory: 'coverage',
   collectCoverageFrom: [
-    '*.js',
+    'app.js',
+    '!index.js',
     '!jest.config.js',
+    '!eslint.config.js',
     '!coverage/**'
   ],
   testMatch: ['**/tests/**/*.test.js'],
