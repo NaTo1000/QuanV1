@@ -9,10 +9,21 @@
     <link rel="stylesheet" href="/css/pages.css" type="text/css">
   </head>
   <body>
+    <!-- Navigation Bar -->
+    <nav class="main-nav">
+      <div class="nav-container">
+        <h1 class="nav-title">QuanV1 - Arkitek Builder</h1>
+        <ul class="nav-menu">
+          <li><a href="/" class="nav-link" accesskey="h">🏠 Home</a></li>
+          <li><a href="/cluster-config" class="nav-link" accesskey="c">⚙️ Clusters</a></li>
+          <li><a href="/ipxe-boot" class="nav-link active" accesskey="b">🚀 Boot Generator</a></li>
+        </ul>
+      </div>
+    </nav>
+
     <div class="container">
-      <a href="/" class="back-link">← Back to Home</a>
-      
       <h1>🚀 iPXE Boot File Generator</h1>
+      <p class="subtitle">Generate boot configurations for mass server deployment</p>
       
       <div class="info-box">
         <h3>📋 About iPXE Boot Files</h3>
@@ -45,26 +56,27 @@
       <h2>Generate iPXE Boot Configuration</h2>
       <form id="ipxeForm">
         <div class="form-group">
-          <label for="clusterName">Cluster Name</label>
-          <input type="text" id="clusterName" name="clusterName" required placeholder="e.g., production-cluster">
+          <label for="clusterName">Cluster Name *</label>
+          <input type="text" id="clusterName" name="clusterName" required placeholder="e.g., production-cluster" autofocus>
+          <small class="form-help">Enter a unique name for this deployment</small>
         </div>
         
         <div class="form-group">
-          <label for="serverCount">Number of Servers</label>
+          <label for="serverCount">Number of Servers *</label>
           <input type="number" id="serverCount" name="serverCount" required min="1" max="1000" value="10" placeholder="e.g., 10">
-          <small>Specify how many servers to configure for mass deployment</small>
+          <small class="form-help">Specify how many servers to configure for mass deployment (1-1000)</small>
         </div>
         
         <div class="form-group">
           <label for="bootImage">Boot Image URL (optional)</label>
           <input type="text" id="bootImage" name="bootImage" placeholder="http://boot.example.com/vmlinuz">
-          <small>Leave empty to use default boot image</small>
+          <small class="form-help">Leave empty to use default boot image</small>
         </div>
         
         <div class="form-group">
           <label for="kernelParams">Kernel Parameters (optional)</label>
           <textarea id="kernelParams" name="kernelParams" rows="2" placeholder="quiet splash console=ttyS0"></textarea>
-          <small>Additional kernel boot parameters</small>
+          <small class="form-help">Additional kernel boot parameters (space-separated)</small>
         </div>
         
         <button type="submit">📥 Generate & Download iPXE File</button>

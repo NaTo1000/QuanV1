@@ -9,38 +9,54 @@
     <link rel="stylesheet" href="/css/pages.css" type="text/css">
   </head>
   <body>
+    <!-- Navigation Bar -->
+    <nav class="main-nav">
+      <div class="nav-container">
+        <h1 class="nav-title">QuanV1 - Arkitek Builder</h1>
+        <ul class="nav-menu">
+          <li><a href="/" class="nav-link" accesskey="h">🏠 Home</a></li>
+          <li><a href="/cluster-config" class="nav-link active" accesskey="c">⚙️ Clusters</a></li>
+          <li><a href="/ipxe-boot" class="nav-link" accesskey="b">🚀 Boot Generator</a></li>
+        </ul>
+      </div>
+    </nav>
+
     <div class="container">
-      <a href="/" class="back-link">← Back to Home</a>
-      
-      <h1>Cluster Link Configuration</h1>
+      <h1>⚙️ Cluster Link Configuration</h1>
+      <p class="subtitle">Manage your cluster endpoints and credentials</p>
       
       <div id="message"></div>
       
       <h2>Add New Cluster Link</h2>
       <form id="clusterLinkForm">
         <div class="form-group">
-          <label for="name">Link Name</label>
-          <input type="text" id="name" name="name" required placeholder="e.g., Production Cluster">
+          <label for="name">Link Name *</label>
+          <input type="text" id="name" name="name" required placeholder="e.g., Production Cluster" autofocus>
+          <small class="form-help">Choose a descriptive name for your cluster</small>
         </div>
         
         <div class="form-group">
           <label for="builderType">Builder Type</label>
           <select id="builderType" name="builderType">
             <option value="generic">Generic Cluster</option>
-            <option value="docker-cloud">Docker Cloud Builder</option>
-            <option value="kubernetes">Kubernetes</option>
+            <option value="docker-cloud">🐳 Docker Cloud Builder</option>
+            <option value="kubernetes">☸️ Kubernetes</option>
             <option value="openshift">OpenShift</option>
+            <option value="watsonx">🤖 Watson X Orchestrator</option>
           </select>
+          <small class="form-help">Select the type of cluster or orchestrator you're using</small>
         </div>
         
         <div class="form-group">
-          <label for="endpoint">Endpoint URL</label>
+          <label for="endpoint">Endpoint URL *</label>
           <input type="text" id="endpoint" name="endpoint" required placeholder="e.g., https://cluster.example.com:9092">
+          <small class="form-help">The full URL including protocol and port</small>
         </div>
         
         <div class="form-group">
           <label for="credentials">Credentials (optional)</label>
           <textarea id="credentials" name="credentials" rows="3" placeholder="API key, token, or connection string"></textarea>
+          <small class="form-help">Stored securely - never committed to version control</small>
         </div>
         
         <button type="submit">Add Cluster Link</button>
@@ -62,6 +78,8 @@
                     <span class="badge badge-k8s">☸️ Kubernetes</span>
                   <% } else if (link.builderType === 'openshift') { %>
                     <span class="badge badge-openshift">OpenShift</span>
+                  <% } else if (link.builderType === 'watsonx') { %>
+                    <span class="badge badge-watsonx">🤖 Watson X</span>
                   <% } %>
                 </div>
                 <button class="delete-btn" onclick="deleteClusterLink('<%= link.id %>')">Delete</button>

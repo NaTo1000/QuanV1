@@ -12,7 +12,51 @@
     <link rel="stylesheet" href="/css/pages.css" type="text/css">
   </head>
   <body>
-    <h1>Haikus for Mona</h1>
+    <!-- Navigation Bar -->
+    <nav class="main-nav">
+      <div class="nav-container">
+        <h1 class="nav-title">QuanV1 - Arkitek Builder</h1>
+        <ul class="nav-menu">
+          <li><a href="/" class="nav-link active" accesskey="h">🏠 Home</a></li>
+          <li><a href="/cluster-config" class="nav-link" accesskey="c">⚙️ Clusters</a></li>
+          <li><a href="/ipxe-boot" class="nav-link" accesskey="b">🚀 Boot Generator</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="content-wrapper">
+      <h1>Welcome to Arkitek Builder</h1>
+      <p class="subtitle">Manage clusters and generate iPXE boot files with ease</p>
+      
+      <!-- Quick Start Guide -->
+      <div class="quick-start">
+        <h2>🎯 Quick Start Guide</h2>
+        <div class="steps">
+          <div class="step">
+            <span class="step-number">1</span>
+            <div class="step-content">
+              <h3>Configure Clusters</h3>
+              <p>Add your cluster endpoints in the Clusters section</p>
+              <a href="/cluster-config" class="step-link">Go to Clusters →</a>
+            </div>
+          </div>
+          <div class="step">
+            <span class="step-number">2</span>
+            <div class="step-content">
+              <h3>Generate Boot Files</h3>
+              <p>Create iPXE boot configurations for mass deployment</p>
+              <a href="/ipxe-boot" class="step-link">Go to Boot Generator →</a>
+            </div>
+          </div>
+          <div class="step">
+            <span class="step-number">3</span>
+            <div class="step-content">
+              <h3>Deploy Servers</h3>
+              <p>Use generated files to boot and configure your servers</p>
+            </div>
+          </div>
+        </div>
+      </div>
     
     <div class="cluster-status">
       <h3>🔗 Arkitek Builder - Cluster Status</h3>
@@ -28,6 +72,8 @@
                 <span class="badge badge-k8s">☸️ K8s</span>
               <% } else if (link.builderType === 'openshift') { %>
                 <span class="badge badge-openshift">OpenShift</span>
+              <% } else if (link.builderType === 'watsonx') { %>
+                <span class="badge badge-watsonx">🤖 Watson X</span>
               <% } %>
               <br>
               <span class="cluster-link-endpoint"><%= link.endpoint %></span>
@@ -37,17 +83,66 @@
       <% } else { %>
         <p class="no-cluster">No cluster links configured</p>
       <% } %>
-      <a href="/cluster-config">Configure Cluster Links</a>
-      <a href="/ipxe-boot" class="btn-success">🚀 Generate iPXE Boot Files</a>
+      <a href="/cluster-config" class="btn-primary">⚙️ Configure Clusters</a>
+      <a href="/ipxe-boot" class="btn-success">🚀 Generate Boot Files</a>
+    </div>
+
+    <!-- Watson X Orchestrator Section -->
+    <div class="watson-section">
+      <h2>🤖 Watson X Orchestrator Integration</h2>
+      <p>Leverage IBM Watson X.ai for intelligent cluster orchestration and AI-powered deployment optimization</p>
+      
+      <div class="watson-content">
+        <div class="watson-feature">
+          <h3>🧠 AI-Powered Orchestration</h3>
+          <p>Use Watson X to intelligently manage and optimize your cluster deployments with machine learning capabilities.</p>
+          <ul>
+            <li>Automated resource allocation</li>
+            <li>Predictive scaling</li>
+            <li>Intelligent load balancing</li>
+          </ul>
+        </div>
+        
+        <div class="watson-feature">
+          <h3>📊 Real-time Analytics</h3>
+          <p>Monitor cluster performance with Watson X analytics and get AI-driven insights for optimization.</p>
+          <ul>
+            <li>Performance metrics</li>
+            <li>Cost optimization suggestions</li>
+            <li>Anomaly detection</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="watson-actions">
+        <button class="watson-btn" onclick="window.location.href='/cluster-config'">Add Watson X Cluster</button>
+        <button class="watson-btn" onclick="alert('Watson X API documentation: https://www.ibm.com/docs/en/watsonx')">View Documentation</button>
+      </div>
+      
+      <div class="watson-status" id="watsonStatus">
+        <strong>Status:</strong> Ready to integrate Watson X Orchestrator. Add your Watson X endpoint in the Clusters section.
+      </div>
     </div>
     
-    <div>
-      <% for(var i=0; i < haikus.length; i++) { %>
-        <img class="mona-images" src="images/<%= haikus[i].image %>" alt="<%= haikus[i].text.split(',')[0] %>">
-        <div class="haiku-containers">
-          <p class="haikus"><%- haikus[i].text %></p>
-        </div>
-      <% } %>
+    <!-- Haiku Section -->
+    <div class="haiku-section">
+      <h2>✨ Inspiration Corner</h2>
+      <div class="haiku-grid">
+        <% for(var i=0; i < haikus.length; i++) { %>
+          <div class="haiku-item">
+            <img class="mona-images" src="images/<%= haikus[i].image %>" alt="<%= haikus[i].text.split(',')[0] %>">
+            <div class="haiku-containers">
+              <p class="haikus"><%- haikus[i].text %></p>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+    
+    <!-- Keyboard Shortcuts Help -->
+    <div class="help-tip">
+      <span class="help-icon" title="Keyboard Shortcuts: Alt+H (Home), Alt+C (Clusters), Alt+B (Boot Generator)">❓</span>
+    </div>
     </div>
   </body>
 </html>
