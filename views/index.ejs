@@ -1,50 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>Haikus for Mona</title>
-    <link href="/css/main.css" rel="stylesheet" type="text/css">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta property="og:title" content="Haikus for Mona">
-    <meta property="og:description" content="Some of the best haikus you'll ever read about our rescue dog June">
-    <meta property="og:image" content="/images/sunlight.jpg">
-    <style>
-      .cluster-status {
-        background-color: #f6f8fa;
-        border: 1px solid #e1e4e8;
-        border-radius: 6px;
-        padding: 15px;
-        margin: 20px auto;
-        max-width: 600px;
-      }
-      
-      .cluster-status h3 {
-        margin-top: 0;
-        margin-bottom: 10px;
-      }
-      
-      .cluster-status a {
-        display: inline-block;
-        padding: 8px 16px;
-        background-color: #0366d6;
-        color: white;
-        text-decoration: none;
-        border-radius: 4px;
-        margin-top: 10px;
-      }
-      
-      .cluster-status a:hover {
-        background-color: #0256c4;
-      }
-      
-      .cluster-count {
-        color: #28a745;
-        font-weight: bold;
-      }
-      
-      .no-cluster {
-        color: #d73a49;
-      }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuanV1 - Arkitek Builder Platform</title>
+    <meta name="description" content="Cluster management and iPXE boot file generator with beautiful haiku poetry">
+    <meta property="og:title" content="QuanV1 - Arkitek Builder Platform">
+    <meta property="og:description" content="Manage cluster configurations and generate iPXE boot files">
+    <meta property="og:type" content="website">
+    <link rel="stylesheet" href="/css/main.css" type="text/css">
+    <link rel="stylesheet" href="/css/pages.css" type="text/css">
   </head>
   <body>
     <h1>Haikus for Mona</h1>
@@ -53,19 +18,19 @@
       <h3>🔗 Arkitek Builder - Cluster Status</h3>
       <% if (clusterLinks && clusterLinks.length > 0) { %>
         <p>Connected clusters: <span class="cluster-count"><%= clusterLinks.length %></span></p>
-        <ul style="list-style: none; padding-left: 0;">
+        <ul>
           <% clusterLinks.forEach(function(link) { %>
-            <li style="margin-bottom: 10px;">
+            <li>
               <strong><%= link.name %></strong>
               <% if (link.builderType === 'docker-cloud') { %>
-                <span style="background-color: #2496ed; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px; font-weight: bold; margin-left: 5px;">🐳 Docker Cloud</span>
+                <span class="badge badge-docker">🐳 Docker Cloud</span>
               <% } else if (link.builderType === 'kubernetes') { %>
-                <span style="background-color: #326ce5; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px; font-weight: bold; margin-left: 5px;">☸️ K8s</span>
+                <span class="badge badge-k8s">☸️ K8s</span>
               <% } else if (link.builderType === 'openshift') { %>
-                <span style="background-color: #ee0000; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px; font-weight: bold; margin-left: 5px;">OpenShift</span>
+                <span class="badge badge-openshift">OpenShift</span>
               <% } %>
               <br>
-              <span style="color: #586069; font-size: 12px;"><%= link.endpoint %></span>
+              <span class="cluster-link-endpoint"><%= link.endpoint %></span>
             </li>
           <% }); %>
         </ul>
@@ -73,19 +38,14 @@
         <p class="no-cluster">No cluster links configured</p>
       <% } %>
       <a href="/cluster-config">Configure Cluster Links</a>
-      <a href="/ipxe-boot" style="background-color: #28a745;">🚀 Generate iPXE Boot Files</a>
+      <a href="/ipxe-boot" class="btn-success">🚀 Generate iPXE Boot Files</a>
     </div>
     
     <div>
       <% for(var i=0; i < haikus.length; i++) { %>
-        <img
-          class="mona-images"
-          src="images/<%= haikus[i].image %>" />
-        <div 
-          class="haiku-containers">
-          <p 
-            class="haikus"
-          ><%- haikus[i].text %></p>
+        <img class="mona-images" src="images/<%= haikus[i].image %>" alt="<%= haikus[i].text.split(',')[0] %>">
+        <div class="haiku-containers">
+          <p class="haikus"><%- haikus[i].text %></p>
         </div>
       <% } %>
     </div>

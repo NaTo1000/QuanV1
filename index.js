@@ -1,12 +1,14 @@
-let express = require('express');
-let app = express();
-let ejs = require('ejs');
+const express = require('express');
+const ejs = require('ejs');
 const fs = require('fs');
 const path = require('path');
+
+const app = express();
 const haikus = require('./haikus.json');
 const port = process.env.PORT || 3000;
 
-app.use(express.static('public'))
+// Middleware
+app.use(express.static('public'));
 app.use(express.json());
 app.set('view engine', 'ejs');
 
@@ -27,9 +29,10 @@ function writeClusterLinks(links) {
   fs.writeFileSync(CLUSTER_LINKS_FILE, JSON.stringify(links, null, 2));
 }
 
+// Routes
 app.get('/', (req, res) => {
   const clusterLinks = readClusterLinks();
-  res.render('index', {haikus: haikus, clusterLinks: clusterLinks});
+  res.render('index', { haikus, clusterLinks });
 });
 
 // API endpoint to get all cluster links
@@ -87,13 +90,13 @@ app.delete('/api/cluster-links/:id', (req, res) => {
 // Cluster link configuration page
 app.get('/cluster-config', (req, res) => {
   const clusterLinks = readClusterLinks();
-  res.render('cluster-config', { clusterLinks: clusterLinks });
+  res.render('cluster-config', { clusterLinks });
 });
 
 // iPXE boot file generation page
 app.get('/ipxe-boot', (req, res) => {
   const clusterLinks = readClusterLinks();
-  res.render('ipxe-boot', { clusterLinks: clusterLinks });
+  res.render('ipxe-boot', { clusterLinks });
 });
 
 // Generate iPXE boot file
@@ -219,4 +222,7 @@ reboot
   return script;
 }
 
-app.listen(port);
+// Start server
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
