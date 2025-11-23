@@ -1,12 +1,11 @@
 let express = require('express');
 let app = express();
-let ejs = require('ejs');
 const fs = require('fs');
 const path = require('path');
 const haikus = require('./haikus.json');
 const port = process.env.PORT || 3000;
 
-app.use(express.static('public'))
+app.use(express.static('public'));
 app.use(express.json());
 app.set('view engine', 'ejs');
 
@@ -17,7 +16,7 @@ function readClusterLinks() {
   try {
     const data = fs.readFileSync(CLUSTER_LINKS_FILE, 'utf8');
     return JSON.parse(data);
-  } catch (error) {
+  } catch (_error) {
     return [];
   }
 }
@@ -88,6 +87,25 @@ app.delete('/api/cluster-links/:id', (req, res) => {
 app.get('/cluster-config', (req, res) => {
   const clusterLinks = readClusterLinks();
   res.render('cluster-config', { clusterLinks: clusterLinks });
+});
+
+// Health check endpoint for monitoring
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development',
+    port: port
+  });
+});
+
+// Readiness check endpoint
+app.get('/ready', (req, res) => {
+  res.json({ 
+    ready: true,
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.listen(port);

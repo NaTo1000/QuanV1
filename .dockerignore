@@ -1,0 +1,15 @@
+node_modules
+npm-debug.log
+coverage
+.git
+.gitignore
+README.md
+.env
+.env.*
+!.env.example
+tests
+*.test.js
+.github
+Dockerfile
+.dockerignore
+cluster-links.json

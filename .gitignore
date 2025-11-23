@@ -13,6 +13,7 @@ lib-cov
 
 # Coverage directory used by tools like istanbul
 coverage
+*.lcov
 
 # nyc test coverage
 .nyc_output
@@ -38,3 +39,11 @@ jspm_packages
 
 # Cluster links configuration (contains sensitive credentials)
 cluster-links.json
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Docker volumes
+docker-volumes/
