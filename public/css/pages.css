@@ -428,8 +428,9 @@ button:hover {
 
 .haiku-section h2 {
     text-align: center;
-    color: #fff;
+    color: #f0f0f0;
     margin-bottom: 30px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .haiku-grid {
@@ -523,6 +524,7 @@ button:hover {
 }
 
 .watson-btn {
+    display: inline-block;
     padding: 12px 24px;
     background: white;
     color: #1e3a8a;
@@ -530,6 +532,7 @@ button:hover {
     border-radius: 6px;
     font-weight: 600;
     cursor: pointer;
+    text-decoration: none;
     transition: all 0.3s ease;
 }
 
