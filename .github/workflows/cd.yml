@@ -20,6 +20,8 @@ jobs:
     name: Deploy to Development
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
     environment:
       name: development
       url: ${{ steps.deploy.outputs.webapp-url }}
@@ -56,6 +58,8 @@ jobs:
     name: Deploy to Staging
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging'
+    permissions:
+      contents: read
     environment:
       name: staging
       url: ${{ steps.deploy.outputs.webapp-url }}
@@ -97,6 +101,8 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
+    permissions:
+      contents: read
     environment:
       name: production
       url: ${{ steps.deploy.outputs.webapp-url }}
