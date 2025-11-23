@@ -17,10 +17,19 @@ A Node.js web application for managing cluster configurations and generating iPX
 
 ## 📋 Prerequisites
 
-- Node.js (version 14 or higher recommended)
-- npm (Node Package Manager)
+- Node.js (version 14.0.0 or higher)
+- npm (version 6.0.0 or higher)
+
+### Supported Platforms
+- ✅ **Windows** (Windows 10, 11, Server 2016+)
+- ✅ **macOS** (macOS 10.14+)
+- ✅ **Linux** (Ubuntu 18.04+, Debian 9+, CentOS 7+, RHEL 7+, and others)
+
+See [PLATFORM_SUPPORT.md](PLATFORM_SUPPORT.md) for detailed platform-specific instructions.
 
 ## 🔧 Installation
+
+### Quick Start (All Platforms)
 
 1. Clone the repository:
 ```bash
@@ -33,9 +42,22 @@ cd QuanV1
 npm install
 ```
 
+The installation automatically detects your platform and configures appropriately.
+
+### Platform-Specific Notes
+
+**Windows Users:** Use PowerShell or Command Prompt. Both forward slashes (`/`) and backslashes (`\`) work.
+
+**macOS Users:** You may need to install Xcode Command Line Tools:
+```bash
+xcode-select --install
+```
+
+**Linux Users:** Ensure Node.js is installed via your package manager or nvm.
+
 ## 🏃 Running the Application
 
-### Development Mode
+### Development Mode (with auto-restart)
 ```bash
 npm run dev
 ```
@@ -45,12 +67,37 @@ npm run dev
 npm start
 ```
 
-The application will be available at `http://localhost:3000`
+The application will be available at:
+- Local: `http://localhost:3000`
+- Network: `http://<your-ip>:3000` (automatically displayed on startup)
 
-### Using PM2
-```bash
-pm2 start process.json
+### Using a Different Port
+
+**Windows (PowerShell):**
+```powershell
+$env:PORT=8080; npm start
 ```
+
+**Windows (Command Prompt):**
+```cmd
+set PORT=8080 && npm start
+```
+
+**macOS/Linux:**
+```bash
+PORT=8080 npm start
+```
+
+### Using PM2 (Cross-Platform Process Manager)
+```bash
+npm install -g pm2
+pm2 start process.json
+pm2 save
+pm2 startup  # Follow the instructions to enable startup on boot
+```
+
+### Graceful Shutdown
+Press `Ctrl+C` on any platform to gracefully shut down the server.
 
 ## 📁 Project Structure
 
@@ -133,9 +180,24 @@ QuanV1 now supports IBM Watson X.ai integration for intelligent cluster orchestr
 - The `.gitignore` file is configured to exclude sensitive files
 - All credentials, including Watson X API keys, are stored locally and never transmitted to external services
 
+## 🌐 Cross-Platform Compatibility
+
+QuanV1 is designed to work seamlessly across all major platforms:
+
+- **File Paths**: Uses Node.js `path` module for cross-platform path handling
+- **Line Endings**: Automatically handles CRLF (Windows) and LF (Unix/Mac)
+- **Process Signals**: Graceful shutdown works on Windows, macOS, and Linux
+- **System Info**: View platform details at `/api/system-info`
+
+For detailed platform-specific instructions, see [PLATFORM_SUPPORT.md](PLATFORM_SUPPORT.md)
+
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please ensure changes work across all platforms:
+- Use `path.join()` for file paths
+- Use `os.EOL` for line endings
+- Test on multiple platforms if possible
+- See [PLATFORM_SUPPORT.md](PLATFORM_SUPPORT.md) for guidelines
 
 ## 📄 License
 
