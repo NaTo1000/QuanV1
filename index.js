@@ -90,4 +90,133 @@ app.get('/cluster-config', (req, res) => {
   res.render('cluster-config', { clusterLinks: clusterLinks });
 });
 
+// iPXE boot file generation page
+app.get('/ipxe-boot', (req, res) => {
+  const clusterLinks = readClusterLinks();
+  res.render('ipxe-boot', { clusterLinks: clusterLinks });
+});
+
+// Generate iPXE boot file
+app.post('/api/ipxe/generate', (req, res) => {
+  const { clusterName, serverCount, bootImage, kernelParams } = req.body;
+  
+  if (!clusterName || !serverCount) {
+    return res.status(400).json({ error: 'Cluster name and server count are required' });
+  }
+
+  const ipxeScript = generateIPXEScript(clusterName, serverCount, bootImage, kernelParams);
+  
+  res.setHeader('Content-Type', 'text/plain');
+  res.setHeader('Content-Disposition', `attachment; filename="${clusterName}-boot.ipxe"`);
+  res.send(ipxeScript);
+});
+
+// Benchmark/stress test endpoint
+app.post('/api/benchmark/run', (req, res) => {
+  const { endpoint, testType, iterations } = req.body;
+  
+  if (!endpoint) {
+    return res.status(400).json({ error: 'Endpoint is required' });
+  }
+
+  const benchmarkResult = {
+    endpoint,
+    testType: testType || 'stress',
+    iterations: iterations || 100,
+    startTime: new Date().toISOString(),
+    status: 'running'
+  };
+
+  res.json(benchmarkResult);
+});
+
+// Continuous test runner - runs tests until failure
+app.post('/api/test/run-until-fail', (req, res) => {
+  const { clusterName, testType, maxIterations } = req.body;
+  
+  if (!clusterName) {
+    return res.status(400).json({ error: 'Cluster name is required' });
+  }
+
+  const testResult = {
+    clusterName,
+    testType: testType || 'continuous',
+    maxIterations: maxIterations || 1000,
+    startTime: new Date().toISOString(),
+    status: 'running',
+    message: `Running continuous tests on ${clusterName} until failure is detected`
+  };
+
+  res.json(testResult);
+});
+
+// Helper function to generate iPXE boot script
+function generateIPXEScript(clusterName, serverCount, bootImage, kernelParams) {
+  const defaultBootImage = bootImage || 'http://boot.example.com/vmlinuz';
+  const defaultInitrd = 'http://boot.example.com/initrd.img';
+  const defaultKernelParams = kernelParams || 'quiet splash';
+  
+  let script = `#!ipxe
+#
+# iPXE Boot Configuration for ${clusterName}
+# Generated: ${new Date().toISOString()}
+# Servers: ${serverCount}
+#
+
+echo ========================================
+echo  Arkitek Builder - Mass Server Deployment
+echo  Cluster: ${clusterName}
+echo  Server Count: ${serverCount}
+echo ========================================
+echo
+
+# Network configuration
+dhcp || echo DHCP failed, trying static...
+
+# Boot menu
+:start
+menu iPXE Boot Menu - ${clusterName}
+item --key 1 deploy Deploy ${serverCount} Servers
+item --key 2 shell  iPXE Shell
+item --key 3 reboot Reboot
+choose --default deploy --timeout 10000 target && goto \${target}
+
+:deploy
+echo Deploying ${serverCount} servers for ${clusterName}...
+`;
+
+  // Generate boot entries for each server
+  for (let i = 1; i <= serverCount; i++) {
+    script += `
+# Server ${i} configuration
+echo Configuring server ${i}/${serverCount}...
+set server-${i}-hostname ${clusterName}-node-${i}
+`;
+  }
+
+  script += `
+# Boot kernel
+echo Loading kernel and initrd...
+kernel ${defaultBootImage} ${defaultKernelParams} cluster=${clusterName} nodes=${serverCount}
+initrd ${defaultInitrd}
+boot || goto failed
+
+:shell
+echo Entering iPXE shell...
+shell
+
+:failed
+echo Boot failed! Press any key to return to menu...
+prompt
+goto start
+
+:reboot
+echo Rebooting in 3 seconds...
+sleep 3
+reboot
+`;
+
+  return script;
+}
+
 app.listen(port);

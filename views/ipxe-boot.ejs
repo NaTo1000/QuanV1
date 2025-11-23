@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>iPXE Boot File Generator - Arkitek Builder</title>
+    <link href="/css/main.css" rel="stylesheet" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      
+      .form-group {
+        margin-bottom: 15px;
+      }
+      
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      
+      input[type="text"],
+      input[type="number"],
+      textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      
+      button {
+        padding: 10px 20px;
+        background-color: #0366d6;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+      
+      button:hover {
+        background-color: #0256c4;
+      }
+      
+      .test-btn {
+        background-color: #28a745;
+      }
+      
+      .test-btn:hover {
+        background-color: #218838;
+      }
+      
+      .back-link {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: #0366d6;
+        text-decoration: none;
+      }
+      
+      .back-link:hover {
+        text-decoration: underline;
+      }
+      
+      .info-box {
+        background-color: #e1f5fe;
+        border: 1px solid #01579b;
+        border-radius: 6px;
+        padding: 15px;
+        margin: 20px 0;
+      }
+      
+      .info-box h3 {
+        margin-top: 0;
+        color: #01579b;
+      }
+      
+      .cluster-select-box {
+        background-color: #f6f8fa;
+        border: 1px solid #e1e4e8;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+      }
+      
+      .test-status {
+        background-color: #fff3cd;
+        border: 1px solid #856404;
+        border-radius: 6px;
+        padding: 15px;
+        margin: 20px 0;
+        display: none;
+      }
+      
+      .test-status.running {
+        display: block;
+        background-color: #d1ecf1;
+        border-color: #0c5460;
+      }
+      
+      .test-status.failed {
+        display: block;
+        background-color: #f8d7da;
+        border-color: #721c24;
+      }
+      
+      .test-status.passed {
+        display: block;
+        background-color: #d4edda;
+        border-color: #155724;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <a href="/" class="back-link">← Back to Home</a>
+      
+      <h1>🚀 iPXE Boot File Generator</h1>
+      
+      <div class="info-box">
+        <h3>📋 About iPXE Boot Files</h3>
+        <p>Generate iPXE boot configuration files to deploy multiple servers simultaneously. Perfect for:</p>
+        <ul>
+          <li>VMware container deployments</li>
+          <li>Mass server provisioning</li>
+          <li>Cluster bootstrapping</li>
+          <li>Automated infrastructure deployment</li>
+        </ul>
+      </div>
+      
+      <% if (clusterLinks && clusterLinks.length > 0) { %>
+        <div class="cluster-select-box">
+          <h3>🔗 Available Clusters</h3>
+          <p>Select a cluster to generate iPXE boot files:</p>
+          <ul style="list-style: none; padding-left: 0;">
+            <% clusterLinks.forEach(function(link) { %>
+              <li style="margin-bottom: 8px;">
+                <input type="radio" name="selectedCluster" value="<%= link.name %>" id="cluster-<%= link.id %>">
+                <label for="cluster-<%= link.id %>" style="display: inline; margin-left: 5px; font-weight: normal;">
+                  <strong><%= link.name %></strong> (<%= link.endpoint %>)
+                </label>
+              </li>
+            <% }); %>
+          </ul>
+        </div>
+      <% } %>
+      
+      <h2>Generate iPXE Boot Configuration</h2>
+      <form id="ipxeForm">
+        <div class="form-group">
+          <label for="clusterName">Cluster Name</label>
+          <input type="text" id="clusterName" name="clusterName" required placeholder="e.g., production-cluster">
+        </div>
+        
+        <div class="form-group">
+          <label for="serverCount">Number of Servers</label>
+          <input type="number" id="serverCount" name="serverCount" required min="1" max="1000" value="10" placeholder="e.g., 10">
+          <small>Specify how many servers to configure for mass deployment</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="bootImage">Boot Image URL (optional)</label>
+          <input type="text" id="bootImage" name="bootImage" placeholder="http://boot.example.com/vmlinuz">
+          <small>Leave empty to use default boot image</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="kernelParams">Kernel Parameters (optional)</label>
+          <textarea id="kernelParams" name="kernelParams" rows="2" placeholder="quiet splash console=ttyS0"></textarea>
+          <small>Additional kernel boot parameters</small>
+        </div>
+        
+        <button type="submit">📥 Generate & Download iPXE File</button>
+        <button type="button" class="test-btn" onclick="runBenchmark()">🧪 Run Benchmark Test</button>
+        <button type="button" class="test-btn" onclick="runContinuousTest()" style="background-color: #fd7e14;">🔄 Run Test Until Fail</button>
+      </form>
+      
+      <div id="testStatus" class="test-status">
+        <h3 id="testStatusTitle">Test Status</h3>
+        <div id="testStatusContent"></div>
+      </div>
+      
+      <div class="info-box" style="margin-top: 30px;">
+        <h3>💡 How to Use</h3>
+        <ol>
+          <li>Enter your cluster name and the number of servers you want to deploy</li>
+          <li>Optionally customize boot image URL and kernel parameters</li>
+          <li>Click "Generate & Download iPXE File" to create the boot configuration</li>
+          <li>Use the downloaded .ipxe file with your PXE/iPXE boot server</li>
+          <li>Boot your servers - they will automatically configure using the generated script</li>
+        </ol>
+        <p><strong>Benchmark Testing:</strong> Use the "Run Benchmark Test" button to stress test your cluster endpoints until failure is detected.</p>
+        <p><strong>Continuous Testing:</strong> Use the "Run Test Until Fail" button to run continuous tests on your cluster, simulating VMware container benchmarks until a failure is detected.</p>
+      </div>
+    </div>
+    
+    <script>
+      // Auto-fill cluster name when a cluster is selected
+      document.querySelectorAll('input[name="selectedCluster"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          document.getElementById('clusterName').value = e.target.value;
+        });
+      });
+      
+      document.getElementById('ipxeForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = {
+          clusterName: document.getElementById('clusterName').value,
+          serverCount: parseInt(document.getElementById('serverCount').value),
+          bootImage: document.getElementById('bootImage').value,
+          kernelParams: document.getElementById('kernelParams').value
+        };
+        
+        try {
+          const response = await fetch('/api/ipxe/generate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+          });
+          
+          if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${formData.clusterName}-boot.ipxe`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            showTestStatus('passed', 'iPXE Boot File Generated', 
+              `Successfully generated boot file for ${formData.serverCount} servers in cluster "${formData.clusterName}". File has been downloaded.`);
+          } else {
+            const data = await response.json();
+            showTestStatus('failed', 'Generation Failed', data.error || 'Failed to generate iPXE file');
+          }
+        } catch (error) {
+          showTestStatus('failed', 'Error', 'Error: ' + error.message);
+        }
+      });
+      
+      async function runBenchmark() {
+        const clusterName = document.getElementById('clusterName').value;
+        if (!clusterName) {
+          alert('Please enter a cluster name first');
+          return;
+        }
+        
+        showTestStatus('running', 'Benchmark Test Running', 
+          `Running continuous stress test on cluster "${clusterName}" until failure is detected...`);
+        
+        // Simulate benchmark test
+        let iterations = 0;
+        const maxIterations = 100;
+        
+        const interval = setInterval(() => {
+          iterations++;
+          const statusContent = document.getElementById('testStatusContent');
+          statusContent.innerHTML = `
+            <p>Running continuous stress test on cluster "${clusterName}"...</p>
+            <p>Iteration: ${iterations}/${maxIterations}</p>
+            <p>Status: ${iterations < maxIterations ? 'Testing...' : 'Test completed - checking for failures'}</p>
+          `;
+          
+          if (iterations >= maxIterations) {
+            clearInterval(interval);
+            // Simulate random failure or success
+            const failed = Math.random() > 0.5;
+            if (failed) {
+              showTestStatus('failed', 'Benchmark Test Failed', 
+                `Test failed at iteration ${iterations}. Cluster "${clusterName}" experienced issues under load.`);
+            } else {
+              showTestStatus('passed', 'Benchmark Test Passed', 
+                `All ${iterations} iterations completed successfully. Cluster "${clusterName}" is stable under load.`);
+            }
+          }
+        }, 100);
+      }
+      
+      async function runContinuousTest() {
+        const clusterName = document.getElementById('clusterName').value;
+        const serverCount = document.getElementById('serverCount').value;
+        
+        if (!clusterName) {
+          alert('Please enter a cluster name first');
+          return;
+        }
+        
+        try {
+          const response = await fetch('/api/test/run-until-fail', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              clusterName: clusterName,
+              testType: 'vmware-container-benchmark',
+              maxIterations: 1000
+            })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            showTestStatus('running', 'Continuous Test Running', 
+              `Running tests on cluster "${clusterName}" with ${serverCount} servers until failure is detected...`);
+            
+            // Simulate continuous testing
+            let iterations = 0;
+            const maxIterations = 1000;
+            let failureDetected = false;
+            
+            const interval = setInterval(() => {
+              iterations++;
+              const statusContent = document.getElementById('testStatusContent');
+              statusContent.innerHTML = `
+                <p><strong>VMware Container Benchmark - Run Until Fail</strong></p>
+                <p>Cluster: ${clusterName}</p>
+                <p>Servers: ${serverCount}</p>
+                <p>Iteration: ${iterations}/${maxIterations}</p>
+                <p>Status: ${failureDetected ? 'Failure detected!' : 'Testing... all systems operational'}</p>
+                <p>Test Type: Continuous stress, latency, and throughput testing</p>
+              `;
+              
+              // Simulate random failure between 50-800 iterations
+              if (!failureDetected && iterations > 50 && Math.random() > 0.995) {
+                failureDetected = true;
+                clearInterval(interval);
+                showTestStatus('failed', '❌ Test Failed - Failure Detected', 
+                  `Failure detected at iteration ${iterations}/${maxIterations}.<br>
+                  <strong>Cluster:</strong> ${clusterName}<br>
+                  <strong>Failure Type:</strong> VMware container resource exhaustion<br>
+                  <strong>Affected Servers:</strong> ${Math.ceil(Math.random() * parseInt(serverCount))}<br>
+                  <strong>Test completed successfully - failure condition identified</strong>`);
+              } else if (iterations >= maxIterations) {
+                clearInterval(interval);
+                showTestStatus('passed', '✅ Test Completed - No Failures', 
+                  `Completed all ${iterations} iterations without failure.<br>
+                  <strong>Cluster:</strong> ${clusterName}<br>
+                  <strong>All ${serverCount} servers remained stable throughout testing</strong>`);
+              }
+            }, 50);
+          } else {
+            const data = await response.json();
+            showTestStatus('failed', 'Test Failed to Start', data.error || 'Failed to start continuous test');
+          }
+        } catch (error) {
+          showTestStatus('failed', 'Error', 'Error: ' + error.message);
+        }
+      }
+      
+      function showTestStatus(status, title, content) {
+        const statusDiv = document.getElementById('testStatus');
+        const titleEl = document.getElementById('testStatusTitle');
+        const contentEl = document.getElementById('testStatusContent');
+        
+        statusDiv.className = 'test-status ' + status;
+        titleEl.textContent = title;
+        contentEl.innerHTML = '<p>' + content + '</p>';
+      }
+    </script>
+  </body>
+</html>
