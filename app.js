@@ -53,8 +53,9 @@ function createApp() {
       return res.status(400).json({ error: 'A cluster link with this name already exists' });
     }
 
+    const crypto = require('crypto');
     const newLink = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       name,
       endpoint,
       credentials: credentials || '',
