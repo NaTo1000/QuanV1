@@ -1,123 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iPXE Boot File Generator - Arkitek Builder</title>
-    <link href="/css/main.css" rel="stylesheet" type="text/css">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-      .container {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-      
-      .form-group {
-        margin-bottom: 15px;
-      }
-      
-      label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
-      }
-      
-      input[type="text"],
-      input[type="number"],
-      textarea {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-sizing: border-box;
-      }
-      
-      button {
-        padding: 10px 20px;
-        background-color: #0366d6;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        margin-right: 10px;
-      }
-      
-      button:hover {
-        background-color: #0256c4;
-      }
-      
-      .test-btn {
-        background-color: #28a745;
-      }
-      
-      .test-btn:hover {
-        background-color: #218838;
-      }
-      
-      .back-link {
-        display: inline-block;
-        margin-bottom: 20px;
-        color: #0366d6;
-        text-decoration: none;
-      }
-      
-      .back-link:hover {
-        text-decoration: underline;
-      }
-      
-      .info-box {
-        background-color: #e1f5fe;
-        border: 1px solid #01579b;
-        border-radius: 6px;
-        padding: 15px;
-        margin: 20px 0;
-      }
-      
-      .info-box h3 {
-        margin-top: 0;
-        color: #01579b;
-      }
-      
-      .cluster-select-box {
-        background-color: #f6f8fa;
-        border: 1px solid #e1e4e8;
-        padding: 15px;
-        border-radius: 6px;
-        margin-bottom: 20px;
-      }
-      
-      .test-status {
-        background-color: #fff3cd;
-        border: 1px solid #856404;
-        border-radius: 6px;
-        padding: 15px;
-        margin: 20px 0;
-        display: none;
-      }
-      
-      .test-status.running {
-        display: block;
-        background-color: #d1ecf1;
-        border-color: #0c5460;
-      }
-      
-      .test-status.failed {
-        display: block;
-        background-color: #f8d7da;
-        border-color: #721c24;
-      }
-      
-      .test-status.passed {
-        display: block;
-        background-color: #d4edda;
-        border-color: #155724;
-      }
-    </style>
+    <meta name="description" content="Generate iPXE boot configuration files for mass server deployment">
+    <link rel="stylesheet" href="/css/main.css" type="text/css">
+    <link rel="stylesheet" href="/css/pages.css" type="text/css">
   </head>
   <body>
+    <!-- Navigation Bar -->
+    <nav class="main-nav">
+      <div class="nav-container">
+        <h1 class="nav-title">QuanV1 - Arkitek Builder</h1>
+        <ul class="nav-menu">
+          <li><a href="/" class="nav-link" accesskey="h">🏠 Home</a></li>
+          <li><a href="/cluster-config" class="nav-link" accesskey="c">⚙️ Clusters</a></li>
+          <li><a href="/ipxe-boot" class="nav-link active" accesskey="b">🚀 Boot Generator</a></li>
+          <li><a href="/system-info" class="nav-link" accesskey="s">💻 System</a></li>
+        </ul>
+      </div>
+    </nav>
+
     <div class="container">
-      <a href="/" class="back-link">← Back to Home</a>
-      
       <h1>🚀 iPXE Boot File Generator</h1>
+      <p class="subtitle">Generate boot configurations for mass server deployment</p>
       
       <div class="info-box">
         <h3>📋 About iPXE Boot Files</h3>
@@ -134,11 +41,11 @@
         <div class="cluster-select-box">
           <h3>🔗 Available Clusters</h3>
           <p>Select a cluster to generate iPXE boot files:</p>
-          <ul style="list-style: none; padding-left: 0;">
+          <ul class="cluster-list">
             <% clusterLinks.forEach(function(link) { %>
-              <li style="margin-bottom: 8px;">
+              <li class="cluster-list-item">
                 <input type="radio" name="selectedCluster" value="<%= link.name %>" id="cluster-<%= link.id %>">
-                <label for="cluster-<%= link.id %>" style="display: inline; margin-left: 5px; font-weight: normal;">
+                <label for="cluster-<%= link.id %>" class="cluster-radio-label">
                   <strong><%= link.name %></strong> (<%= link.endpoint %>)
                 </label>
               </li>
@@ -150,31 +57,32 @@
       <h2>Generate iPXE Boot Configuration</h2>
       <form id="ipxeForm">
         <div class="form-group">
-          <label for="clusterName">Cluster Name</label>
-          <input type="text" id="clusterName" name="clusterName" required placeholder="e.g., production-cluster">
+          <label for="clusterName">Cluster Name *</label>
+          <input type="text" id="clusterName" name="clusterName" required placeholder="e.g., production-cluster" autofocus>
+          <small class="form-help">Enter a unique name for this deployment</small>
         </div>
         
         <div class="form-group">
-          <label for="serverCount">Number of Servers</label>
+          <label for="serverCount">Number of Servers *</label>
           <input type="number" id="serverCount" name="serverCount" required min="1" max="1000" value="10" placeholder="e.g., 10">
-          <small>Specify how many servers to configure for mass deployment</small>
+          <small class="form-help">Specify how many servers to configure for mass deployment (1-1000)</small>
         </div>
         
         <div class="form-group">
           <label for="bootImage">Boot Image URL (optional)</label>
           <input type="text" id="bootImage" name="bootImage" placeholder="http://boot.example.com/vmlinuz">
-          <small>Leave empty to use default boot image</small>
+          <small class="form-help">Leave empty to use default boot image</small>
         </div>
         
         <div class="form-group">
           <label for="kernelParams">Kernel Parameters (optional)</label>
           <textarea id="kernelParams" name="kernelParams" rows="2" placeholder="quiet splash console=ttyS0"></textarea>
-          <small>Additional kernel boot parameters</small>
+          <small class="form-help">Additional kernel boot parameters (space-separated)</small>
         </div>
         
         <button type="submit">📥 Generate & Download iPXE File</button>
         <button type="button" class="test-btn" onclick="runBenchmark()">🧪 Run Benchmark Test</button>
-        <button type="button" class="test-btn" onclick="runContinuousTest()" style="background-color: #fd7e14;">🔄 Run Test Until Fail</button>
+        <button type="button" class="test-btn test-btn-warning" onclick="runContinuousTest()">🔄 Run Test Until Fail</button>
       </form>
       
       <div id="testStatus" class="test-status">

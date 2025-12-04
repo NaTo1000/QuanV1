@@ -1,15 +1,28 @@
-let express = require('express');
-let app = express();
-let ejs = require('ejs');
+const express = require('express');
+const ejs = require('ejs');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+
+const app = express();
 const haikus = require('./haikus.json');
 const port = process.env.PORT || 3000;
 
-app.use(express.static('public'))
+// Cross-platform compatibility check
+console.log('='.repeat(50));
+console.log('Platform Information:');
+console.log(`  OS: ${os.platform()} (${os.type()})`);
+console.log(`  Architecture: ${os.arch()}`);
+console.log(`  Node.js: ${process.version}`);
+console.log(`  Working Directory: ${process.cwd()}`);
+console.log('='.repeat(50));
+
+// Middleware
+app.use(express.static('public'));
 app.use(express.json());
 app.set('view engine', 'ejs');
 
+// Use cross-platform path separator
 const CLUSTER_LINKS_FILE = path.join(__dirname, 'cluster-links.json');
 
 // Helper function to read cluster links
@@ -22,14 +35,19 @@ function readClusterLinks() {
   }
 }
 
-// Helper function to write cluster links
+// Helper function to write cluster links with cross-platform line endings
 function writeClusterLinks(links) {
-  fs.writeFileSync(CLUSTER_LINKS_FILE, JSON.stringify(links, null, 2));
+  const content = JSON.stringify(links, null, 2);
+  // Normalize line endings for current platform
+  // First normalize to LF, then convert to platform-specific
+  const normalized = content.replace(/\r\n/g, '\n').replace(/\n/g, os.EOL);
+  fs.writeFileSync(CLUSTER_LINKS_FILE, normalized, 'utf8');
 }
 
+// Routes
 app.get('/', (req, res) => {
   const clusterLinks = readClusterLinks();
-  res.render('index', {haikus: haikus, clusterLinks: clusterLinks});
+  res.render('index', { haikus, clusterLinks });
 });
 
 // API endpoint to get all cluster links
@@ -87,13 +105,18 @@ app.delete('/api/cluster-links/:id', (req, res) => {
 // Cluster link configuration page
 app.get('/cluster-config', (req, res) => {
   const clusterLinks = readClusterLinks();
-  res.render('cluster-config', { clusterLinks: clusterLinks });
+  res.render('cluster-config', { clusterLinks });
 });
 
 // iPXE boot file generation page
 app.get('/ipxe-boot', (req, res) => {
   const clusterLinks = readClusterLinks();
-  res.render('ipxe-boot', { clusterLinks: clusterLinks });
+  res.render('ipxe-boot', { clusterLinks });
+});
+
+// System information page
+app.get('/system-info', (req, res) => {
+  res.render('system-info');
 });
 
 // Generate iPXE boot file
@@ -219,4 +242,72 @@ reboot
   return script;
 }
 
-app.listen(port);
+// System information endpoint for debugging
+app.get('/api/system-info', (req, res) => {
+  res.json({
+    platform: os.platform(),
+    type: os.type(),
+    architecture: os.arch(),
+    release: os.release(),
+    nodeVersion: process.version,
+    uptime: os.uptime(),
+    hostname: os.hostname(),
+    totalMemory: os.totalmem(),
+    freeMemory: os.freemem(),
+    cpus: os.cpus().length,
+    networkInterfaces: Object.keys(os.networkInterfaces()),
+    pathSeparator: path.sep,
+    lineEnding: os.EOL === '\r\n' ? 'CRLF (Windows)' : 'LF (Unix/Mac)'
+  });
+});
+
+// Start server with cross-platform error handling
+const server = app.listen(port, () => {
+  console.log(`\nServer is running on port ${port}`);
+  console.log(`Local: http://localhost:${port}`);
+  console.log(`Network: http://${getNetworkAddress()}:${port}`);
+  console.log(`\nPress Ctrl+C to stop the server\n`);
+});
+
+// Graceful shutdown handler (works on Windows, Linux, and macOS)
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
+
+// Windows-specific shutdown signals
+if (process.platform === 'win32') {
+  require('readline')
+    .createInterface({
+      input: process.stdin,
+      output: process.stdout
+    })
+    .on('SIGINT', () => {
+      process.emit('SIGINT');
+    });
+}
+
+function gracefulShutdown() {
+  console.log('\n\nShutting down gracefully...');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+  
+  // Force close after 10 seconds
+  setTimeout(() => {
+    console.error('Forcing shutdown...');
+    process.exit(1);
+  }, 10000);
+}
+
+// Get network address for display
+function getNetworkAddress() {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return 'localhost';
+}

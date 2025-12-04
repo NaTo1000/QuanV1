@@ -1,159 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cluster Link Configuration - Arkitek Builder</title>
-    <link href="/css/main.css" rel="stylesheet" type="text/css">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-      .container {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-      
-      .form-group {
-        margin-bottom: 15px;
-      }
-      
-      label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
-      }
-      
-      input[type="text"],
-      input[type="password"],
-      textarea {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-sizing: border-box;
-      }
-      
-      button {
-        padding: 10px 20px;
-        background-color: #0366d6;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        margin-right: 10px;
-      }
-      
-      button:hover {
-        background-color: #0256c4;
-      }
-      
-      .cluster-link-item {
-        border: 1px solid #e1e4e8;
-        padding: 15px;
-        margin-bottom: 10px;
-        border-radius: 6px;
-        background-color: #f6f8fa;
-      }
-      
-      .cluster-link-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-      }
-      
-      .cluster-link-name {
-        font-size: 18px;
-        font-weight: bold;
-      }
-      
-      .cluster-link-endpoint {
-        color: #586069;
-        margin-bottom: 5px;
-      }
-      
-      .status-badge {
-        display: inline-block;
-        padding: 3px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: bold;
-      }
-      
-      .status-active {
-        background-color: #28a745;
-        color: white;
-      }
-      
-      .delete-btn {
-        background-color: #d73a49;
-      }
-      
-      .delete-btn:hover {
-        background-color: #cb2431;
-      }
-      
-      .message {
-        padding: 10px;
-        margin-bottom: 15px;
-        border-radius: 4px;
-      }
-      
-      .message.success {
-        background-color: #d4edda;
-        border: 1px solid #c3e6cb;
-        color: #155724;
-      }
-      
-      .message.error {
-        background-color: #f8d7da;
-        border: 1px solid #f5c6cb;
-        color: #721c24;
-      }
-      
-      .back-link {
-        display: inline-block;
-        margin-bottom: 20px;
-        color: #0366d6;
-        text-decoration: none;
-      }
-      
-      .back-link:hover {
-        text-decoration: underline;
-      }
-    </style>
+    <meta name="description" content="Configure and manage cluster links for the Arkitek Builder platform">
+    <link rel="stylesheet" href="/css/main.css" type="text/css">
+    <link rel="stylesheet" href="/css/pages.css" type="text/css">
   </head>
   <body>
+    <!-- Navigation Bar -->
+    <nav class="main-nav">
+      <div class="nav-container">
+        <h1 class="nav-title">QuanV1 - Arkitek Builder</h1>
+        <ul class="nav-menu">
+          <li><a href="/" class="nav-link" accesskey="h">🏠 Home</a></li>
+          <li><a href="/cluster-config" class="nav-link active" accesskey="c">⚙️ Clusters</a></li>
+          <li><a href="/ipxe-boot" class="nav-link" accesskey="b">🚀 Boot Generator</a></li>
+          <li><a href="/system-info" class="nav-link" accesskey="s">💻 System</a></li>
+        </ul>
+      </div>
+    </nav>
+
     <div class="container">
-      <a href="/" class="back-link">← Back to Home</a>
-      
-      <h1>Cluster Link Configuration</h1>
+      <h1>⚙️ Cluster Link Configuration</h1>
+      <p class="subtitle">Manage your cluster endpoints and credentials</p>
       
       <div id="message"></div>
       
       <h2>Add New Cluster Link</h2>
       <form id="clusterLinkForm">
         <div class="form-group">
-          <label for="name">Link Name</label>
-          <input type="text" id="name" name="name" required placeholder="e.g., Production Cluster">
+          <label for="name">Link Name *</label>
+          <input type="text" id="name" name="name" required placeholder="e.g., Production Cluster" autofocus>
+          <small class="form-help">Choose a descriptive name for your cluster</small>
         </div>
         
         <div class="form-group">
           <label for="builderType">Builder Type</label>
-          <select id="builderType" name="builderType" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+          <select id="builderType" name="builderType">
             <option value="generic">Generic Cluster</option>
-            <option value="docker-cloud">Docker Cloud Builder</option>
-            <option value="kubernetes">Kubernetes</option>
+            <option value="docker-cloud">🐳 Docker Cloud Builder</option>
+            <option value="kubernetes">☸️ Kubernetes</option>
             <option value="openshift">OpenShift</option>
+            <option value="watsonx">🤖 Watson X Orchestrator</option>
           </select>
+          <small class="form-help">Select the type of cluster or orchestrator you're using</small>
         </div>
         
         <div class="form-group">
-          <label for="endpoint">Endpoint URL</label>
+          <label for="endpoint">Endpoint URL *</label>
           <input type="text" id="endpoint" name="endpoint" required placeholder="e.g., https://cluster.example.com:9092">
+          <small class="form-help">The full URL including protocol and port</small>
         </div>
         
         <div class="form-group">
           <label for="credentials">Credentials (optional)</label>
           <textarea id="credentials" name="credentials" rows="3" placeholder="API key, token, or connection string"></textarea>
+          <small class="form-help">Stored securely - never committed to version control</small>
         </div>
         
         <button type="submit">Add Cluster Link</button>
@@ -170,11 +74,13 @@
                   <div class="cluster-link-name"><%= link.name %></div>
                   <span class="status-badge status-<%= link.status %>"><%= link.status %></span>
                   <% if (link.builderType === 'docker-cloud') { %>
-                    <span style="background-color: #2496ed; color: white; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-left: 5px;">🐳 Docker Cloud</span>
+                    <span class="badge badge-docker">🐳 Docker Cloud</span>
                   <% } else if (link.builderType === 'kubernetes') { %>
-                    <span style="background-color: #326ce5; color: white; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-left: 5px;">☸️ Kubernetes</span>
+                    <span class="badge badge-k8s">☸️ Kubernetes</span>
                   <% } else if (link.builderType === 'openshift') { %>
-                    <span style="background-color: #ee0000; color: white; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-left: 5px;">OpenShift</span>
+                    <span class="badge badge-openshift">OpenShift</span>
+                  <% } else if (link.builderType === 'watsonx') { %>
+                    <span class="badge badge-watsonx">🤖 Watson X</span>
                   <% } %>
                 </div>
                 <button class="delete-btn" onclick="deleteClusterLink('<%= link.id %>')">Delete</button>
