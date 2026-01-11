@@ -15,7 +15,7 @@ services:
     networks:
       - quanv1-network
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost/health"]
+      test: ["CMD-SHELL", "curl -f http://localhost/health || exit 1"]
       interval: 30s
       timeout: 3s
       retries: 3
@@ -33,7 +33,9 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - INSTANCE_ID=1
+      - DATA_DIR=/app/data
     volumes:
+      # Shared volume for cluster-links.json data file
       - cluster-data:/app/data
     networks:
       - quanv1-network
@@ -56,7 +58,9 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - INSTANCE_ID=2
+      - DATA_DIR=/app/data
     volumes:
+      # Shared volume for cluster-links.json data file
       - cluster-data:/app/data
     networks:
       - quanv1-network
@@ -79,7 +83,9 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - INSTANCE_ID=3
+      - DATA_DIR=/app/data
     volumes:
+      # Shared volume for cluster-links.json data file
       - cluster-data:/app/data
     networks:
       - quanv1-network

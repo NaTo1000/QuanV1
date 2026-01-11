@@ -23,7 +23,14 @@ app.use(express.json());
 app.set('view engine', 'ejs');
 
 // Use cross-platform path separator
-const CLUSTER_LINKS_FILE = path.join(__dirname, 'cluster-links.json');
+// Use data directory for persistent storage (supports Docker volume mounts)
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
+const CLUSTER_LINKS_FILE = path.join(DATA_DIR, 'cluster-links.json');
+
+// Ensure data directory exists
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
 
 // Helper function to read cluster links
 function readClusterLinks() {
