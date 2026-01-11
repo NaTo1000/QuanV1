@@ -16,6 +16,7 @@
         <ul class="nav-menu">
           <li><a href="/" class="nav-link" accesskey="h">🏠 Home</a></li>
           <li><a href="/cluster-config" class="nav-link active" accesskey="c">⚙️ Clusters</a></li>
+          <li><a href="/quantum-training" class="nav-link" accesskey="q">⚛️ Quantum</a></li>
           <li><a href="/ipxe-boot" class="nav-link" accesskey="b">🚀 Boot Generator</a></li>
           <li><a href="/system-info" class="nav-link" accesskey="s">💻 System</a></li>
         </ul>
@@ -44,6 +45,7 @@
             <option value="kubernetes">☸️ Kubernetes</option>
             <option value="openshift">OpenShift</option>
             <option value="watsonx">🤖 Watson X Orchestrator</option>
+            <option value="quantum">⚛️ Quantum Pipeline</option>
           </select>
           <small class="form-help">Select the type of cluster or orchestrator you're using</small>
         </div>
@@ -81,6 +83,8 @@
                     <span class="badge badge-openshift">OpenShift</span>
                   <% } else if (link.builderType === 'watsonx') { %>
                     <span class="badge badge-watsonx">🤖 Watson X</span>
+                  <% } else if (link.builderType === 'quantum') { %>
+                    <span class="badge badge-quantum">⚛️ Quantum</span>
                   <% } %>
                 </div>
                 <button class="delete-btn" onclick="deleteClusterLink('<%= link.id %>')">Delete</button>
