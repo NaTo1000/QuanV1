@@ -153,23 +153,30 @@ app.get('/api/quantum/pipelines', (req, res) => {
 app.post('/api/quantum/pipelines', (req, res) => {
   const { name, type, numQubits, circuitDepth, backend, description } = req.body;
   
-  if (!name || !numQubits) {
-    return res.status(400).json({ error: 'Pipeline name and number of qubits are required' });
+  // Validate required fields
+  if (!name || typeof name !== 'string' || !name.trim()) {
+    return res.status(400).json({ error: 'Pipeline name is required' });
+  }
+  
+  const parsedQubits = parseInt(numQubits);
+  if (isNaN(parsedQubits) || parsedQubits < 1 || parsedQubits > 100) {
+    return res.status(400).json({ error: 'Number of qubits must be between 1 and 100' });
   }
 
   const pipelines = readQuantumPipelines();
   
   // Check if a pipeline with the same name already exists
-  if (pipelines.some(pipeline => pipeline.name === name)) {
+  if (pipelines.some(pipeline => pipeline.name === name.trim())) {
     return res.status(400).json({ error: 'A quantum pipeline with this name already exists' });
   }
 
+  const parsedDepth = parseInt(circuitDepth);
   const newPipeline = {
     id: Date.now().toString(),
-    name,
+    name: name.trim(),
     type: type || 'vqe',
-    numQubits: parseInt(numQubits),
-    circuitDepth: parseInt(circuitDepth) || 10,
+    numQubits: parsedQubits,
+    circuitDepth: (!isNaN(parsedDepth) && parsedDepth >= 1) ? parsedDepth : 10,
     backend: backend || 'statevector',
     description: description || '',
     createdAt: new Date().toISOString(),
