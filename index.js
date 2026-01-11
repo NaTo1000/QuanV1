@@ -24,6 +24,7 @@ app.set('view engine', 'ejs');
 
 // Use cross-platform path separator
 const CLUSTER_LINKS_FILE = path.join(__dirname, 'cluster-links.json');
+const QUANTUM_PIPELINES_FILE = path.join(__dirname, 'quantum-pipelines.json');
 
 // Helper function to read cluster links
 function readClusterLinks() {
@@ -42,6 +43,23 @@ function writeClusterLinks(links) {
   // First normalize to LF, then convert to platform-specific
   const normalized = content.replace(/\r\n/g, '\n').replace(/\n/g, os.EOL);
   fs.writeFileSync(CLUSTER_LINKS_FILE, normalized, 'utf8');
+}
+
+// Helper function to read quantum pipelines
+function readQuantumPipelines() {
+  try {
+    const data = fs.readFileSync(QUANTUM_PIPELINES_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    return [];
+  }
+}
+
+// Helper function to write quantum pipelines
+function writeQuantumPipelines(pipelines) {
+  const content = JSON.stringify(pipelines, null, 2);
+  const normalized = content.replace(/\r\n/g, '\n').replace(/\n/g, os.EOL);
+  fs.writeFileSync(QUANTUM_PIPELINES_FILE, normalized, 'utf8');
 }
 
 // Routes
@@ -117,6 +135,117 @@ app.get('/ipxe-boot', (req, res) => {
 // System information page
 app.get('/system-info', (req, res) => {
   res.render('system-info');
+});
+
+// Quantum training page
+app.get('/quantum-training', (req, res) => {
+  const pipelines = readQuantumPipelines();
+  res.render('quantum-training', { pipelines });
+});
+
+// API endpoint to get all quantum pipelines
+app.get('/api/quantum/pipelines', (req, res) => {
+  const pipelines = readQuantumPipelines();
+  res.json(pipelines);
+});
+
+// API endpoint to create a new quantum pipeline
+app.post('/api/quantum/pipelines', (req, res) => {
+  const { name, type, numQubits, circuitDepth, backend, description } = req.body;
+  
+  // Validate required fields
+  if (!name || typeof name !== 'string' || !name.trim()) {
+    return res.status(400).json({ error: 'Pipeline name is required' });
+  }
+  
+  const parsedQubits = parseInt(numQubits);
+  if (isNaN(parsedQubits) || parsedQubits < 1 || parsedQubits > 100) {
+    return res.status(400).json({ error: 'Number of qubits must be between 1 and 100' });
+  }
+
+  const pipelines = readQuantumPipelines();
+  
+  // Check if a pipeline with the same name already exists
+  if (pipelines.some(pipeline => pipeline.name === name.trim())) {
+    return res.status(400).json({ error: 'A quantum pipeline with this name already exists' });
+  }
+
+  const parsedDepth = parseInt(circuitDepth);
+  const newPipeline = {
+    id: Date.now().toString(),
+    name: name.trim(),
+    type: type || 'vqe',
+    numQubits: parsedQubits,
+    circuitDepth: (!isNaN(parsedDepth) && parsedDepth >= 1) ? parsedDepth : 10,
+    backend: backend || 'statevector',
+    description: description || '',
+    createdAt: new Date().toISOString(),
+    status: 'ready',
+    trainingHistory: []
+  };
+
+  pipelines.push(newPipeline);
+  writeQuantumPipelines(pipelines);
+  
+  res.status(201).json(newPipeline);
+});
+
+// API endpoint to delete a quantum pipeline
+app.delete('/api/quantum/pipelines/:id', (req, res) => {
+  const { id } = req.params;
+  const pipelines = readQuantumPipelines();
+  
+  const filteredPipelines = pipelines.filter(pipeline => pipeline.id !== id);
+  
+  if (filteredPipelines.length === pipelines.length) {
+    return res.status(404).json({ error: 'Quantum pipeline not found' });
+  }
+
+  writeQuantumPipelines(filteredPipelines);
+  res.json({ message: 'Quantum pipeline deleted successfully' });
+});
+
+// API endpoint to train a quantum pipeline
+app.post('/api/quantum/train', (req, res) => {
+  const { pipelineId, epochs, learningRate, optimizer } = req.body;
+  
+  if (!pipelineId) {
+    return res.status(400).json({ error: 'Pipeline ID is required' });
+  }
+
+  const pipelines = readQuantumPipelines();
+  const pipelineIndex = pipelines.findIndex(p => p.id === pipelineId);
+  
+  if (pipelineIndex === -1) {
+    return res.status(404).json({ error: 'Quantum pipeline not found' });
+  }
+
+  // Update pipeline status
+  pipelines[pipelineIndex].status = 'training';
+  
+  // Add training record
+  const trainingRecord = {
+    id: Date.now().toString(),
+    startTime: new Date().toISOString(),
+    epochs: epochs || 100,
+    learningRate: learningRate || 0.01,
+    optimizer: optimizer || 'adam',
+    status: 'running'
+  };
+  
+  pipelines[pipelineIndex].trainingHistory.push(trainingRecord);
+  writeQuantumPipelines(pipelines);
+
+  res.json({
+    message: 'Training started successfully',
+    pipelineId,
+    trainingId: trainingRecord.id,
+    config: {
+      epochs: trainingRecord.epochs,
+      learningRate: trainingRecord.learningRate,
+      optimizer: trainingRecord.optimizer
+    }
+  });
 });
 
 // Generate iPXE boot file

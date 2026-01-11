@@ -4,14 +4,15 @@ A Node.js web application for managing cluster configurations and generating iPX
 
 ## 🚀 Features
 
-- **Intuitive Navigation**: Easy-to-use navigation bar with keyboard shortcuts (Alt+H, Alt+C, Alt+B)
+- **Intuitive Navigation**: Easy-to-use navigation bar with keyboard shortcuts (Alt+H, Alt+C, Alt+Q, Alt+B)
 - **Quick Start Guide**: Step-by-step guidance for new users
 - **Cluster Link Management**: Configure and manage multiple cluster endpoints
 - **iPXE Boot File Generator**: Generate boot configuration files for mass server deployment
 - **Watson X Orchestrator Integration**: AI-powered cluster orchestration with IBM Watson X.ai
+- **Quantum Pipeline Training**: Create and train quantum computing pipelines for advanced computational tasks
 - **Benchmark Testing**: Run stress tests on cluster endpoints
 - **Continuous Testing**: Run tests until failure detection for VMware container benchmarks
-- **Multiple Builder Types**: Support for Docker Cloud, Kubernetes, OpenShift, Watson X, and generic clusters
+- **Multiple Builder Types**: Support for Docker Cloud, Kubernetes, OpenShift, Watson X, Quantum Pipeline, and generic clusters
 - **Responsive Design**: Mobile-friendly interface that works on all devices
 - **Real-time Validation**: Instant form feedback and help text
 
@@ -131,17 +132,23 @@ QuanV1/
 - `POST /api/benchmark/run` - Run benchmark/stress test
 - `POST /api/test/run-until-fail` - Run continuous test until failure
 
+### Quantum Pipelines
+- `GET /api/quantum/pipelines` - Get all quantum pipelines
+- `POST /api/quantum/pipelines` - Create a new quantum pipeline
+- `DELETE /api/quantum/pipelines/:id` - Delete a quantum pipeline
+- `POST /api/quantum/train` - Start training a quantum pipeline
+
 ## 🎯 Usage Examples
 
 ### Quick Start
 1. Visit the home page to see the Quick Start Guide
 2. Follow the 3-step process to get started
-3. Use keyboard shortcuts: Alt+H (Home), Alt+C (Clusters), Alt+B (Boot Generator)
+3. Use keyboard shortcuts: Alt+H (Home), Alt+C (Clusters), Alt+Q (Quantum), Alt+B (Boot Generator)
 
 ### Adding a Cluster Link
 Navigate to `/cluster-config` (or press Alt+C) and fill in the form:
 - **Link Name**: Production Cluster
-- **Builder Type**: Kubernetes (or Watson X Orchestrator for AI-powered management)
+- **Builder Type**: Kubernetes, Watson X, Quantum Pipeline, or other supported types
 - **Endpoint URL**: https://cluster.example.com:9092
 - **Credentials**: Your API key or token (optional)
 
@@ -173,9 +180,43 @@ QuanV1 now supports IBM Watson X.ai integration for intelligent cluster orchestr
 2. Configure your Watson X endpoint and API credentials
 3. The platform automatically leverages Watson X capabilities for all operations
 
+## ⚛️ Quantum Pipeline Training
+
+QuanV1 includes comprehensive quantum computing integration for advanced computational tasks:
+
+### Supported Pipeline Types
+- **VQE (Variational Quantum Eigensolver)**: Solve eigenvalue problems for quantum chemistry and optimization
+- **QAOA (Quantum Approximate Optimization)**: Solve combinatorial optimization problems
+- **QNN (Quantum Neural Network)**: Hybrid quantum-classical machine learning models
+- **QSVM (Quantum Support Vector Machine)**: Quantum-enhanced classification algorithms
+- **Grover's Search**: Quantum search algorithm for unstructured databases
+- **Custom Circuit**: Design and run custom quantum circuits
+
+### Features
+- **Parameterized Circuits**: Configure qubit count and circuit depth
+- **Multiple Backends**: Support for statevector, QASM, Aer, and IBM Quantum simulators
+- **Training Dashboard**: Real-time training progress with loss and accuracy metrics
+- **Optimization Algorithms**: Adam, SPSA, COBYLA, and Gradient Descent optimizers
+- **Training History**: Track all training runs and their results
+
+### Creating a Quantum Pipeline
+1. Navigate to `/quantum-training` (or press Alt+Q)
+2. Enter a unique pipeline name
+3. Select the pipeline type (VQE, QAOA, QNN, etc.)
+4. Configure qubits, circuit depth, and backend
+5. Click "Create Pipeline"
+
+### Training a Pipeline
+1. Create or select an existing pipeline
+2. Configure training parameters (epochs, learning rate, optimizer)
+3. Click "Train" on the pipeline or "Start Training" button
+4. Monitor real-time progress with loss and accuracy metrics
+5. Training can be stopped at any time
+
 ## 🛡️ Security Notes
 
 - Cluster credentials are stored in `cluster-links.json` (excluded from git)
+- Quantum pipeline configurations are stored in `quantum-pipelines.json` (excluded from git)
 - Keep your credentials secure and never commit them to version control
 - The `.gitignore` file is configured to exclude sensitive files
 - All credentials, including Watson X API keys, are stored locally and never transmitted to external services

@@ -101,6 +101,9 @@ dist
 # Cluster links configuration (contains sensitive credentials)
 cluster-links.json
 
+# Quantum pipelines configuration (contains user data)
+quantum-pipelines.json
+
 # OS files
 .DS_Store
 Thumbs.db

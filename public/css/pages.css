@@ -80,6 +80,10 @@
     background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
 }
 
+.badge-quantum {
+    background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%);
+}
+
 /* Configuration Pages Styles */
 .container {
     max-width: 900px;
@@ -591,4 +595,80 @@ select:focus {
     .watson-actions {
         flex-direction: column;
     }
+
+    .quantum-home-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .quantum-home-actions {
+        flex-direction: column;
+    }
+}
+
+/* Quantum Home Section */
+.quantum-home-section {
+    background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%);
+    border-radius: 12px;
+    padding: 30px;
+    margin: 40px 0;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.quantum-home-section h2 {
+    color: white;
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.quantum-home-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.quantum-home-feature {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.quantum-home-feature h3 {
+    margin-top: 0;
+    color: #c4b5fd;
+}
+
+.quantum-home-feature ul {
+    padding-left: 20px;
+    margin-bottom: 0;
+}
+
+.quantum-home-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.quantum-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    background: white;
+    color: #4c1d95;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.quantum-btn:hover {
+    background: #c4b5fd;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
