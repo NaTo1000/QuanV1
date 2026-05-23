@@ -7,6 +7,7 @@ QuanV1 is designed to work seamlessly across Windows, macOS, and Linux platforms
 ✅ **Windows** (Windows 10, Windows 11, Windows Server 2016+)
 ✅ **macOS** (macOS 10.14+)
 ✅ **Linux** (Ubuntu 18.04+, Debian 9+, CentOS 7+, RHEL 7+, Fedora, Arch Linux)
+✅ **BlackArch Linux** (rolling Arch-based distribution)
 
 ## Requirements
 
@@ -41,6 +42,17 @@ npm start
 
 ```bash
 # Using Bash
+git clone https://github.com/NaTo1000/QuanV1.git
+cd QuanV1
+npm install
+npm start
+```
+
+### BlackArch Linux
+
+```bash
+# Using Bash
+sudo pacman -Sy --needed nodejs npm
 git clone https://github.com/NaTo1000/QuanV1.git
 cd QuanV1
 npm install

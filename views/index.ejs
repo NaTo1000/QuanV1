@@ -75,6 +75,8 @@
                 <span class="badge badge-openshift">OpenShift</span>
               <% } else if (link.builderType === 'watsonx') { %>
                 <span class="badge badge-watsonx">🤖 Watson X</span>
+              <% } else if (link.builderType === 'blackarch') { %>
+                <span class="badge badge-blackarch">🛡️ BlackArch</span>
               <% } %>
               <br>
               <span class="cluster-link-endpoint"><%= link.endpoint %></span>

@@ -44,6 +44,7 @@
             <option value="kubernetes">☸️ Kubernetes</option>
             <option value="openshift">OpenShift</option>
             <option value="watsonx">🤖 Watson X Orchestrator</option>
+            <option value="blackarch">🛡️ BlackArch Security Stack</option>
           </select>
           <small class="form-help">Select the type of cluster or orchestrator you're using</small>
         </div>
@@ -81,6 +82,8 @@
                     <span class="badge badge-openshift">OpenShift</span>
                   <% } else if (link.builderType === 'watsonx') { %>
                     <span class="badge badge-watsonx">🤖 Watson X</span>
+                  <% } else if (link.builderType === 'blackarch') { %>
+                    <span class="badge badge-blackarch">🛡️ BlackArch</span>
                   <% } %>
                 </div>
                 <button class="delete-btn" onclick="deleteClusterLink('<%= link.id %>')">Delete</button>

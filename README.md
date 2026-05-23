@@ -9,6 +9,7 @@ A Node.js web application for managing cluster configurations and generating iPX
 - **Cluster Link Management**: Configure and manage multiple cluster endpoints
 - **iPXE Boot File Generator**: Generate boot configuration files for mass server deployment
 - **Watson X Orchestrator Integration**: AI-powered cluster orchestration with IBM Watson X.ai
+- **BlackArch Security Stack Integration**: Register BlackArch-powered cybersecurity clusters
 - **Benchmark Testing**: Run stress tests on cluster endpoints
 - **Continuous Testing**: Run tests until failure detection for VMware container benchmarks
 - **Multiple Builder Types**: Support for Docker Cloud, Kubernetes, OpenShift, Watson X, and generic clusters
@@ -24,6 +25,7 @@ A Node.js web application for managing cluster configurations and generating iPX
 - ✅ **Windows** (Windows 10, 11, Server 2016+)
 - ✅ **macOS** (macOS 10.14+)
 - ✅ **Linux** (Ubuntu 18.04+, Debian 9+, CentOS 7+, RHEL 7+, and others)
+- ✅ **BlackArch Linux** (rolling Arch-based distribution)
 
 See [PLATFORM_SUPPORT.md](PLATFORM_SUPPORT.md) for detailed platform-specific instructions.
 
@@ -142,6 +144,7 @@ QuanV1/
 Navigate to `/cluster-config` (or press Alt+C) and fill in the form:
 - **Link Name**: Production Cluster
 - **Builder Type**: Kubernetes (or Watson X Orchestrator for AI-powered management)
+- **Builder Type**: Kubernetes, Watson X Orchestrator, or BlackArch Security Stack
 - **Endpoint URL**: https://cluster.example.com:9092
 - **Credentials**: Your API key or token (optional)
 
@@ -151,6 +154,13 @@ Navigate to `/cluster-config` (or press Alt+C) and fill in the form:
 3. Enter your Watson X endpoint URL
 4. Add your Watson X API credentials
 5. The platform will automatically leverage AI for intelligent cluster management
+
+### Integrating BlackArch Security Stack
+1. Navigate to Cluster Configuration
+2. Select "BlackArch Security Stack" as the builder type
+3. Enter your BlackArch host endpoint URL
+4. Add your API key or token credentials if required
+5. Use iPXE boot generation and test endpoints to manage and validate your cybersecurity cluster workflows
 
 ### Generating iPXE Boot Files
 1. Navigate to `/ipxe-boot`

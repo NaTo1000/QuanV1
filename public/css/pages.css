@@ -80,6 +80,10 @@
     background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
 }
 
+.badge-blackarch {
+    background: linear-gradient(135deg, #111827 0%, #374151 100%);
+}
+
 /* Configuration Pages Styles */
 .container {
     max-width: 900px;
