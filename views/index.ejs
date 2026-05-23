@@ -77,6 +77,8 @@
                 <span class="badge badge-watsonx">🤖 Watson X</span>
               <% } else if (link.builderType === 'blackarch') { %>
                 <span class="badge badge-blackarch">🛡️ BlackArch</span>
+              <% } else { %>
+                <span class="badge"><%= link.builderType || 'Generic' %></span>
               <% } %>
               <br>
               <span class="cluster-link-endpoint"><%= link.endpoint %></span>
