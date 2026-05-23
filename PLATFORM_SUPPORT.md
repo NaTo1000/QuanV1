@@ -53,11 +53,9 @@ npm start
 ```bash
 # Using Bash
 sudo pacman -Sy --needed nodejs npm
-git clone https://github.com/NaTo1000/QuanV1.git
-cd QuanV1
-npm install
-npm start
 ```
+
+Then follow the standard Linux installation steps above.
 
 ## Platform-Specific Features
 

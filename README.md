@@ -143,7 +143,6 @@ QuanV1/
 ### Adding a Cluster Link
 Navigate to `/cluster-config` (or press Alt+C) and fill in the form:
 - **Link Name**: Production Cluster
-- **Builder Type**: Kubernetes (or Watson X Orchestrator for AI-powered management)
 - **Builder Type**: Kubernetes, Watson X Orchestrator, or BlackArch Security Stack
 - **Endpoint URL**: https://cluster.example.com:9092
 - **Credentials**: Your API key or token (optional)
