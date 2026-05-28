@@ -5,6 +5,10 @@ const path = require('path');
 const os = require('os');
 
 // Quantum & AI modules
+const {
+  silenceNoiseVortex, nonagonTopology, mapCircuitToNonagon,
+  computeGeodesicSilencing, deterministicReasoningEval,
+} = require('./nonagonal-vortex');
 const { swarm }            = require('./rag-swarm');
 const { QuadBrainOrchestrator } = require('./quad-brain');
 const vault                = require('./blockchain-vault');
@@ -607,6 +611,98 @@ app.post('/api/harmonic/harmonise', (req, res) => {
   const { weights } = req.body;
   if (!Array.isArray(weights)) return res.status(400).json({ error: 'weights array required' });
   res.json({ harmonised: harmonise369(weights.map(Number)), carrier: CARRIER_HZ, solfeggio: SOLFEGGIO });
+});
+
+app.post('/api/harmonic/harmonise', (req, res) => {
+  const { weights } = req.body;
+  if (!Array.isArray(weights)) return res.status(400).json({ error: 'weights array required' });
+  res.json({ harmonised: harmonise369(weights.map(Number)), carrier: CARRIER_HZ, solfeggio: SOLFEGGIO });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NONAGONAL VORTEX — 369Hz Geodesic Noise Silencer routes
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Precomputed topology (no request data needed)
+app.get('/api/nonagonal/topology', (req, res) => {
+  res.json({
+    vertices     : nonagonTopology.vertices,
+    teslaIndices : [2, 5, 8],
+    teslaLabels  : [3, 6, 9],
+    arcHops      : nonagonTopology.arcHops,
+    geoLength    : nonagonTopology.geoLength,
+    teslaProximity: nonagonTopology.teslaProximity,
+    carrierHz    : 369,
+    description  : 'Nonagonal (9-vertex) geodesic vortex. Tesla silence anchors at vertices 3, 6, 9.',
+  });
+});
+
+// Silence a specific circuit (by id, looked up from the JSON corpus)
+app.post('/api/nonagonal/evaluate', (req, res) => {
+  const { circuitId } = req.body;
+  if (!circuitId) return res.status(400).json({ error: 'circuitId required' });
+  const circuit = (circuits.circuits || []).find(c => String(c.id) === String(circuitId));
+  if (!circuit) return res.status(404).json({ error: 'Circuit not found' });
+  try {
+    const result = silenceNoiseVortex(circuit);
+    vault.writeToAllVaults({
+      type: 'NONAGONAL_SILENCE',
+      circuitId,
+      determinismScore: result.summary.determinismScore,
+      meanSuppression : result.summary.meanSuppression,
+    }, 'NONAGONAL');
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Silence a raw circuit payload (custom circuits not in the JSON corpus)
+app.post('/api/nonagonal/silence', (req, res) => {
+  const { circuit } = req.body;
+  if (!circuit || typeof circuit !== 'object') {
+    return res.status(400).json({ error: 'circuit object required' });
+  }
+  try {
+    const result = silenceNoiseVortex(circuit);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Gate-level silencing only (no reasoning re-eval) — useful for real-time animation
+app.post('/api/nonagonal/gate-map', (req, res) => {
+  const { circuit } = req.body;
+  if (!circuit) return res.status(400).json({ error: 'circuit object required' });
+  try {
+    const gateMap  = mapCircuitToNonagon(circuit);
+    const silenced = computeGeodesicSilencing(gateMap);
+    res.json({
+      gateCount        : silenced.length,
+      silenceSignature : Array.from({ length: 9 }, (_, k) => {
+        const gates = silenced.filter(g => g.node === k);
+        return gates.length ? gates.reduce((a, g) => a + g.sigma, 0) / gates.length : 0;
+      }),
+      gates: silenced,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Deterministic reasoning re-evaluation only (expects pre-silenced gate data)
+app.post('/api/nonagonal/reasoning', (req, res) => {
+  const { circuit, silencingData } = req.body;
+  if (!circuit || !Array.isArray(silencingData)) {
+    return res.status(400).json({ error: 'circuit and silencingData array required' });
+  }
+  try {
+    const result = deterministicReasoningEval(circuit, silencingData);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // 404 handler
