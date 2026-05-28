@@ -43,14 +43,21 @@
         
         <div class="form-group">
           <label for="builderType">Builder Type</label>
-          <select id="builderType" name="builderType">
+          <select id="builderType" name="builderType" onchange="toggleVmRam('vmRamGroup', this.value)">
             <option value="generic">Generic Cluster</option>
             <option value="docker-cloud">🐳 Docker Cloud Builder</option>
             <option value="kubernetes">☸️ Kubernetes</option>
             <option value="openshift">OpenShift</option>
             <option value="watsonx">🤖 Watson X Orchestrator</option>
+            <option value="tensorflow">🧠 TensorFlow Container</option>
           </select>
           <small class="form-help">Select the type of cluster or orchestrator you're using</small>
+        </div>
+
+        <div class="form-group" id="vmRamGroup" style="display:none;">
+          <label for="vmRam">VM RAM Allocation</label>
+          <input type="text" id="vmRam" name="vmRam" placeholder="e.g., 8GB, 16GB, 32GB">
+          <small class="form-help">Amount of VM RAM to allocate for the TensorFlow container cluster</small>
         </div>
         
         <div class="form-group">
@@ -93,14 +100,19 @@
                     <span class="badge badge-openshift">OpenShift</span>
                   <% } else if (link.builderType === 'watsonx') { %>
                     <span class="badge badge-watsonx">🤖 Watson X</span>
+                  <% } else if (link.builderType === 'tensorflow') { %>
+                    <span class="badge badge-tensorflow">🧠 TensorFlow</span>
                   <% } %>
                 </div>
                 <div>
-                  <button class="test-btn" style="padding: 6px 12px; font-size: 13px;" onclick="editClusterLink('<%= link.id %>', '<%= link.name.replace(/\'/g, "\\x27") %>', '<%= link.endpoint.replace(/\'/g, "\\x27") %>', '<%= link.builderType %>')">Edit</button>
+                  <button class="test-btn" style="padding: 6px 12px; font-size: 13px;" onclick="editClusterLink('<%= link.id %>', '<%= link.name.replace(/\'/g, "\\x27") %>', '<%= link.endpoint.replace(/\'/g, "\\x27") %>', '<%= link.builderType %>', '<%= (link.vmRam || "").replace(/\'/g, "\\x27") %>')">Edit</button>
                   <button class="delete-btn" onclick="deleteClusterLink('<%= link.id %>')">Delete</button>
                 </div>
               </div>
               <div class="cluster-link-endpoint"><strong>Endpoint:</strong> <%= link.endpoint %></div>
+              <% if (link.vmRam) { %>
+                <div style="color: #586069; font-size: 12px;"><strong>VM RAM:</strong> <%= link.vmRam %></div>
+              <% } %>
               <div style="color: #586069; font-size: 12px;">Created: <%= new Date(link.createdAt).toLocaleString() %></div>
             </div>
           <% }); %>
@@ -122,13 +134,19 @@
           </div>
           <div class="form-group">
             <label for="editBuilderType">Builder Type</label>
-            <select id="editBuilderType">
+            <select id="editBuilderType" onchange="toggleVmRam('editVmRamGroup', this.value)">
               <option value="generic">Generic Cluster</option>
               <option value="docker-cloud">🐳 Docker Cloud Builder</option>
               <option value="kubernetes">☸️ Kubernetes</option>
               <option value="openshift">OpenShift</option>
               <option value="watsonx">🤖 Watson X Orchestrator</option>
+              <option value="tensorflow">🧠 TensorFlow Container</option>
             </select>
+          </div>
+          <div class="form-group" id="editVmRamGroup" style="display:none;">
+            <label for="editVmRam">VM RAM Allocation</label>
+            <input type="text" id="editVmRam" placeholder="e.g., 8GB, 16GB, 32GB">
+            <small class="form-help">Amount of VM RAM to allocate for the TensorFlow container cluster</small>
           </div>
           <div class="form-group">
             <label for="editEndpoint">Endpoint URL *</label>
@@ -152,7 +170,8 @@
           name: document.getElementById('name').value,
           builderType: document.getElementById('builderType').value,
           endpoint: document.getElementById('endpoint').value,
-          credentials: document.getElementById('credentials').value
+          credentials: document.getElementById('credentials').value,
+          vmRam: document.getElementById('vmRam').value
         };
         
         try {
@@ -200,12 +219,14 @@
         }
       }
 
-      function editClusterLink(id, name, endpoint, builderType) {
+      function editClusterLink(id, name, endpoint, builderType, vmRam) {
         document.getElementById('editId').value = id;
         document.getElementById('editName').value = name;
         document.getElementById('editEndpoint').value = endpoint;
         document.getElementById('editBuilderType').value = builderType;
         document.getElementById('editCredentials').value = '';
+        document.getElementById('editVmRam').value = vmRam || '';
+        toggleVmRam('editVmRamGroup', builderType);
         document.getElementById('editModal').style.display = 'flex';
       }
 
