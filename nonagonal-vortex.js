@@ -74,6 +74,7 @@ const CARRIER_HZ    = 369;
 const TESLA_INDICES = new Set([2, 5, 8]);   // vertices labelled 3, 6, 9
 const TESLA_BOOST   = 1.369;
 const MAX_CHORD_HOPS = 4;                   // floor(9/2) — max arc hops on nonagon
+const SOLFEGGIO = [174, 285, 396, 417, 432, 528, 639, 741, 852, 963];
 
 // ── Utility: digital root ─────────────────────────────────────────────────────
 function digitalRoot(n) {
@@ -388,7 +389,6 @@ function _geodesicPathToNearest(node) {
 }
 
 /** Nearest Solfeggio frequency to a given Hz value */
-const SOLFEGGIO = [174, 285, 396, 417, 432, 528, 639, 741, 852, 963];
 function _nearestSolfeggio(hz) {
   let best = SOLFEGGIO[0]; let bestD = Infinity;
   for (const f of SOLFEGGIO) {

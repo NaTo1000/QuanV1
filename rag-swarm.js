@@ -117,7 +117,8 @@ function flattenCurriculum(raw) {
   if (raw.concepts) {
     Object.entries(raw.concepts).forEach(([key, concept]) => {
       const ddmText = Object.values(concept.ddm || {}).join(' ');
-      const quizText = (concept.quiz || []).map(q => q.question + ' ' + (q.options || []).join(' ')).join(' ');
+      const quizArr  = Array.isArray(concept.quiz) ? concept.quiz : Object.values(concept.quiz || {});
+      const quizText = quizArr.map(q => (q.question || '') + ' ' + (q.options || []).join(' ')).join(' ');
       docs.push({
         id: `concept_${key}`,
         text: `${key} ${concept.title || ''} ${concept.classical_analogy || ''} ${ddmText} ${quizText}`,

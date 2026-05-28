@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Pipeline — QuanV1</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/pages.css">
+  <style>
+    :root { --bg:#0a0a1a; --panel:#111128; --border:#2a2a4a; --text:#e2e8f0; --accent:#7c3aed; }
+    body { background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; margin:0; }
+    .pipeline-layout { max-width:1400px; margin:0 auto; padding:24px 20px; }
+    /* Backend grid */
+    .backend-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; margin-bottom:32px; }
+    .backend-card { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; transition:border-color .2s; }
+    .backend-card:hover { border-color:var(--accent); }
+    .backend-card.selected { border-color:var(--accent); background:#1a1040; }
+    .backend-name { font-weight:700; font-size:14px; margin-bottom:4px; }
+    .backend-provider { font-size:11px; opacity:.5; margin-bottom:8px; }
+    .backend-badges { display:flex; gap:4px; flex-wrap:wrap; }
+    .badge { padding:2px 7px; border-radius:4px; font-size:10px; }
+    .badge-sim  { background:#1e3a5f; color:#60a5fa; }
+    .badge-real { background:#1a3a2a; color:#34d399; }
+    .badge-gpu  { background:#3b1f6b; color:#c4b5fd; }
+    .badge-cloud{ background:#3b2a08; color:#fbbf24; }
+    .backend-metric { font-size:11px; opacity:.6; margin-top:6px; }
+    .backend-select-btn { margin-top:10px; width:100%; padding:7px; background:transparent; border:1px solid var(--border); color:var(--text); border-radius:6px; cursor:pointer; font-size:11px; transition:all .2s; }
+    .backend-select-btn:hover { background:var(--accent); border-color:var(--accent); }
+    /* Pipeline builder */
+    .pipeline-builder { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:22px; margin-bottom:28px; }
+    .pipeline-builder h3 { margin:0 0 16px; }
+    .pipe-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+    .pipe-block { background:#1a1040; border:1px solid var(--accent); border-radius:8px; padding:10px 16px; font-size:12px; min-width:120px; text-align:center; position:relative; cursor:grab; }
+    .pipe-arrow { color:#6d28d9; font-size:20px; }
+    .pipe-label { font-size:10px; opacity:.5; position:absolute; top:-14px; left:50%; transform:translateX(-50%); white-space:nowrap; }
+    /* Route recommender */
+    .recommender { background:#0d0d22; border:1px solid var(--border); border-radius:10px; padding:18px; margin-bottom:28px; }
+    .recommender h3 { margin:0 0 14px; }
+    .form-row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+    .form-row select, .form-row input { padding:9px 12px; background:#111128; border:1px solid var(--border); color:var(--text); border-radius:6px; font-size:13px; flex:1; min-width:140px; }
+    .rec-result { background:#111128; border-radius:8px; padding:14px; font-size:13px; min-height:50px; }
+    .rec-result .rec-name { font-weight:700; font-size:16px; color:#a78bfa; }
+    .rec-result .rec-reason { opacity:.6; margin-top:4px; }
+    /* Template selector */
+    .template-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; margin-bottom:28px; }
+    .template-card { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; cursor:pointer; transition:all .2s; }
+    .template-card:hover, .template-card.active { border-color:#10b981; background:#0d2018; }
+    .template-card h4 { margin:0 0 8px; color:#34d399; }
+    .template-card p  { font-size:12px; opacity:.6; margin:0; }
+    /* Template detail */
+    .template-detail { background:var(--panel); border:1px solid #10b981; border-radius:12px; padding:22px; margin-bottom:28px; display:none; }
+    .template-detail.show { display:block; }
+    .template-detail pre { background:#0a0a1a; border-radius:6px; padding:14px; font-size:11px; overflow-x:auto; color:#86efac; }
+  </style>
+</head>
+<body>
+<nav class="main-nav">
+  <div class="nav-container">
+    <h1 class="nav-title">QuanV1</h1>
+    <ul class="nav-menu">
+      <li><a href="/" class="nav-link">🏠 Home</a></li>
+      <li><a href="/cluster-config" class="nav-link">⚙️ Clusters</a></li>
+      <li><a href="/quantum-school" class="nav-link">🎓 School</a></li>
+      <li><a href="/quantum-analyzer" class="nav-link">🔬 Analyzer</a></li>
+      <li><a href="/quantum-pipeline" class="nav-link active">🔗 Pipeline</a></li>
+      <li><a href="/quantum-rag-vault" class="nav-link">🔐 Vault</a></li>
+      <li><a href="/quantum-vortex" class="nav-link">🌀 Vortex</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="pipeline-layout">
+  <h2 style="margin-bottom:4px;">🔗 Multi-Backend Quantum Pipeline Orchestrator</h2>
+  <p style="opacity:.5; font-size:13px; margin-bottom:28px;">13 backends · parallel &amp; series routing · best-backend recommender · Q-CTRL fire opal · AWS Braket · IBM · IonQ · Rigetti · PennyLane</p>
+
+  <!-- Best-backend recommender -->
+  <div class="recommender">
+    <h3>🧭 Best-Backend Recommender</h3>
+    <div class="form-row">
+      <select id="alg-select">
+        <option value="">— algorithm type —</option>
+        <option value="vqe">VQE (Variational Quantum Eigensolver)</option>
+        <option value="qaoa">QAOA (Optimization)</option>
+        <option value="grover">Grover Search</option>
+        <option value="qft">Quantum Fourier Transform</option>
+        <option value="shor">Shor Factoring</option>
+        <option value="error_suppression">Error Suppression</option>
+        <option value="simulation">State Vector Simulation</option>
+        <option value="benchmark">Benchmarking</option>
+      </select>
+      <input type="number" id="qubit-count" placeholder="Qubit count (e.g. 8)" min="1" max="1000">
+      <select id="budget-select">
+        <option value="free">Free / local</option>
+        <option value="cloud">Cloud pay-per-use</option>
+        <option value="premium">Premium QPU</option>
+      </select>
+      <button onclick="getRecommendation()" style="padding:9px 20px; background:var(--accent); border:none; color:#fff; border-radius:6px; cursor:pointer; font-size:13px; font-weight:700;">⚡ Recommend</button>
+    </div>
+    <div class="rec-result" id="rec-result">
+      <span style="opacity:.4;">Fill out the form and click Recommend.</span>
+    </div>
+  </div>
+
+  <!-- Pipeline templates -->
+  <h3 style="margin-bottom:12px;">📋 Pipeline Templates</h3>
+  <div class="template-grid" id="template-grid"></div>
+  <div class="template-detail" id="template-detail"></div>
+
+  <!-- Visual pipeline builder -->
+  <div class="pipeline-builder">
+    <h3>🏗️ Visual Pipeline Builder</h3>
+    <p style="font-size:12px; opacity:.5; margin:0 0 16px;">Selected backends appear here. Toggle parallel / series.</p>
+    <div style="display:flex; gap:10px; margin-bottom:14px;">
+      <button onclick="setPipeMode('parallel')" id="btn-par" style="padding:8px 16px; border-radius:6px; border:1px solid var(--border); background:var(--accent); color:#fff; cursor:pointer; font-size:12px;">⟰ Parallel</button>
+      <button onclick="setPipeMode('series')"   id="btn-ser" style="padding:8px 16px; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--text); cursor:pointer; font-size:12px;">→ Series</button>
+      <button onclick="clearPipeline()"         style="padding:8px 16px; border-radius:6px; border:1px solid #ef4444; background:transparent; color:#f87171; cursor:pointer; font-size:12px;">✕ Clear</button>
+    </div>
+    <div class="pipe-row" id="pipe-row">
+      <span style="opacity:.3; font-size:12px;">Add backends from the grid below.</span>
+    </div>
+    <div id="pipe-mode-label" style="font-size:11px; opacity:.5; margin-top:8px;"></div>
+  </div>
+
+  <!-- Backend cards -->
+  <h3 style="margin-bottom:14px;">🖥️ Backend Registry</h3>
+  <div class="backend-grid" id="backend-grid"></div>
+</div>
+
+<script>
+let backendsData = {};
+let templatesData = {};
+let pipeMode = 'parallel';
+let selectedBackends = [];
+
+async function init() {
+  const [bRes, tRes] = await Promise.all([
+    fetch('/api/quantum/backends').then(r => r.json()),
+    fetch('/api/pipeline/templates').then(r => r.json()),
+  ]);
+  backendsData  = bRes.backends || bRes || {};
+  templatesData = tRes || {};
+  renderBackends();
+  renderTemplates();
+}
+
+function renderBackends() {
+  const grid = document.getElementById('backend-grid');
+  grid.innerHTML = '';
+  Object.entries(backendsData).forEach(([id, b]) => {
+    const card = document.createElement('div');
+    card.className = 'backend-card';
+    card.id = 'bc-' + id;
+    const isReal = b.type === 'real_hardware' || b.type === 'quantum_hardware';
+    const isGPU  = (b.name||'').toLowerCase().includes('gpu') || (b.acceleration||'') === 'gpu';
+    const badges = [
+      isReal ? `<span class="badge badge-real">REAL QPU</span>` : `<span class="badge badge-sim">SIMULATOR</span>`,
+      isGPU  ? `<span class="badge badge-gpu">GPU</span>` : '',
+      b.provider ? `<span class="badge badge-cloud">${b.provider}</span>` : '',
+    ].filter(Boolean).join('');
+
+    const qubits  = b.qubit_count || b.qubits || '—';
+    const fid     = b.two_qubit_gate_fidelity ? (b.two_qubit_gate_fidelity*100).toFixed(2)+'%' : '—';
+    const t2      = b.T2_us ? b.T2_us+'µs' : (b.T2_ms ? b.T2_ms+'ms' : '—');
+
+    card.innerHTML = `
+      <div class="backend-name">${b.name || id}</div>
+      <div class="backend-provider">${b.provider || b.type || ''}</div>
+      <div class="backend-badges">${badges}</div>
+      <div class="backend-metric">Qubits: <b>${qubits}</b> · Fidelity: <b>${fid}</b></div>
+      <div class="backend-metric">T₂: <b>${t2}</b></div>
+      <button class="backend-select-btn" onclick="toggleBackend('${id}', this)">+ Add to Pipeline</button>`;
+    grid.appendChild(card);
+  });
+}
+
+function toggleBackend(id, btn) {
+  const idx = selectedBackends.indexOf(id);
+  if (idx >= 0) {
+    selectedBackends.splice(idx, 1);
+    document.getElementById('bc-' + id)?.classList.remove('selected');
+    btn.textContent = '+ Add to Pipeline';
+  } else {
+    selectedBackends.push(id);
+    document.getElementById('bc-' + id)?.classList.add('selected');
+    btn.textContent = '✓ In Pipeline';
+  }
+  renderPipeRow();
+}
+
+function renderPipeRow() {
+  const row = document.getElementById('pipe-row');
+  if (!selectedBackends.length) {
+    row.innerHTML = '<span style="opacity:.3; font-size:12px;">Add backends from the grid below.</span>';
+    document.getElementById('pipe-mode-label').textContent = '';
+    return;
+  }
+  const sep = pipeMode === 'parallel' ? `<span class="pipe-arrow">⟰</span>` : `<span class="pipe-arrow">→</span>`;
+  row.innerHTML = selectedBackends.map((id, i) => {
+    const b = backendsData[id] || {};
+    return `${i > 0 ? sep : ''}<div class="pipe-block">${(b.name||id).slice(0,18)}</div>`;
+  }).join('');
+  const modeText = pipeMode === 'parallel'
+    ? `Parallel execution — all ${selectedBackends.length} backends run simultaneously; outcomes merged`
+    : `Series execution — output of each backend feeds the next`;
+  document.getElementById('pipe-mode-label').textContent = modeText;
+}
+
+function setPipeMode(m) {
+  pipeMode = m;
+  document.getElementById('btn-par').style.background = m === 'parallel' ? 'var(--accent)' : 'transparent';
+  document.getElementById('btn-ser').style.background = m === 'series'   ? 'var(--accent)' : 'transparent';
+  document.getElementById('btn-par').style.color = '#fff';
+  document.getElementById('btn-ser').style.color = '#fff';
+  renderPipeRow();
+}
+
+function clearPipeline() {
+  selectedBackends = [];
+  document.querySelectorAll('.backend-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.backend-select-btn').forEach(b => b.textContent = '+ Add to Pipeline');
+  renderPipeRow();
+}
+
+function renderTemplates() {
+  const grid = document.getElementById('template-grid');
+  grid.innerHTML = '';
+  Object.entries(templatesData).forEach(([id, t]) => {
+    const card = document.createElement('div');
+    card.className = 'template-card';
+    card.innerHTML = `<h4>${t.name || id}</h4><p>${t.description || t.use_case || ''}</p>`;
+    card.onclick = () => selectTemplate(id, t, card);
+    grid.appendChild(card);
+  });
+}
+
+function selectTemplate(id, t, card) {
+  document.querySelectorAll('.template-card').forEach(c => c.classList.remove('active'));
+  card.classList.add('active');
+  const det = document.getElementById('template-detail');
+  det.classList.add('show');
+  det.innerHTML = `
+    <h3 style="margin:0 0 12px; color:#34d399;">📋 ${t.name || id}</h3>
+    <p style="margin:0 0 14px; opacity:.7;">${t.description || ''}</p>
+    <pre>${JSON.stringify(t, null, 2).slice(0, 2000)}</pre>`;
+}
+
+async function getRecommendation() {
+  const alg     = document.getElementById('alg-select').value;
+  const qubits  = parseInt(document.getElementById('qubit-count').value) || 0;
+  const budget  = document.getElementById('budget-select').value;
+  const el      = document.getElementById('rec-result');
+  el.innerHTML  = '<span style="opacity:.5;">Computing…</span>';
+
+  try {
+    const res = await fetch('/api/pipeline/route', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ algorithm: alg, qubitCount: qubits, budget }),
+    }).then(r => r.json());
+
+    const rec = res.recommended;
+    const bid = rec?.recommend || rec?.backend_id || '—';
+    const b   = backendsData[bid] || {};
+    el.innerHTML = `
+      <div class="rec-name">✅ ${b.name || bid}</div>
+      <div class="rec-reason">${rec?.reason || ''}</div>
+      <div style="font-size:11px; opacity:.5; margin-top:8px;">${res.allMatches?.length || 0} routing rules matched · ${res.availableBackends?.length || 0} backends available</div>`;
+  } catch(e) {
+    el.innerHTML = `<span style="color:#f87171;">Error: ${e.message}</span>`;
+  }
+}
+
+init();
+</script>
+</body>
+</html>

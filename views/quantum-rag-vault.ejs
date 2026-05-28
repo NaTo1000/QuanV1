@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Vault — QuanV1</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/pages.css">
+  <style>
+    :root { --bg:#0a0a1a; --panel:#111128; --border:#2a2a4a; --text:#e2e8f0; --accent:#7c3aed; }
+    body { background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; margin:0; }
+    .vault-layout { max-width:1400px; margin:0 auto; padding:24px 20px; }
+    /* Vault cards */
+    .vault-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; margin-bottom:32px; }
+    .vault-card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:20px; }
+    .vault-card.valid   { border-color:#10b981; }
+    .vault-card.invalid { border-color:#ef4444; }
+    .vault-loc  { font-size:11px; letter-spacing:.1em; text-transform:uppercase; opacity:.5; margin-bottom:6px; }
+    .vault-name { font-weight:700; font-size:16px; margin-bottom:10px; }
+    .vault-hash { font-family:'Courier New',monospace; font-size:10px; opacity:.5; word-break:break-all; margin-bottom:8px; }
+    .vault-stats { display:flex; gap:16px; font-size:12px; opacity:.7; margin-bottom:12px; }
+    .vault-status { display:inline-block; padding:3px 10px; border-radius:4px; font-size:11px; font-weight:700; }
+    .vault-status.ok  { background:#064e3b44; color:#34d399; }
+    .vault-status.err { background:#7f1d1d44; color:#f87171; }
+    .verify-btn { padding:8px 16px; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--text); cursor:pointer; font-size:12px; transition:all .2s; width:100%; }
+    .verify-btn:hover { background:#10b981; border-color:#10b981; color:#fff; }
+    /* Write form */
+    .write-panel { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:22px; margin-bottom:28px; }
+    .write-panel h3 { margin:0 0 14px; }
+    .write-row { display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+    .write-row input, .write-row select, .write-row textarea {
+      flex:1; min-width:200px; padding:10px; background:#0d0d22; border:1px solid var(--border);
+      color:var(--text); border-radius:6px; font-size:13px; font-family:inherit;
+    }
+    .write-row textarea { min-height:80px; resize:vertical; }
+    /* RAG bots */
+    .rag-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; margin-bottom:28px; }
+    .rag-card { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; }
+    .rag-card h4 { margin:0 0 8px; color:#a78bfa; }
+    .rag-stat { font-size:11px; opacity:.6; margin-bottom:4px; }
+    .rag-badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:10px; background:#2a2a4a; }
+    /* Query panel */
+    .query-panel { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:22px; margin-bottom:28px; }
+    .query-panel h3 { margin:0 0 14px; }
+    .query-input-row { display:flex; gap:10px; margin-bottom:14px; }
+    .query-input-row input { flex:1; padding:10px; background:#0d0d22; border:1px solid var(--border); color:var(--text); border-radius:6px; font-size:13px; }
+    /* Results */
+    .result-list { display:flex; flex-direction:column; gap:8px; }
+    .result-item { background:#0d0d22; border:1px solid var(--border); border-radius:8px; padding:12px; }
+    .result-item .result-id    { font-size:10px; opacity:.5; font-family:'Courier New',monospace; }
+    .result-item .result-score { font-weight:700; color:#a78bfa; float:right; }
+    .result-item .result-text  { font-size:12px; margin-top:6px; opacity:.8; }
+    .result-item .result-bot   { font-size:10px; color:#22d3ee; margin-top:4px; }
+    /* Blockchain log */
+    .chain-log { background:#0a0a1a; border:1px solid var(--border); border-radius:8px; padding:14px; max-height:280px; overflow-y:auto; font-family:'Courier New',monospace; font-size:10px; margin-top:14px; }
+    .chain-block { padding:4px 0; border-bottom:1px solid #1a1a2e; }
+    .chain-block .blk-idx  { color:#a78bfa; }
+    .chain-block .blk-hash { color:#22d3ee; }
+    .chain-block .blk-data { color:#86efac; }
+  </style>
+</head>
+<body>
+<nav class="main-nav">
+  <div class="nav-container">
+    <h1 class="nav-title">QuanV1</h1>
+    <ul class="nav-menu">
+      <li><a href="/" class="nav-link">🏠 Home</a></li>
+      <li><a href="/cluster-config" class="nav-link">⚙️ Clusters</a></li>
+      <li><a href="/quantum-school" class="nav-link">🎓 School</a></li>
+      <li><a href="/quantum-analyzer" class="nav-link">🔬 Analyzer</a></li>
+      <li><a href="/quantum-pipeline" class="nav-link">🔗 Pipeline</a></li>
+      <li><a href="/quantum-rag-vault" class="nav-link active">🔐 Vault</a></li>
+      <li><a href="/quantum-vortex" class="nav-link">🌀 Vortex</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="vault-layout">
+  <h2 style="margin-bottom:4px;">🔐 Quad Blockchain Vault + Tri-RAG Swarm</h2>
+  <p style="opacity:.5; font-size:13px; margin-bottom:24px;">
+    4 immutable geo-vaults (SHA-256 proof-of-work) · 3 BM25 RAGbot specialists · append-only audit trail
+  </p>
+
+  <!-- Vault status cards -->
+  <h3 style="margin-bottom:12px;">🔒 Vault Status</h3>
+  <div class="vault-grid" id="vault-grid">
+    <div style="opacity:.4; font-size:13px;">Loading vaults…</div>
+  </div>
+
+  <!-- Verify all -->
+  <div style="margin-bottom:28px; display:flex; gap:12px; flex-wrap:wrap;">
+    <button onclick="verifyAll()" style="padding:10px 24px; background:#10b981; border:none; color:#fff; border-radius:8px; cursor:pointer; font-size:13px; font-weight:700;">🔎 Verify All Chains</button>
+    <button onclick="refreshVaults()" style="padding:10px 24px; background:transparent; border:1px solid var(--border); color:var(--text); border-radius:8px; cursor:pointer; font-size:13px;">↻ Refresh</button>
+    <span id="verify-result" style="line-height:40px; font-size:13px;"></span>
+  </div>
+
+  <!-- Write to vault -->
+  <div class="write-panel">
+    <h3>📝 Write Immutable Record</h3>
+    <div class="write-row">
+      <select id="write-type">
+        <option value="RECORD">RECORD</option>
+        <option value="EXPERIMENT">EXPERIMENT</option>
+        <option value="QUERY">QUERY</option>
+        <option value="CALIBRATION">CALIBRATION</option>
+        <option value="RESULT">RESULT</option>
+      </select>
+    </div>
+    <div class="write-row">
+      <textarea id="write-data" placeholder='JSON or text data to store immutably, e.g. {"experiment":"VQE","fidelity":0.98}'></textarea>
+    </div>
+    <button onclick="writeToVault()" style="padding:10px 24px; background:var(--accent); border:none; color:#fff; border-radius:8px; cursor:pointer; font-size:13px; font-weight:700;">⛏ Mine &amp; Write to All 4 Vaults</button>
+    <div id="write-result" style="margin-top:12px; font-size:12px;"></div>
+  </div>
+
+  <!-- Blockchain log -->
+  <div class="write-panel" style="margin-bottom:28px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="margin:0;">⛓ Chain Log</h3>
+      <select id="chain-vault-select" onchange="loadChainLog(this.value)" style="padding:6px 12px; background:#0d0d22; border:1px solid var(--border); color:var(--text); border-radius:6px; font-size:12px;">
+        <option value="NA-EAST">NA-EAST</option>
+        <option value="EU-WEST">EU-WEST</option>
+        <option value="APAC">APAC</option>
+        <option value="NA-WEST">NA-WEST</option>
+      </select>
+    </div>
+    <div class="chain-log" id="chain-log">Loading…</div>
+  </div>
+
+  <!-- RAG bot status -->
+  <h3 style="margin-bottom:12px;">🤖 RAGbot Swarm Status</h3>
+  <div class="rag-grid" id="rag-grid">
+    <div style="opacity:.4; font-size:13px;">Loading bots…</div>
+  </div>
+
+  <!-- RAG query -->
+  <div class="query-panel">
+    <h3>🔍 Tri-RAG Query</h3>
+    <div class="query-input-row">
+      <input type="text" id="rag-query-input" placeholder="Query all 3 RAGbots e.g. 'Hadamard gate noise suppression GRAPE'" />
+      <select id="rag-topk" style="padding:10px; background:#0d0d22; border:1px solid var(--border); color:var(--text); border-radius:6px; font-size:13px;">
+        <option value="3">Top 3</option>
+        <option value="5" selected>Top 5</option>
+        <option value="10">Top 10</option>
+      </select>
+      <button onclick="runRAGQuery()" style="padding:10px 22px; background:var(--accent); border:none; color:#fff; border-radius:8px; cursor:pointer; font-size:13px; font-weight:700;">⚡ Query</button>
+    </div>
+    <div class="result-list" id="rag-results">
+      <div style="opacity:.4; font-size:13px; text-align:center; padding:20px;">Enter a query above.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+async function init() {
+  await Promise.all([refreshVaults(), refreshRAGStatus(), loadChainLog('NA-EAST')]);
+}
+
+// ── Vaults ────────────────────────────────────────────────────────────────────
+async function refreshVaults() {
+  const summary = await fetch('/api/vault/summary').then(r => r.json()).catch(() => ({}));
+  const grid = document.getElementById('vault-grid');
+  const vaults = summary.vaults || [];
+  if (!vaults.length) {
+    grid.innerHTML = '<div style="opacity:.4; font-size:13px;">No vault data yet — write a record to initialise.</div>';
+    return;
+  }
+  grid.innerHTML = vaults.map(v => `
+    <div class="vault-card ${v.valid !== false ? 'valid' : 'invalid'}">
+      <div class="vault-loc">${v.location || v.name}</div>
+      <div class="vault-name">🔒 ${v.location || v.name}</div>
+      <div class="vault-stats">
+        <span>Blocks: <b>${v.blockCount || 0}</b></span>
+        <span>Entries: <b>${v.entryCount || 0}</b></span>
+      </div>
+      <div class="vault-hash">Latest: ${v.latestHash || 'genesis'}</div>
+      <span class="vault-status ${v.valid !== false ? 'ok' : 'err'}">${v.valid !== false ? '✓ VALID' : '✗ TAMPERED'}</span>
+    </div>`).join('');
+}
+
+async function verifyAll() {
+  const res  = await fetch('/api/vault/verify').then(r => r.json()).catch(e => ({ error: e.message }));
+  const el   = document.getElementById('verify-result');
+  const all  = res.results || [];
+  const valid = all.filter(r => r.valid !== false).length;
+  el.style.color = valid === all.length ? '#34d399' : '#f87171';
+  el.textContent = res.error
+    ? '❌ ' + res.error
+    : `${valid === all.length ? '✅' : '⚠️'} ${valid}/${all.length} vaults verified`;
+}
+
+async function writeToVault() {
+  const type     = document.getElementById('write-type').value;
+  const rawData  = document.getElementById('write-data').value.trim();
+  const resultEl = document.getElementById('write-result');
+  if (!rawData) { resultEl.textContent = '⚠ Enter data to write.'; return; }
+  resultEl.textContent = '⛏ Mining proof-of-work…';
+  let data;
+  try { data = JSON.parse(rawData); } catch { data = rawData; }
+  try {
+    const res = await fetch('/api/vault/write', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ data, type }),
+    }).then(r => r.json());
+    resultEl.style.color = '#34d399';
+    resultEl.textContent = `✅ Written to ${res.written?.length || 4} vaults. Block hashes: ${(res.written||[]).map(w => w.hash?.slice(0,12)||'ok').join(', ')}`;
+    refreshVaults();
+    loadChainLog(document.getElementById('chain-vault-select').value);
+  } catch(e) {
+    resultEl.style.color = '#f87171';
+    resultEl.textContent = '❌ ' + e.message;
+  }
+}
+
+async function loadChainLog(location) {
+  const el = document.getElementById('chain-log');
+  el.textContent = 'Loading…';
+  try {
+    const chain = await fetch(`/api/vault/chain/${location}`).then(r => r.json());
+    const blocks = Array.isArray(chain) ? chain : chain.chain || [];
+    if (!blocks.length) { el.textContent = 'No blocks yet.'; return; }
+    el.innerHTML = blocks.slice().reverse().map(b => `
+      <div class="chain-block">
+        <span class="blk-idx">#${b.index}</span>
+        <span class="blk-hash"> ${b.hash?.slice(0,24)}…</span>
+        <span class="blk-data"> ${typeof b.data === 'object' ? JSON.stringify(b.data).slice(0,80) : String(b.data||'').slice(0,80)}</span>
+        <span style="opacity:.3;"> ${new Date(b.timestamp||0).toLocaleTimeString()}</span>
+      </div>`).join('');
+  } catch(e) {
+    el.textContent = 'Error: ' + e.message;
+  }
+}
+
+// ── RAG ───────────────────────────────────────────────────────────────────────
+async function refreshRAGStatus() {
+  const status = await fetch('/api/rag/status').then(r => r.json()).catch(() => ({}));
+  const grid = document.getElementById('rag-grid');
+  const bots = status.bots || [];
+  if (!bots.length) {
+    grid.innerHTML = '<div style="opacity:.4; font-size:13px;">RAG swarm initialising…</div>';
+    return;
+  }
+  grid.innerHTML = bots.map(b => `
+    <div class="rag-card">
+      <h4>🤖 ${b.name || b.id}</h4>
+      <div class="rag-stat">Corpus: <b>${b.documentCount || 0}</b> documents</div>
+      <div class="rag-stat">Queries: <b>${b.queryCount || 0}</b> total</div>
+      <div class="rag-stat">Last: <span style="opacity:.5;">${b.lastQuery || 'none'}</span></div>
+      <div style="margin-top:8px;">
+        <span class="rag-badge">${b.specialisation || b.type || 'general'}</span>
+        <span class="rag-badge" style="margin-left:4px; color:#34d399;">${b.ready ? '● ready' : '○ indexing'}</span>
+      </div>
+    </div>`).join('');
+}
+
+async function runRAGQuery() {
+  const q    = document.getElementById('rag-query-input').value.trim();
+  const topK = parseInt(document.getElementById('rag-topk').value) || 5;
+  if (!q) return;
+  const el = document.getElementById('rag-results');
+  el.innerHTML = '<div style="opacity:.4; text-align:center; padding:20px;">Querying 3 bots in parallel…</div>';
+  try {
+    const res = await fetch('/api/rag/query', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ query: q, topK }),
+    }).then(r => r.json());
+    const results = res.results || res.merged || [];
+    if (!results.length) {
+      el.innerHTML = '<div style="opacity:.4; text-align:center; padding:20px;">No results found.</div>';
+      return;
+    }
+    el.innerHTML = results.map((r, i) => `
+      <div class="result-item">
+        <div>
+          <span class="result-id">${r.id || r.docId || '?'}</span>
+          <span class="result-score">${(r.score || r.normalizedScore || 0).toFixed(4)}</span>
+        </div>
+        <div class="result-text">${(r.text || r.snippet || '').slice(0, 200)}</div>
+        <div class="result-bot">via ${r.bot || r.source || 'swarm'}</div>
+      </div>`).join('');
+    refreshRAGStatus();
+  } catch(e) {
+    el.innerHTML = `<div style="color:#f87171; text-align:center; padding:20px;">Error: ${e.message}</div>`;
+  }
+}
+
+document.getElementById('rag-query-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') runRAGQuery();
+});
+
+init();
+</script>
+</body>
+</html>
