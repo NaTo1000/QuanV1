@@ -199,7 +199,7 @@
               <span class="nbadge nbadge-<%= n.status %>"><%= n.status.toUpperCase() %></span>
             </div>
             <div class="node-queue">VRAM: <%= n.totalVramGB %>GB &nbsp;|&nbsp; Queue: <%= n.queueDepth %></div>
-            <button class="node-del" onclick="deleteNode('<%= n.id %>')">Remove</button>
+            <button class="node-del js-delete-node" data-node-id="<%= n.id %>">Remove</button>
           </div>
         <% }) %>
       </div>
@@ -312,6 +312,13 @@
       t.style.display = 'block';
       setTimeout(() => { t.style.display = 'none'; }, 4000);
     }
+
+    // Event delegation for node removal buttons
+    document.getElementById('nodeGrid').addEventListener('click', async (e) => {
+      const btn = e.target.closest('.js-delete-node');
+      if (!btn) return;
+      await deleteNode(btn.dataset.nodeId);
+    });
 
     async function registerNode() {
       const body = {

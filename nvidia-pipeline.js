@@ -24,7 +24,7 @@ const LB_STRATEGIES = {
   round_robin:   'Round Robin — distribute requests sequentially across nodes',
   least_loaded:  'Least Loaded — route to the node with lowest current batch queue',
   vram_weighted: 'VRAM-Weighted — route proportionally by available GPU VRAM',
-  latency_aware: 'Latency Aware — route to the node with lowest recent p95 latency',
+  latency_aware: 'Latency Aware — route to the node with lowest recent latency',
 };
 
 // ─── Pipeline state (in-memory, per-process) ─────────────────────────────────
@@ -36,6 +36,7 @@ let   _lbIdx   = 0;           // round-robin cursor
 
 /**
  * Parse a VM-RAM string like "16GB" → number of GB (16).
+ * When no unit is provided the value is treated as GB by default.
  * Returns null if unparseable.
  */
 function parseVmRamGB(vmRamStr) {
@@ -98,7 +99,7 @@ function registerNode({ name, endpoint, gpuModel, gpuCount = 1, vmRam, precision
     totalVramGB: gpuSpec.vram * gpuCount,
     status:      'idle',
     queueDepth:  0,
-    p95LatencyMs: null,
+    lastLatencyMs: null,
     registeredAt: new Date().toISOString(),
   };
   _nodes.set(nodeId, node);
@@ -147,9 +148,9 @@ function selectNode(strategy = 'round_robin') {
     }
 
     case 'latency_aware': {
-      const withLatency = active.filter(n => n.p95LatencyMs !== null);
+      const withLatency = active.filter(n => n.lastLatencyMs !== null);
       if (withLatency.length === 0) return active[_lbIdx++ % active.length];
-      return withLatency.reduce((best, n) => n.p95LatencyMs < best.p95LatencyMs ? n : best, withLatency[0]);
+      return withLatency.reduce((best, n) => n.lastLatencyMs < best.lastLatencyMs ? n : best, withLatency[0]);
     }
 
     case 'round_robin':
@@ -247,7 +248,7 @@ function completeJob(jobId, success = true, latencyMs = null, errorMsg = null) {
   if (node) {
     node.queueDepth = Math.max(0, node.queueDepth - 1);
     if (node.queueDepth === 0) node.status = 'idle';
-    if (latencyMs !== null) node.p95LatencyMs = latencyMs; // simplified p95 proxy
+    if (latencyMs !== null) node.lastLatencyMs = latencyMs; // most recent completed latency
   }
   return job;
 }
