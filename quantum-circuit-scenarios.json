@@ -1,0 +1,810 @@
+{
+  "version": "1.0.0",
+  "title": "Q-CTRL Quantum Circuit Scenario Library",
+  "description": "Qiskit-semantic circuit definitions with stochastic mesh topology, agentic reasoning traces, and real-world buildable metrics",
+  "hardware_profiles": {
+    "ibm_eagle": {
+      "name": "IBM Eagle (127-qubit)",
+      "topology": "heavy-hex",
+      "single_qubit_gate_fidelity": 0.9995,
+      "two_qubit_gate_fidelity": 0.990,
+      "t1_us": 250,
+      "t2_us": 180,
+      "gate_time_single_ns": 35,
+      "gate_time_cx_ns": 400,
+      "readout_fidelity": 0.977,
+      "connectivity": "heavy-hex (limited, not all-to-all)",
+      "access": "IBM Quantum Network / cloud"
+    },
+    "ibm_heron": {
+      "name": "IBM Heron (133-qubit)",
+      "topology": "heavy-hex",
+      "single_qubit_gate_fidelity": 0.9998,
+      "two_qubit_gate_fidelity": 0.9975,
+      "t1_us": 400,
+      "t2_us": 300,
+      "gate_time_single_ns": 25,
+      "gate_time_cx_ns": 170,
+      "readout_fidelity": 0.990,
+      "connectivity": "heavy-hex (improved coupling)",
+      "access": "IBM Quantum Network"
+    },
+    "ionq_aria": {
+      "name": "IonQ Aria (25 trapped-ion qubits)",
+      "topology": "all-to-all",
+      "single_qubit_gate_fidelity": 0.9997,
+      "two_qubit_gate_fidelity": 0.9980,
+      "t1_us": 100000000,
+      "t2_us": 1000000,
+      "gate_time_single_ns": 10000,
+      "gate_time_cx_ns": 600000,
+      "readout_fidelity": 0.997,
+      "connectivity": "all-to-all (any qubit pair)",
+      "access": "IonQ cloud / AWS Braket"
+    },
+    "google_sycamore": {
+      "name": "Google Sycamore (53-qubit)",
+      "topology": "grid-2d",
+      "single_qubit_gate_fidelity": 0.9993,
+      "two_qubit_gate_fidelity": 0.9942,
+      "t1_us": 180,
+      "t2_us": 120,
+      "gate_time_single_ns": 25,
+      "gate_time_cx_ns": 40,
+      "readout_fidelity": 0.968,
+      "connectivity": "2D grid (nearest-neighbour only)",
+      "access": "Google Cloud / research access"
+    }
+  },
+  "circuits": [
+    {
+      "id": "bell-state",
+      "title": "Bell State Creation",
+      "subtitle": "The simplest entangled quantum system",
+      "complexity": "beginner",
+      "qubits": 2,
+      "depth": 2,
+      "gate_count": { "h": 1, "cx": 1, "measure": 2, "total": 4 },
+      "algorithm_family": "entanglement",
+      "use_cases": ["Quantum key distribution (E91)", "Quantum teleportation", "Superdense coding", "Bell inequality tests"],
+      "qiskit_code": "from qiskit import QuantumCircuit\nqc = QuantumCircuit(2, 2)\nqc.h(0)        # Hadamard on qubit 0\nqc.cx(0, 1)   # CNOT: qubit 0 control, qubit 1 target\nqc.measure([0,1], [0,1])",
+      "qiskit_semantic": {
+        "gates": [
+          { "id": "g0", "name": "h", "qiskit_op": "h", "qubit": 0, "layer": 0, "params": [] },
+          { "id": "g1", "name": "cx", "qiskit_op": "cx", "qubits": [0,1], "layer": 1, "params": [], "control": 0, "target": 1 },
+          { "id": "g2", "name": "measure", "qiskit_op": "measure", "qubit": 0, "layer": 2, "clbit": 0 },
+          { "id": "g3", "name": "measure", "qiskit_op": "measure", "qubit": 1, "layer": 2, "clbit": 1 }
+        ],
+        "initial_state": "|00⟩",
+        "final_state": "(|00⟩ + |11⟩)/√2  [Bell state |Φ+⟩]"
+      },
+      "stochastic_mesh": {
+        "description": "2-qubit mesh: each node is a gate, edges show qubit propagation paths and entanglement links",
+        "nodes": [
+          { "id": "in0", "label": "|0⟩", "qubit": 0, "layer": -1, "type": "init", "state_amplitude": 1.0, "error_rate": 0 },
+          { "id": "in1", "label": "|0⟩", "qubit": 1, "layer": -1, "type": "init", "state_amplitude": 1.0, "error_rate": 0 },
+          { "id": "g0", "label": "H", "qubit": 0, "layer": 0, "type": "single", "state_amplitude": 0.7071, "error_rate": 0.0005, "post_state": "(|0⟩+|1⟩)/√2" },
+          { "id": "g1", "label": "CX", "qubit": 0, "layer": 1, "type": "two_qubit", "state_amplitude": 0.7071, "error_rate": 0.010, "post_state": "(|00⟩+|11⟩)/√2" },
+          { "id": "g1t", "label": "⊕", "qubit": 1, "layer": 1, "type": "target", "state_amplitude": 0.7071, "error_rate": 0, "post_state": "(|00⟩+|11⟩)/√2" },
+          { "id": "m0", "label": "M", "qubit": 0, "layer": 2, "type": "measure", "p0": 0.5, "p1": 0.5 },
+          { "id": "m1", "label": "M", "qubit": 1, "layer": 2, "type": "measure", "p0": 0.5, "p1": 0.5 }
+        ],
+        "edges": [
+          { "from": "in0", "to": "g0", "type": "qubit_wire", "qubit": 0, "transition_prob": 1.0 },
+          { "from": "in1", "to": "g1t", "type": "qubit_wire", "qubit": 1, "transition_prob": 1.0 },
+          { "from": "g0", "to": "g1", "type": "qubit_wire", "qubit": 0, "transition_prob": 0.9995 },
+          { "from": "g1", "to": "g1t", "type": "entanglement", "qubit": "0→1", "transition_prob": 0.990 },
+          { "from": "g1", "to": "m0", "type": "qubit_wire", "qubit": 0, "transition_prob": 0.9995 },
+          { "from": "g1t", "to": "m1", "type": "qubit_wire", "qubit": 1, "transition_prob": 0.9995 }
+        ],
+        "circuit_success_prob_ibm_eagle": 0.9746,
+        "circuit_success_prob_ionq_aria": 0.9962
+      },
+      "real_world_metrics": {
+        "estimated_execution_time_ibm_us": 0.87,
+        "estimated_execution_time_ionq_us": 1210,
+        "min_physical_qubits": 2,
+        "logical_qubits_if_error_corrected": 0,
+        "shots_for_95pct_confidence": 400,
+        "expected_state_fidelity_ibm_eagle": 0.974,
+        "expected_state_fidelity_ionq_aria": 0.996,
+        "classical_compute_equivalent": "2 boolean operations",
+        "quantum_advantage": "No advantage — 2-qubit circuits are trivially simulable classically. Educational use only."
+      },
+      "agentic_reasoning": [
+        {
+          "step": 1,
+          "gate": "INIT",
+          "title": "System Initialization",
+          "qiskit_line": "qc = QuantumCircuit(2, 2)",
+          "technical": "Both qubits initialized to |0⟩ ground state. Register state: |ψ₀⟩ = |00⟩. Classical registers c[0]=c[1]=0.",
+          "layman": "We start with two coins both showing heads (0). The quantum computer resets everything to a clean, known starting point before we do anything.",
+          "math_state": "|ψ⟩ = |00⟩",
+          "error_introduced": 0
+        },
+        {
+          "step": 2,
+          "gate": "H(q0)",
+          "title": "Superposition on Qubit 0",
+          "qiskit_line": "qc.h(0)",
+          "technical": "Hadamard gate applied to qubit 0: |0⟩ → (|0⟩+|1⟩)/√2. Qubit 1 unchanged. System state: (|0⟩+|1⟩)/√2 ⊗ |0⟩ = (|00⟩+|10⟩)/√2.",
+          "layman": "We spin coin 0 so it's perfectly balanced — 50% heads, 50% tails simultaneously. Coin 1 still shows heads. The coins are independent at this point.",
+          "math_state": "|ψ⟩ = (|00⟩ + |10⟩)/√2",
+          "error_introduced": 0.0005,
+          "cumulative_fidelity_ibm": 0.9995
+        },
+        {
+          "step": 3,
+          "gate": "CX(q0,q1)",
+          "title": "Entanglement via CNOT",
+          "qiskit_line": "qc.cx(0, 1)",
+          "technical": "CNOT gate: if qubit 0 = |1⟩, flip qubit 1. Since q0 is in superposition, BOTH branches execute: |00⟩→|00⟩, |10⟩→|11⟩. Result: (|00⟩+|11⟩)/√2 — a Bell state.",
+          "layman": "This is the magic step. We link the two coins: 'whenever coin 0 is tails (1), automatically flip coin 1.' Since coin 0 is spinning (superposition), the link creates entanglement — the coins are now BOTH spinning together as one unit. They will always land matching.",
+          "math_state": "|ψ⟩ = (|00⟩ + |11⟩)/√2  ← Bell state |Φ+⟩",
+          "error_introduced": 0.010,
+          "cumulative_fidelity_ibm": 0.9895,
+          "entanglement_entropy_ebits": 1.0
+        },
+        {
+          "step": 4,
+          "gate": "MEASURE",
+          "title": "Measurement & Collapse",
+          "qiskit_line": "qc.measure([0,1], [0,1])",
+          "technical": "Projective measurement in computational basis. Born rule: P(00)=0.5, P(01)=0, P(10)=0, P(11)=0.5. Measurement collapses the Bell state. Outcomes are perfectly correlated.",
+          "layman": "The coins land. Whenever they land, they ALWAYS match: both heads (00) or both tails (11). You will NEVER see one heads and one tails. This is quantum entanglement in action — the coins 'know' each other's result instantly.",
+          "math_state": "Outcome 00 or 11, each with P=0.5. Never 01 or 10.",
+          "error_introduced": 0.023,
+          "cumulative_fidelity_ibm": 0.9746
+        }
+      ],
+      "ddm_summary": {
+        "level_1": "Two perfectly correlated quantum coins that always land the same way.",
+        "level_2": "A Hadamard gate creates superposition; a CNOT gate links the qubits into an entangled state where measurement outcomes are always correlated.",
+        "level_3": "Bell state |Φ+⟩ = (|00⟩+|11⟩)/√2 — maximally entangled, violates CHSH inequality, cannot be described by classical correlations.",
+        "level_4": "State preparation: H⊗I followed by CNOT. Entanglement entropy S = 1 ebit. Density matrix: ρ = |Φ+⟩⟨Φ+|."
+      }
+    },
+    {
+      "id": "quantum-teleportation",
+      "title": "Quantum Teleportation",
+      "subtitle": "Transfer a qubit state using entanglement + 2 classical bits",
+      "complexity": "intermediate",
+      "qubits": 3,
+      "depth": 7,
+      "gate_count": { "h": 2, "cx": 2, "cz": 1, "measure": 2, "x": 1, "z": 1, "total": 9 },
+      "algorithm_family": "quantum-communication",
+      "use_cases": ["Quantum networking", "Distributed quantum computing", "Quantum repeaters", "Modular quantum computers"],
+      "qiskit_code": "from qiskit import QuantumCircuit\nqc = QuantumCircuit(3, 2)\n# q0=message qubit (unknown state), q1=Alice's EPR, q2=Bob's EPR\n# Step 1: Create Bell pair between Alice (q1) and Bob (q2)\nqc.h(1)\nqc.cx(1, 2)\n# Step 2: Alice entangles message with her EPR half\nqc.cx(0, 1)\nqc.h(0)\n# Step 3: Alice measures, sends 2 classical bits to Bob\nqc.measure(0, 0)\nqc.measure(1, 1)\n# Step 4: Bob applies corrections based on classical bits\nqc.x(2).c_if(1, 1)   # if c[1]=1, apply X\nqc.z(2).c_if(0, 1)   # if c[0]=1, apply Z",
+      "qiskit_semantic": {
+        "gates": [
+          { "id": "g0", "name": "h", "qiskit_op": "h", "qubit": 1, "layer": 0, "params": [] },
+          { "id": "g1", "name": "cx", "qiskit_op": "cx", "qubits": [1,2], "layer": 1, "params": [], "control": 1, "target": 2 },
+          { "id": "g2", "name": "cx", "qiskit_op": "cx", "qubits": [0,1], "layer": 2, "params": [], "control": 0, "target": 1 },
+          { "id": "g3", "name": "h", "qiskit_op": "h", "qubit": 0, "layer": 3, "params": [] },
+          { "id": "g4", "name": "measure", "qiskit_op": "measure", "qubit": 0, "layer": 4, "clbit": 0 },
+          { "id": "g5", "name": "measure", "qiskit_op": "measure", "qubit": 1, "layer": 4, "clbit": 1 },
+          { "id": "g6", "name": "x", "qiskit_op": "x", "qubit": 2, "layer": 5, "params": [], "classical_condition": {"bit": 1, "val": 1} },
+          { "id": "g7", "name": "z", "qiskit_op": "z", "qubit": 2, "layer": 6, "params": [], "classical_condition": {"bit": 0, "val": 1} }
+        ],
+        "initial_state": "|ψ⟩_q0 ⊗ |0⟩_q1 ⊗ |0⟩_q2",
+        "final_state": "q2 holds original q0 state |ψ⟩ (q0 destroyed)"
+      },
+      "stochastic_mesh": {
+        "description": "3-qubit mesh: q0=message, q1=Alice EPR, q2=Bob EPR. Classical feedback channel shown as dashed edges.",
+        "nodes": [
+          { "id": "in0", "label": "|ψ⟩", "qubit": 0, "layer": -1, "type": "init", "state_amplitude": 1.0, "error_rate": 0 },
+          { "id": "in1", "label": "|0⟩", "qubit": 1, "layer": -1, "type": "init", "state_amplitude": 1.0, "error_rate": 0 },
+          { "id": "in2", "label": "|0⟩", "qubit": 2, "layer": -1, "type": "init", "state_amplitude": 1.0, "error_rate": 0 },
+          { "id": "g0", "label": "H", "qubit": 1, "layer": 0, "type": "single", "error_rate": 0.0005 },
+          { "id": "g1c", "label": "●", "qubit": 1, "layer": 1, "type": "two_qubit", "error_rate": 0.010 },
+          { "id": "g1t", "label": "⊕", "qubit": 2, "layer": 1, "type": "target", "error_rate": 0 },
+          { "id": "g2c", "label": "●", "qubit": 0, "layer": 2, "type": "two_qubit", "error_rate": 0.010 },
+          { "id": "g2t", "label": "⊕", "qubit": 1, "layer": 2, "type": "target", "error_rate": 0 },
+          { "id": "g3", "label": "H", "qubit": 0, "layer": 3, "type": "single", "error_rate": 0.0005 },
+          { "id": "m0", "label": "M", "qubit": 0, "layer": 4, "type": "measure" },
+          { "id": "m1", "label": "M", "qubit": 1, "layer": 4, "type": "measure" },
+          { "id": "g6", "label": "X?", "qubit": 2, "layer": 5, "type": "classically_conditioned", "error_rate": 0.0005 },
+          { "id": "g7", "label": "Z?", "qubit": 2, "layer": 6, "type": "classically_conditioned", "error_rate": 0.0005 },
+          { "id": "out", "label": "|ψ⟩", "qubit": 2, "layer": 7, "type": "output" }
+        ],
+        "edges": [
+          { "from": "in1", "to": "g0", "type": "qubit_wire", "qubit": 1, "transition_prob": 1.0 },
+          { "from": "g0", "to": "g1c", "type": "qubit_wire", "qubit": 1, "transition_prob": 0.9995 },
+          { "from": "in2", "to": "g1t", "type": "qubit_wire", "qubit": 2, "transition_prob": 1.0 },
+          { "from": "g1c", "to": "g1t", "type": "entanglement", "transition_prob": 0.990 },
+          { "from": "in0", "to": "g2c", "type": "qubit_wire", "qubit": 0, "transition_prob": 1.0 },
+          { "from": "g1c", "to": "g2t", "type": "qubit_wire", "qubit": 1, "transition_prob": 0.9895 },
+          { "from": "g2c", "to": "g2t", "type": "entanglement", "transition_prob": 0.990 },
+          { "from": "g2c", "to": "g3", "type": "qubit_wire", "qubit": 0, "transition_prob": 0.9895 },
+          { "from": "g3", "to": "m0", "type": "qubit_wire", "qubit": 0, "transition_prob": 0.9990 },
+          { "from": "g2t", "to": "m1", "type": "qubit_wire", "qubit": 1, "transition_prob": 0.9895 },
+          { "from": "m0", "to": "g7", "type": "classical_feedback", "classical_bit": 0 },
+          { "from": "m1", "to": "g6", "type": "classical_feedback", "classical_bit": 1 },
+          { "from": "g1t", "to": "g6", "type": "qubit_wire", "qubit": 2, "transition_prob": 0.9895 },
+          { "from": "g6", "to": "g7", "type": "qubit_wire", "qubit": 2, "transition_prob": 0.9990 },
+          { "from": "g7", "to": "out", "type": "qubit_wire", "qubit": 2, "transition_prob": 0.9990 }
+        ],
+        "circuit_success_prob_ibm_eagle": 0.956,
+        "circuit_success_prob_ionq_aria": 0.993
+      },
+      "real_world_metrics": {
+        "estimated_execution_time_ibm_us": 1.8,
+        "estimated_execution_time_ionq_us": 4200,
+        "min_physical_qubits": 3,
+        "shots_for_95pct_confidence": 1000,
+        "expected_state_fidelity_ibm_eagle": 0.956,
+        "expected_state_fidelity_ionq_aria": 0.993,
+        "classical_bits_transmitted": 2,
+        "quantum_channel_required": "pre-shared Bell pair",
+        "quantum_advantage": "Teleports unknown quantum state using only classical communication (+ pre-shared entanglement)"
+      },
+      "agentic_reasoning": [
+        {
+          "step": 1,
+          "gate": "INIT",
+          "title": "Three Qubits — Three Roles",
+          "qiskit_line": "qc = QuantumCircuit(3, 2)",
+          "technical": "Three-qubit register: q0 holds the unknown state |ψ⟩ = α|0⟩+β|1⟩ to teleport. q1 is Alice's EPR qubit. q2 is Bob's EPR qubit. 2 classical bits for measurement results.",
+          "layman": "Three players: a SECRET MESSAGE (q0) containing quantum information, and two MAGIC BOXES (q1, q2) that belong to Alice and Bob. The magic boxes are pre-linked by entanglement — like two synchronized safe combinations.",
+          "math_state": "|ψ⟩_q0 ⊗ |00⟩_{q1,q2}",
+          "error_introduced": 0
+        },
+        {
+          "step": 2,
+          "gate": "H(q1) + CX(q1,q2)",
+          "title": "Create the Quantum Channel (Bell Pair)",
+          "qiskit_line": "qc.h(1); qc.cx(1, 2)",
+          "technical": "Hadamard + CNOT on q1,q2 creates Bell pair |Φ+⟩_{q1,q2} = (|00⟩+|11⟩)/√2. This shared entanglement is the quantum resource. Full state: |ψ⟩_q0 ⊗ (|00⟩+|11⟩)/√2.",
+          "layman": "We synchronize Alice's and Bob's magic boxes. They are now entangled — whatever one shows, the other reflects. This synchronized pair is like a QUANTUM FAX LINE between Alice and Bob.",
+          "math_state": "(α|0⟩+β|1⟩) ⊗ (|00⟩+|11⟩)/√2",
+          "error_introduced": 0.0105,
+          "cumulative_fidelity_ibm": 0.9890
+        },
+        {
+          "step": 3,
+          "gate": "CX(q0,q1) + H(q0)",
+          "title": "Alice Entangles Message with Her EPR Half",
+          "qiskit_line": "qc.cx(0, 1); qc.h(0)",
+          "technical": "Full 3-qubit state expands to: α|0⟩(|00⟩+|11⟩)/√2 + β|1⟩(|00⟩+|11⟩)/√2. After CX(q0,q1) + H(q0): state becomes (1/2)[|00⟩(α|0⟩+β|1⟩) + |01⟩(α|1⟩+β|0⟩) + |10⟩(α|0⟩-β|1⟩) + |11⟩(α|1⟩-β|0⟩)]. Bob's qubit already encodes all correction information.",
+          "layman": "Alice feeds the SECRET MESSAGE into her magic box. This 'scrambles' the message across all three systems. Crucially, Bob's box now secretly contains all the information needed to reconstruct the message — it just needs a decryption key.",
+          "math_state": "(1/2)Σ_{x,y∈{0,1}} |xy⟩_{q0,q1} ⊗ (correction on q2)",
+          "error_introduced": 0.0105,
+          "cumulative_fidelity_ibm": 0.9786
+        },
+        {
+          "step": 4,
+          "gate": "MEASURE q0, q1",
+          "title": "Alice Measures — Gets the Decryption Key",
+          "qiskit_line": "qc.measure(0, 0); qc.measure(1, 1)",
+          "technical": "Alice measures q0 and q1 in computational basis. Gets one of {00, 01, 10, 11} each with P=0.25. This collapses Bob's qubit q2 into one of four states, each off from |ψ⟩ by a Pauli correction.",
+          "layman": "Alice reads her magic box and writes down 2 numbers (the 'decryption key'). Her measurement DESTROYS the original message — it no longer exists in Alice's hands. But Bob's box has silently collapsed into a version of the message needing a simple fix.",
+          "math_state": "c0,c1 ∈ {0,1}. Bob has: X^c1 Z^c0 |ψ⟩",
+          "error_introduced": 0.046,
+          "cumulative_fidelity_ibm": 0.9326
+        },
+        {
+          "step": 5,
+          "gate": "X^c1, Z^c0 (Bob's corrections)",
+          "title": "Bob Applies the Decryption Key",
+          "qiskit_line": "qc.x(2).c_if(1,1); qc.z(2).c_if(0,1)",
+          "technical": "Bob receives 2 classical bits (c0, c1) from Alice. Applies: if c1=1 → X gate; if c0=1 → Z gate. These correct the Pauli error from Alice's measurement. Bob's q2 is now exactly |ψ⟩ = α|0⟩+β|1⟩.",
+          "layman": "Alice phones Bob with her 2 numbers (ordinary phone call — no quantum needed). Bob applies the matching 'fix' to his magic box using those numbers. His box now contains the EXACT MESSAGE that was in Alice's box — teleported without physically moving anything.",
+          "math_state": "q2 = |ψ⟩ = α|0⟩ + β|1⟩  ✓ Teleportation complete",
+          "error_introduced": 0.001,
+          "cumulative_fidelity_ibm": 0.9316
+        }
+      ],
+      "ddm_summary": {
+        "level_1": "Quantum fax machine: destroys the original message while reconstructing it at the destination using entanglement + 2 phone calls.",
+        "level_2": "Shared Bell pair acts as quantum channel; Alice's Bell measurement + classical communication lets Bob recover the state.",
+        "level_3": "Protocol uses entanglement as a resource and classical communication to select the correct Pauli correction.",
+        "level_4": "Measurement projects joint state onto Bell basis, revealing Pauli correction X^c1Z^c0. No faster-than-light signalling (classical channel required)."
+      }
+    },
+    {
+      "id": "grovers-3qubit",
+      "title": "Grover's Search (3 qubits, target |101⟩)",
+      "subtitle": "Quantum amplitude amplification for unstructured search",
+      "complexity": "intermediate",
+      "qubits": 3,
+      "depth": 12,
+      "gate_count": { "h": 6, "x": 4, "cz": 1, "ccz": 1, "measure": 3, "total": 15 },
+      "algorithm_family": "search-amplification",
+      "use_cases": ["Database search", "Optimization sub-routine", "Cryptographic attack acceleration", "Satisfiability problems"],
+      "qiskit_code": "from qiskit import QuantumCircuit\nqc = QuantumCircuit(3, 3)\n# Initialize superposition\nqc.h([0, 1, 2])\n# Grover iteration x1 for N=8 (optimal ~2.2 iterations)\n# Oracle: marks |101⟩ (q0=1, q1=0, q2=1)\nqc.x(1)         # flip q1 so |101⟩ becomes |111⟩\nqc.ccz(0,1,2)   # phase flip |111⟩ -> -|111⟩\nqc.x(1)         # unflip q1\n# Diffusion operator: 2|s⟩⟨s| - I\nqc.h([0,1,2])\nqc.x([0,1,2])\nqc.ccz(0,1,2)\nqc.x([0,1,2])\nqc.h([0,1,2])\n# Measure\nqc.measure([0,1,2], [0,1,2])",
+      "qiskit_semantic": {
+        "gates": [
+          { "id": "init_h", "name": "h×3", "qiskit_op": "h", "qubits": [0,1,2], "layer": 0, "description": "Uniform superposition" },
+          { "id": "oracle_x1", "name": "x", "qiskit_op": "x", "qubit": 1, "layer": 1, "description": "Oracle setup" },
+          { "id": "oracle_ccz", "name": "ccz", "qiskit_op": "ccz", "qubits": [0,1,2], "layer": 2, "description": "Phase flip target" },
+          { "id": "oracle_x2", "name": "x", "qiskit_op": "x", "qubit": 1, "layer": 3, "description": "Oracle teardown" },
+          { "id": "diff_h1", "name": "h×3", "qiskit_op": "h", "qubits": [0,1,2], "layer": 4, "description": "Diffusion start" },
+          { "id": "diff_x1", "name": "x×3", "qiskit_op": "x", "qubits": [0,1,2], "layer": 5, "description": "Diffusion X" },
+          { "id": "diff_ccz", "name": "ccz", "qiskit_op": "ccz", "qubits": [0,1,2], "layer": 6, "description": "Diffusion phase" },
+          { "id": "diff_x2", "name": "x×3", "qiskit_op": "x", "qubits": [0,1,2], "layer": 7, "description": "Diffusion X†" },
+          { "id": "diff_h2", "name": "h×3", "qiskit_op": "h", "qubits": [0,1,2], "layer": 8, "description": "Diffusion end" }
+        ],
+        "initial_state": "|000⟩",
+        "intermediate_superposition": "(1/√8)(|000⟩+|001⟩+|010⟩+|011⟩+|100⟩+|101⟩+|110⟩+|111⟩)",
+        "post_oracle_state": "(1/√8)(|000⟩+|001⟩+|010⟩+|011⟩+|100⟩-|101⟩+|110⟩+|111⟩)",
+        "post_diffusion_state": "≈0.97|101⟩ + small amplitudes on others",
+        "final_state": "P(101) ≈ 0.781 after 2 iterations (optimal)"
+      },
+      "stochastic_mesh": {
+        "description": "3-qubit 3-layer Grover mesh: superposition layer → oracle layer → diffusion layer. Nodes track amplitude per state per layer.",
+        "topology_type": "layered_amplitude_flow",
+        "layers": [
+          {
+            "id": "superposition",
+            "gates": ["h×3"],
+            "amplitude_per_state": 0.3536,
+            "all_states_equal": true,
+            "error_rate_layer": 0.0015
+          },
+          {
+            "id": "oracle",
+            "gates": ["x", "ccz", "x"],
+            "phase_flipped_state": "101",
+            "amplitude_101": -0.3536,
+            "amplitude_others": 0.3536,
+            "error_rate_layer": 0.021
+          },
+          {
+            "id": "diffusion",
+            "gates": ["h×3", "x×3", "ccz", "x×3", "h×3"],
+            "amplitude_101_after": 0.882,
+            "amplitude_others_after": -0.067,
+            "probability_101": 0.781,
+            "error_rate_layer": 0.045
+          }
+        ],
+        "circuit_success_prob_ibm_eagle": 0.921,
+        "circuit_success_prob_ionq_aria": 0.975
+      },
+      "real_world_metrics": {
+        "optimal_iterations": 2,
+        "search_space_size": 8,
+        "classical_average_queries": 4,
+        "quantum_queries": 2,
+        "speedup_factor": 2.83,
+        "expected_success_prob_ideal": 0.945,
+        "expected_success_prob_ibm_eagle": 0.870,
+        "expected_success_prob_ionq_aria": 0.950,
+        "shots_needed_for_confident_find": 100,
+        "estimated_execution_time_ibm_us": 4.7,
+        "min_physical_qubits": 3,
+        "quantum_advantage": "Quadratic speedup O(√N). Marginal for N=8, but scales to O(√N) classically O(N) for large N."
+      },
+      "agentic_reasoning": [
+        {
+          "step": 1,
+          "gate": "H⊗H⊗H",
+          "title": "Load ALL Possible Answers Simultaneously",
+          "qiskit_line": "qc.h([0, 1, 2])",
+          "technical": "Three Hadamard gates transform |000⟩ into the uniform superposition (1/√8)Σ|x⟩. All 8 three-bit strings now exist simultaneously with equal amplitude 1/√8 ≈ 0.354.",
+          "layman": "Imagine 8 doors in a hallway. Classically, you must check each door one by one. Grover's trick: we 'look' at ALL 8 doors simultaneously. Each door has an equal chance (12.5%) of being the right one. We load all candidates at once.",
+          "math_state": "|ψ⟩ = (1/√8)(|000⟩+|001⟩+|010⟩+|011⟩+|100⟩+|101⟩+|110⟩+|111⟩)",
+          "error_introduced": 0.0015
+        },
+        {
+          "step": 2,
+          "gate": "Oracle (X·CCZ·X)",
+          "title": "Mark the Correct Answer with a Phase Flag",
+          "qiskit_line": "qc.x(1); qc.ccz(0,1,2); qc.x(1)",
+          "technical": "The oracle flips the phase of the target state |101⟩: amplitude goes from +0.354 to -0.354. All other 7 states unchanged. The oracle is a function evaluation — it identifies the target without collapsing the superposition.",
+          "layman": "We have a 'correct door detector' that secretly marks the right door. It doesn't open the doors or tell us which one — it just puts a tiny minus sign (phase flag) on door 101. We still can't tell which door is marked just by looking, but the quantum system knows.",
+          "math_state": "|ψ⟩ = (1/√8)(|000⟩+|001⟩+|010⟩+|011⟩+|100⟩−|101⟩+|110⟩+|111⟩)",
+          "error_introduced": 0.021
+        },
+        {
+          "step": 3,
+          "gate": "Diffusion (H·X·CCZ·X·H)",
+          "title": "Amplify the Marked State via Interference",
+          "qiskit_line": "qc.h([0,1,2]); qc.x([0,1,2]); qc.ccz(0,1,2); qc.x([0,1,2]); qc.h([0,1,2])",
+          "technical": "Grover diffusion operator: 2|s⟩⟨s|-I. Reflects state vector about the average amplitude. The negative amplitude at |101⟩ pulls the average down, so all states get reduced EXCEPT |101⟩ which gets boosted. After 1 iteration: P(101) ≈ 78.1%.",
+          "layman": "The diffusion step is the magic amplifier. Think of it as: (1) calculate the average door-probability, (2) for each door, reflect its probability around that average. Since door 101 was negative and all others positive, the average is slightly below 12.5%. Reflecting door 101 around this lower average DRAMATICALLY increases its probability. The wrong doors lose probability.",
+          "math_state": "P(|101⟩) ≈ 0.781. P(others) ≈ 0.031 each.",
+          "error_introduced": 0.045
+        },
+        {
+          "step": 4,
+          "gate": "MEASURE",
+          "title": "Read the Answer",
+          "qiskit_line": "qc.measure([0,1,2], [0,1,2])",
+          "technical": "Measurement in computational basis. P(101) ≈ 0.781 after 1 iteration. Running 2 iterations would give P(101) ≈ 0.945. Classical average: 4 queries; Quantum: 2 iterations. Speedup: √8 ≈ 2.83×.",
+          "layman": "We look at the doors and almost certainly see door 101. We're right 78% of the time with ONE oracle call. Run it again (2 total oracle calls vs classical average of 4) and we're right 94.5% of the time. We searched 8 items in effectively 2 checks instead of 4.",
+          "math_state": "Outcome '101' with P≈0.781 (1 iteration) or P≈0.945 (2 iterations)",
+          "error_introduced": 0.069
+        }
+      ],
+      "ddm_summary": {
+        "level_1": "Like having a hint machine: instead of checking all 8 doors one by one, quantum interference makes the right door glow brighter with each hint.",
+        "level_2": "Superposition loads all candidates; oracle marks the target with a phase flip; diffusion amplifies the marked state's probability via constructive interference.",
+        "level_3": "Grover iteration G = (2|s⟩⟨s|-I)·Oracle rotates state vector toward marked state by angle 2θ, where sin²θ = 1/N. Optimal iterations: ⌊π√N/4⌋.",
+        "level_4": "After k iterations, P(target) = sin²((2k+1)θ). For N=8, k=2 gives P≈0.945. Gate complexity: O((log N) · √N). Oracle calls: O(√N)."
+      }
+    },
+    {
+      "id": "qft-4qubit",
+      "title": "Quantum Fourier Transform (4 qubits)",
+      "subtitle": "The quantum analog of the Fast Fourier Transform",
+      "complexity": "advanced",
+      "qubits": 4,
+      "depth": 8,
+      "gate_count": { "h": 4, "cp": 6, "swap": 2, "total": 12 },
+      "algorithm_family": "transform",
+      "use_cases": ["Shor's algorithm (core subroutine)", "Quantum phase estimation", "Quantum signal processing", "Period finding"],
+      "qiskit_code": "from qiskit import QuantumCircuit\nimport numpy as np\nqc = QuantumCircuit(4)\n# QFT on 4 qubits\nfor j in range(4):\n    qc.h(j)\n    for k in range(j+1, 4):\n        qc.cp(2*np.pi/2**(k-j+1), k, j)  # controlled phase\n# Swap to reverse bit order\nqc.swap(0, 3)\nqc.swap(1, 2)",
+      "qiskit_semantic": {
+        "gates": [
+          { "id": "h0", "name": "h", "qubit": 0, "layer": 0 },
+          { "id": "cp01", "name": "cp(π/2)", "qubits": [1,0], "layer": 1 },
+          { "id": "cp02", "name": "cp(π/4)", "qubits": [2,0], "layer": 2 },
+          { "id": "cp03", "name": "cp(π/8)", "qubits": [3,0], "layer": 3 },
+          { "id": "h1", "name": "h", "qubit": 1, "layer": 4 },
+          { "id": "cp12", "name": "cp(π/2)", "qubits": [2,1], "layer": 5 },
+          { "id": "cp13", "name": "cp(π/4)", "qubits": [3,1], "layer": 5 },
+          { "id": "h2", "name": "h", "qubit": 2, "layer": 6 },
+          { "id": "cp23", "name": "cp(π/2)", "qubits": [3,2], "layer": 7 },
+          { "id": "h3", "name": "h", "qubit": 3, "layer": 8 },
+          { "id": "sw03", "name": "swap", "qubits": [0,3], "layer": 9 },
+          { "id": "sw12", "name": "swap", "qubits": [1,2], "layer": 9 }
+        ],
+        "initial_state": "|j⟩ (any 4-qubit computational basis state)",
+        "output_description": "QFT|j⟩ = (1/√16) Σ_{k=0}^{15} e^{2πijk/16} |k⟩"
+      },
+      "stochastic_mesh": {
+        "topology_type": "butterfly_network",
+        "description": "QFT has a butterfly network topology similar to classical FFT. Each qubit interacts with every other qubit via controlled phases of decreasing magnitude.",
+        "key_property": "Phase contributions decrease as 1/2^distance — far-qubit interactions have tiny phase and can be truncated in approximate QFT",
+        "circuit_success_prob_ibm_eagle": 0.886,
+        "circuit_success_prob_ionq_aria": 0.968,
+        "approximate_qft_2qubit_interactions_only_fidelity_ibm": 0.952
+      },
+      "real_world_metrics": {
+        "gate_count_exact": 12,
+        "gate_count_approximate_qft": 7,
+        "depth_exact": 10,
+        "estimated_execution_time_ibm_us": 4.2,
+        "expected_fidelity_ibm_eagle_exact": 0.886,
+        "expected_fidelity_ibm_eagle_approx": 0.952,
+        "classical_fft_equivalent": "O(N log N) for N=16 points",
+        "quantum_advantage": "Exponential speedup: QFT on n qubits in O(n²) gates vs O(N log N) classical for N=2ⁿ. Core of Shor's algorithm."
+      },
+      "agentic_reasoning": [
+        {
+          "step": 1,
+          "gate": "H + controlled phases on q0",
+          "title": "Encode Frequency in Qubit 0's Phase",
+          "qiskit_line": "qc.h(0); qc.cp(π/2,1,0); qc.cp(π/4,2,0); qc.cp(π/8,3,0)",
+          "technical": "H creates superposition on q0. Controlled phase gates Rk(j) add phase e^{2πi·j_k/2^k} based on control qubit states. Result: q0 accumulates the full frequency information from all input qubits.",
+          "layman": "Imagine tuning a radio dial. Each of the 4 bits contributes a different-sized 'twist' to the signal frequency. Qubit 0 gets the full frequency contribution — big twists from nearby qubits, tiny twists from far ones. The Hadamard first puts it in a state where these twists can add up coherently.",
+          "math_state": "q0 ← H·R2(j1)·R3(j2)·R4(j3) |j0⟩",
+          "error_introduced": 0.031
+        },
+        {
+          "step": 2,
+          "gate": "H + controlled phases on q1, q2, q3",
+          "title": "Repeat for Each Qubit — Build the Full Spectrum",
+          "qiskit_line": "qc.h(1); qc.cp(π/2,2,1); ... qc.h(3)",
+          "technical": "Repeat the H + controlled phases pattern for q1, q2, q3 (with fewer interactions each time). After all 4 Hadamard + phase blocks, each qubit holds one 'frequency component' of the Fourier transform.",
+          "layman": "Like tuning 4 radio dials simultaneously: each dial is tuned with fewer and fewer corrections as you go down the line. Together, the 4 dials encode the full frequency spectrum of the input signal.",
+          "math_state": "Each qubit encodes one bit of the QFT frequency register",
+          "error_introduced": 0.057
+        },
+        {
+          "step": 3,
+          "gate": "SWAP(0,3) + SWAP(1,2)",
+          "title": "Reverse Bit Order to Match QFT Convention",
+          "qiskit_line": "qc.swap(0, 3); qc.swap(1, 2)",
+          "technical": "QFT outputs frequency components in reversed order. Swap gates correct the bit reversal so output matches standard DFT convention. Each SWAP = 3 CNOTs.",
+          "layman": "The QFT outputs the frequency spectrum in backwards order — like a reversed readout. The SWAP operations are bookkeeping that flip the order to match what algorithms like Shor's expect.",
+          "math_state": "QFT|j⟩ = (1/4) Σ_{k=0}^{15} e^{2πijk/16} |k⟩",
+          "error_introduced": 0.040
+        }
+      ],
+      "ddm_summary": {
+        "level_1": "A 'prism' that splits quantum states into their frequency components — like splitting white light into a rainbow.",
+        "level_2": "Applies Hadamard and controlled phase gates to encode frequency information from input amplitude pattern.",
+        "level_3": "QFT: |j⟩ → (1/√N)Σ_k e^{2πijk/N}|k⟩. Used in period-finding (Shor's) and phase estimation (QPE).",
+        "level_4": "Butterfly network of H and Rk(j) gates. Complexity O(n²) gates for n qubits vs O(N log N) classical."
+      }
+    },
+    {
+      "id": "vqe-h2",
+      "title": "VQE for H₂ Molecule Ground State",
+      "subtitle": "Find hydrogen molecule energy using hybrid quantum-classical optimization",
+      "complexity": "advanced",
+      "qubits": 4,
+      "depth": 15,
+      "gate_count": { "ry": 8, "rz": 4, "cx": 6, "measure": 4, "total": 22 },
+      "algorithm_family": "variational-hybrid",
+      "use_cases": ["Drug discovery", "Materials science", "Nitrogen fixation catalyst design", "Battery chemistry"],
+      "qiskit_code": "from qiskit import QuantumCircuit\nfrom qiskit.circuit import Parameter\nimport numpy as np\n\n# UCCSD ansatz for H2 in STO-3G basis (4 qubits, 2 electrons)\ntheta = [Parameter(f't{i}') for i in range(4)]\nqc = QuantumCircuit(4)\n# HF reference state (Hartree-Fock)\nqc.x([0, 1])   # occupy first 2 spin-orbitals\n# UCCSD single excitations\nqc.ry(theta[0], 0)\nqc.ry(theta[1], 1)\n# UCCSD double excitation\nqc.cx(0, 2)\nqc.cx(1, 3)\nqc.ry(theta[2], 2)\nqc.rz(theta[3], 3)\nqc.cx(1, 3)\nqc.cx(0, 2)",
+      "qiskit_semantic": {
+        "parameterized": true,
+        "parameters": ["θ₀ (single excitation 0→2)", "θ₁ (single excitation 1→3)", "θ₂ (double excitation amplitude)", "θ₃ (double excitation phase)"],
+        "hamiltonian": "H₂ Hamiltonian (STO-3G): H = g₀I + g₁Z₀ + g₂Z₁ + g₃Z₀Z₁ + g₄Z₀Z₂ + g₅X₀X₁Y₂Y₃",
+        "target_energy": "-1.137 Hartree (exact)",
+        "achievable_vqe_energy": "-1.136 Hartree (UCCSD ansatz)"
+      },
+      "stochastic_mesh": {
+        "topology_type": "parameterized_variational",
+        "description": "VQE mesh has an outer classical optimization loop driving the quantum circuit parameters. Each iteration re-evaluates multiple Pauli expectation values.",
+        "classical_optimizer": "COBYLA or L-BFGS-B",
+        "iterations_typical": 150,
+        "circuit_evaluations_per_iteration": 12,
+        "total_circuit_runs_typical": 1800,
+        "circuit_success_prob_ibm_eagle": 0.854,
+        "circuit_success_prob_ionq_aria": 0.961
+      },
+      "real_world_metrics": {
+        "energy_accuracy_kcal_mol": 0.37,
+        "chemical_accuracy_threshold_kcal_mol": 1.0,
+        "achieves_chemical_accuracy": true,
+        "shots_per_expectation_value": 8192,
+        "total_shots_full_vqe": 1474560,
+        "estimated_execution_time_ibm_minutes": 12.3,
+        "classical_simulation_equivalent_cpu_hours": 0.001,
+        "molecules_beyond_classical": "FeMo cofactor (nitrogen fixation): 54 qubits needed",
+        "quantum_advantage_horizon": "~50-100 qubits: molecules intractable classically",
+        "current_ibm_fidelity_H2": 0.854,
+        "noise_impact": "Energy error ~5 mHartree on IBM Eagle without error mitigation"
+      },
+      "agentic_reasoning": [
+        {
+          "step": 1,
+          "gate": "X(q0), X(q1) — HF Reference",
+          "title": "Set the Starting Guess (Hartree-Fock State)",
+          "qiskit_line": "qc.x([0, 1])",
+          "technical": "Initialize to |1100⟩ — the Hartree-Fock reference state where electrons occupy the two lowest-energy spin-orbitals. This is the best classical guess for the molecular ground state.",
+          "layman": "Before quantum refinement, we start with the best classical chemistry answer (Hartree-Fock). Think of it as starting a sculpture with the closest block of marble — then using quantum operations to carve out the missing detail.",
+          "math_state": "|ψ_HF⟩ = |1100⟩",
+          "energy_at_this_point_hartree": -1.116,
+          "error_vs_exact_kcal_mol": 13.2
+        },
+        {
+          "step": 2,
+          "gate": "RY, RZ rotations",
+          "title": "Parameterized Rotations — Encode Electron Correlation",
+          "qiskit_line": "qc.ry(theta[0], 0); qc.ry(theta[1], 1); ...",
+          "technical": "Parameterized RY and RZ gates encode amplitudes and phases of excited electronic configurations. θ parameters control how much 'electron correlation' to mix in — quantum correlations that classical Hartree-Fock misses.",
+          "layman": "The quantum gates are the sculptor's chisels. Each parameter θ controls how much we 'stir in' the missing quantum correlation — electrons that quantum-mechanically avoid each other in ways classical models cannot capture. The classical optimizer finds the ideal chisel settings.",
+          "math_state": "|ψ(θ)⟩ = cos(θ/2)|1100⟩ + sin(θ/2)|0011⟩ + ... (UCCSD ansatz)",
+          "error_introduced": 0.031
+        },
+        {
+          "step": 3,
+          "gate": "CNOT ladders",
+          "title": "Entangle Electrons — Model Quantum Correlations",
+          "qiskit_line": "qc.cx(0, 2); qc.cx(1, 3); ...",
+          "technical": "CNOT gates create entanglement between spin-up and spin-down orbitals, encoding the double excitation |1100⟩ ↔ |0011⟩. These are the electron-pair correlations that make chemistry quantum.",
+          "layman": "Electrons in molecules don't move independently — they're quantum-mechanically correlated. The CNOT gates link them so their quantum states are entangled, accurately representing how they push each other around in the molecule.",
+          "math_state": "UCCSD double excitation: amplitude for e⁻e⁻ pair jumping from orbitals 0,1 → 2,3",
+          "error_introduced": 0.060
+        },
+        {
+          "step": 4,
+          "gate": "MEASURE + Classical Optimization Loop",
+          "title": "Measure Energy → Optimize Parameters → Repeat",
+          "qiskit_line": "measure all qubits; compute ⟨H⟩; COBYLA updates θ",
+          "technical": "Measure Pauli expectation values for each term in H₂ Hamiltonian. Compute ⟨ψ(θ)|H|ψ(θ)⟩. COBYLA or gradient descent updates θ to minimize energy. Repeat ~150 iterations. Converges to -1.136 Hartree.",
+          "layman": "The quantum computer measures how stable the molecule is at each setting. The classical computer says 'try more here, less there.' After ~150 rounds, we've found the exact quantum ground state energy of hydrogen — better than any classical approximation.",
+          "math_state": "Converged: E(θ*) = -1.136 Hartree. Error from exact: 0.001 Hartree = 0.63 kcal/mol < 1 kcal/mol chemical accuracy",
+          "error_introduced": 0.031
+        }
+      ],
+      "ddm_summary": {
+        "level_1": "Teaching a quantum computer to be a molecular calculator: it tries different electron arrangements until it finds the most stable one.",
+        "level_2": "Hybrid loop: quantum circuit prepares trial molecular state, measures energy expectation, classical computer optimizes circuit parameters.",
+        "level_3": "UCCSD ansatz parameterizes all chemically relevant electron excitations. Variational principle guarantees ⟨H⟩ ≥ E₀.",
+        "level_4": "Pauli decomposition: H = Σᵢ gᵢ Pᵢ. Measure ⟨Pᵢ⟩ for each term. Gradient: ∂⟨H⟩/∂θⱼ = (⟨H⟩(θⱼ+π/2) - ⟨H⟩(θⱼ-π/2))/2 (parameter-shift rule)."
+      }
+    },
+    {
+      "id": "qaoa-maxcut",
+      "title": "QAOA MaxCut on 4-node Graph",
+      "subtitle": "Quantum approximate optimization for graph partitioning",
+      "complexity": "advanced",
+      "qubits": 4,
+      "depth": 14,
+      "gate_count": { "h": 4, "rzz": 4, "rx": 4, "measure": 4, "total": 16 },
+      "algorithm_family": "variational-optimization",
+      "use_cases": ["Network clustering", "Portfolio optimization", "Traffic routing", "Supply chain optimization", "Drug target identification"],
+      "problem_definition": {
+        "graph_edges": [[0,1],[1,2],[2,3],[0,3]],
+        "edge_weights": [1, 1, 1, 1],
+        "max_cut_value": 4,
+        "optimal_partition": "0,2 vs 1,3",
+        "classical_brute_force_checks": 16
+      },
+      "qiskit_code": "from qiskit import QuantumCircuit\nfrom qiskit.circuit import Parameter\nimport numpy as np\n\ngamma = Parameter('γ')  # problem angle\nbeta = Parameter('β')   # mixing angle\nqc = QuantumCircuit(4, 4)\n\n# Initialize uniform superposition\nqc.h([0, 1, 2, 3])\n\n# QAOA p=1 layer: Problem unitary UC(γ)\nfor (u, v) in [(0,1),(1,2),(2,3),(0,3)]:  # graph edges\n    qc.rzz(2*gamma, u, v)  # edge penalty\n\n# Mixing unitary UB(β)\nfor q in range(4):\n    qc.rx(2*beta, q)\n\nqc.measure([0,1,2,3], [0,1,2,3])",
+      "qiskit_semantic": {
+        "parameterized": true,
+        "p_layers": 1,
+        "parameters": ["γ (problem unitary angle, optimal ≈0.785)", "β (mixer angle, optimal ≈0.393)"],
+        "problem_hamiltonian": "HC = Σ_{(u,v)∈E} (I - ZuZv)/2",
+        "mixer_hamiltonian": "HB = Σᵢ Xᵢ",
+        "optimal_gamma_p1": 0.785,
+        "optimal_beta_p1": 0.393,
+        "approx_ratio_p1_random_3reg": 0.6924
+      },
+      "stochastic_mesh": {
+        "topology_type": "graph_embedded",
+        "description": "QAOA mesh mirrors the problem graph. ZZ interactions connect each graph edge. Mixer layer acts on all nodes simultaneously.",
+        "graph_connectivity": "ring: 0-1-2-3-0",
+        "qaoa_layers": 1,
+        "circuit_success_prob_ibm_eagle": 0.879,
+        "circuit_success_prob_ionq_aria": 0.964,
+        "nodes": [
+          { "id": "q0", "label": "q0", "problem_role": "node 0", "qubit": 0 },
+          { "id": "q1", "label": "q1", "problem_role": "node 1", "qubit": 1 },
+          { "id": "q2", "label": "q2", "problem_role": "node 2", "qubit": 2 },
+          { "id": "q3", "label": "q3", "problem_role": "node 3", "qubit": 3 }
+        ],
+        "problem_edges": [
+          { "from": "q0", "to": "q1", "weight": 1, "rzz_angle": "2γ" },
+          { "from": "q1", "to": "q2", "weight": 1, "rzz_angle": "2γ" },
+          { "from": "q2", "to": "q3", "weight": 1, "rzz_angle": "2γ" },
+          { "from": "q0", "to": "q3", "weight": 1, "rzz_angle": "2γ" }
+        ]
+      },
+      "real_world_metrics": {
+        "optimal_cut_size": 4,
+        "p1_expected_cut_size_ideal": 3.5,
+        "p1_approximation_ratio": 0.875,
+        "p2_approximation_ratio_est": 0.940,
+        "p1_expected_cut_ibm_eagle": 3.07,
+        "shots_for_confident_solution": 500,
+        "estimated_execution_time_ibm_us": 5.6,
+        "classical_goemans_williamson_ratio": 0.878,
+        "quantum_advantage_horizon": "Graph instances with N>50 nodes and complex structure — active research area",
+        "nisq_performance": "QAOA p=1 matches Goemans-Williamson classical approximation for 3-regular graphs"
+      },
+      "agentic_reasoning": [
+        {
+          "step": 1,
+          "gate": "H×4",
+          "title": "Start: Every Partition Simultaneously",
+          "qiskit_line": "qc.h([0, 1, 2, 3])",
+          "technical": "All 4 qubits in uniform superposition. The 2⁴=16 computational basis states represent all 16 possible ways to partition 4 nodes into two groups (Set A / Set B).",
+          "layman": "We place all 16 ways to split 4 cities into two teams on the quantum scales simultaneously. Each city can be on Team 0 or Team 1. We start by weighing all possibilities at once.",
+          "math_state": "(1/4)Σ_{x∈{0,1}⁴} |x⟩  — all 16 partitions equal weight"
+        },
+        {
+          "step": 2,
+          "gate": "RZZ(2γ) on each edge",
+          "title": "Score Each Partition by Cut Edges",
+          "qiskit_line": "qc.rzz(2*gamma, u, v) for each edge",
+          "technical": "ZZ interaction on edge (u,v): if qu≠qv (nodes in different sets), state gets phase e^{iγ}. If qu=qv (same set, no cut), phase e^{-iγ}. After all edges, states with more cuts accumulate more constructive phase.",
+          "layman": "The quantum computer 'scores' each partition. For each road connecting two cities, if they're on DIFFERENT teams, that road is 'cut' (good — earns a point). We quietly apply a phase-boost to partitions that cut more roads. High-scoring partitions start to stand out.",
+          "math_state": "Phase ∝ cut size. High-cut partitions have larger positive phase angles."
+        },
+        {
+          "step": 3,
+          "gate": "RX(2β) on all qubits",
+          "title": "Mix: Quantum Tunnelling Between Partitions",
+          "qiskit_line": "qc.rx(2*beta, q) for q in range(4)",
+          "technical": "Mixing Hamiltonian applies X rotations, coupling adjacent computational basis states (differing in one bit). This creates quantum tunnelling between similar partitions, allowing the algorithm to escape local optima.",
+          "layman": "The mixing step lets partitions 'bleed into each other' quantumly. It's like allowing a city to reconsider which team it's on, guided by quantum tunnelling. This prevents getting stuck on a near-optimal solution when the real optimal is just one flip away.",
+          "math_state": "After p=1 layer, optimal γ*≈0.785, β*≈0.393 maximizes ⟨HC⟩"
+        },
+        {
+          "step": 4,
+          "gate": "MEASURE + Classical Parameter Sweep",
+          "title": "Find Best Parameters → Read the Best Cut",
+          "qiskit_line": "qc.measure(...); optimize (γ,β); re-run",
+          "technical": "Classical optimizer finds γ*,β* maximizing ⟨HC⟩. At optimal parameters for 4-node ring: P(0101)=P(1010)≈0.28 (optimal partitions), giving E[cut] ≈ 3.5/4.0. Measure most frequent output.",
+          "layman": "After tuning the 'scoring' and 'tunnelling' knobs (γ and β) to their best values, measuring the quantum state gives the best cut most of the time. For a 4-node ring, the quantum computer finds '0101' or '1010' (alternating teams) — which IS the perfect 4-cut solution, 87.5% of the time.",
+          "math_state": "P(0101 or 1010) ≈ 0.56. Expected cut ≈ 3.5 at p=1."
+        }
+      ],
+      "ddm_summary": {
+        "level_1": "A quantum city planner that tries every possible way to divide cities into two groups and zeroes in on the one that maximises cross-city connections.",
+        "level_2": "Problem Hamiltonian penalizes same-team edges; mixer Hamiltonian allows quantum search; classical optimizer tunes the balance.",
+        "level_3": "QAOA alternates cost and mixing unitaries: |ψ(γ,β)⟩ = UB(β)UC(γ)|+⟩. Maximizes ⟨HC⟩ = expected cut size.",
+        "level_4": "Approximation ratio r = ⟨HC⟩/OPT. At p=1 for 3-regular graphs: r ≥ 0.6924 (provable). Increases with p depth. Quantum advantage unproven but promising for dense graphs."
+      }
+    },
+    {
+      "id": "surface-code-7",
+      "title": "7-Qubit Surface Code (d=3 Patch)",
+      "subtitle": "Fault-tolerant quantum error correction — protecting 1 logical qubit",
+      "complexity": "expert",
+      "qubits": 13,
+      "depth": 25,
+      "gate_count": { "h": 24, "cx": 48, "measure": 24, "x_correction": "variable", "z_correction": "variable", "total_per_round": 96 },
+      "algorithm_family": "error-correction",
+      "use_cases": ["Fault-tolerant logical qubits", "Long-running quantum algorithms", "Cryptographic-quality computation", "Quantum memory"],
+      "qiskit_code": "# Surface code requires Qiskit QEC package or custom implementation\n# Conceptual pseudocode:\nfrom qiskit_qec.circuits import SurfaceCodeCircuit\n\n# Create distance-3 surface code\nsc = SurfaceCodeCircuit(d=3, T=1)  # d=distance, T=syndrome rounds\nqc = sc.circuit['0']  # logical |0> preparation\n\n# One QEC round:\n# 1. Apply data qubit operations\n# 2. Measure 4 X-type stabilizers (detect Z errors)\n# 3. Measure 4 Z-type stabilizers (detect X errors)\n# 4. Classical decoder (MWPM) identifies corrections\n# 5. Apply Pauli corrections to data qubits",
+      "qiskit_semantic": {
+        "data_qubits": [0,1,2,3,4,5,6],
+        "ancilla_x_stabilizers": [7,8,9,10],
+        "ancilla_z_stabilizers": [11,12,13],
+        "stabilizers_x": ["X0X1X3X4", "X1X2X4X5", "X3X4", "X4X5X6"],
+        "stabilizers_z": ["Z0Z1Z3Z4", "Z1Z2Z4Z5", "Z3Z4Z6"],
+        "logical_x": "X0X1X2",
+        "logical_z": "Z0Z3Z6",
+        "code_parameters": "[[9,1,3]] — 9 physical qubits per logical, distance 3"
+      },
+      "stochastic_mesh": {
+        "topology_type": "2d_grid_stabilizer",
+        "description": "Surface code on 2D grid: data qubits at grid points, stabilizer ancillas at face/vertex centers. Heavy-hex compatible with IBM hardware.",
+        "grid_rows": 3,
+        "grid_cols": 3,
+        "connectivity": "nearest-neighbour only",
+        "syndrome_graph": "Plaquette (Z) and vertex (X) syndrome measurements",
+        "decoder": "Minimum Weight Perfect Matching (MWPM)",
+        "per_round_error_model": {
+          "data_qubit_depolarizing": 0.001,
+          "cx_gate_error": 0.010,
+          "measurement_error": 0.023,
+          "total_per_round_logical_error_rate": 0.0029
+        },
+        "physical_error_threshold": 0.01,
+        "current_ibm_error_rate": 0.0098,
+        "above_threshold": false,
+        "comment": "IBM Eagle is borderline at threshold. Heron is comfortably below."
+      },
+      "real_world_metrics": {
+        "physical_qubits_per_logical": 9,
+        "ancilla_qubits": 8,
+        "total_physical_qubits_d3": 17,
+        "logical_error_rate_per_round_d3": 0.0029,
+        "logical_error_rate_per_round_d5": 0.00084,
+        "logical_error_rate_per_round_d7": 0.00024,
+        "rounds_for_1pct_error_d3": 344,
+        "rounds_for_1pct_error_d5": 1190,
+        "qubits_for_shors_2048bit_RSA_logical": 4098,
+        "physical_qubits_for_shors_2048bit_d3": 69666,
+        "physical_qubits_for_shors_2048bit_d7": 2015238,
+        "t_gates_for_shors_2048bit": 100000000,
+        "execution_time_shors_2048bit_hours": 8.5,
+        "quantum_advantage": "ESSENTIAL for any practically useful quantum algorithm. Without QEC, all useful algorithms fail due to noise."
+      },
+      "agentic_reasoning": [
+        {
+          "step": 1,
+          "gate": "Data qubit initialization",
+          "title": "Encode 1 Logical Qubit in 9 Physical Qubits",
+          "technical": "Logical |0⟩_L = equal weight superposition of all states in the code space C. Encoding spreads the logical qubit non-locally across the 9 data qubits so no single qubit's error can corrupt the information.",
+          "layman": "Instead of storing our important message in one unsafe box (1 qubit), we split it cleverly across 9 boxes. The message isn't in any single box — it's in the PATTERN of boxes. Damage one box and the pattern still reveals the message.",
+          "math_state": "|0⟩_L ∝ Σ_{s∈code space} |s⟩",
+          "error_introduced": 0
+        },
+        {
+          "step": 2,
+          "gate": "X-stabilizer measurements",
+          "title": "Detect Z-Errors (Phase Flips) Without Reading the Data",
+          "technical": "4 ancilla qubits each measure the parity of 4 data qubits (XXXX pattern). A Z error on any data qubit flips the parity of 2 adjacent stabilizers. The syndrome pattern (which parities flipped) identifies error location WITHOUT measuring the logical qubit.",
+          "layman": "Think of the 9 boxes arranged in a 3×3 grid. We check the 'sum' of small groups of boxes (without opening them). If a box was tampered with, exactly two of our group-sums become wrong — and the PATTERN of wrong sums tells us WHICH box was tampered with.",
+          "math_state": "Syndrome s ∈ {0,1}⁴. Error location: MWPM decode(s)",
+          "error_introduced": 0.023
+        },
+        {
+          "step": 3,
+          "gate": "Z-stabilizer measurements",
+          "title": "Detect X-Errors (Bit Flips)",
+          "technical": "4 ancilla qubits measure ZZZZ parity patterns. An X error on data qubit triggers 2 adjacent Z stabilizers. Combined with X-stabilizer syndromes, we can locate both bit-flip and phase-flip errors.",
+          "layman": "A second set of checks catches a different kind of tampering (phase flips, which have no classical analog). Together, the two sets of checks catch every possible single-qubit error.",
+          "math_state": "Combined syndrome identifies all Pauli single-qubit errors on 9 data qubits",
+          "error_introduced": 0.023
+        },
+        {
+          "step": 4,
+          "gate": "MWPM Decoder + Correction",
+          "title": "Decode the Syndrome and Apply the Fix",
+          "technical": "Classical computer runs Minimum Weight Perfect Matching on the syndrome graph. Finds minimum set of Pauli corrections consistent with the syndrome. Applies corrections. Logical error occurs only if error weight ≥ d/2 = 1.5 → weight ≥ 2 errors needed to fail.",
+          "layman": "A classical computer solves a puzzle: 'which single tampered box explains all the wrong group-sums?' It finds the most likely answer and fixes that box. A mistake only happens if TWO or more boxes are tampered simultaneously — unlikely if each box error rate is below 1%.",
+          "math_state": "Logical error rate p_L ≈ (p/p_th)^(d+1)/2 for d=3: p_L ≈ (p/0.01)² per round"
+        }
+      ],
+      "ddm_summary": {
+        "level_1": "Nine backup boxes for one message: damage one without ruining the information. Like RAID storage for quantum data.",
+        "level_2": "Parity checks on qubit groups detect errors non-destructively. Pattern of parity violations locates the error for correction.",
+        "level_3": "[[9,1,3]] surface code: 9 physical qubits encode 1 logical qubit with distance 3 (corrects any 1 error). X and Z stabilizers detect bit and phase flips.",
+        "level_4": "Stabilizer group S = ⟨g₁...g₈⟩. Logical operators X_L, Z_L commute with all stabilizers but not each other. MWPM decoder: polynomial time, near-optimal. Fault-tolerance threshold ~1%."
+      }
+    }
+  ]
+}
