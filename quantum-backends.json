@@ -1,0 +1,621 @@
+{
+  "version": "2.0.0",
+  "title": "QuanV1 Multi-Backend Quantum Inference Registry",
+  "description": "Full registry of all supported quantum backends with capabilities, routing rules, and real-time metrics for parallel/series pipeline orchestration",
+  "routing_strategy": {
+    "default": "best_fidelity",
+    "options": ["best_fidelity", "lowest_latency", "lowest_cost", "most_qubits", "all_parallel", "round_robin"],
+    "auto_rules": [
+      { "condition": "circuit.two_qubit_gates > 10 AND circuit.qubits <= 25", "recommend": "ionq_aria", "reason": "All-to-all connectivity eliminates SWAP overhead; high 2Q fidelity" },
+      { "condition": "circuit.qubits > 50", "recommend": "ibm_eagle_or_heron", "reason": "Largest available qubit counts" },
+      { "condition": "algorithm == 'vqe' OR algorithm == 'qaoa'", "recommend": "pennylane_default", "reason": "Native autodiff gradient support; parameter-shift rule built-in" },
+      { "condition": "circuit.depth < 5 AND circuit.qubits <= 20", "recommend": "all_parallel", "reason": "Low depth circuits are cheap — run all backends for statistical comparison" },
+      { "condition": "algorithm == 'qec'", "recommend": "ibm_heron", "reason": "Lowest reported error rates; compatible with surface code layout" },
+      { "condition": "circuit.requires_mid_circuit_measurement == true", "recommend": "ionq_aria OR ibm_heron", "reason": "Not all backends support mid-circuit measurement" },
+      { "condition": "budget == 'free'", "recommend": "pennylane_lightning_qubit OR ibm_free_tier", "reason": "Local simulation and free cloud quota" }
+    ]
+  },
+  "backends": {
+    "ibm_eagle_r3": {
+      "id": "ibm_eagle_r3",
+      "name": "IBM Eagle R3",
+      "provider": "IBM Quantum",
+      "access_via": ["IBM Quantum Platform", "Qiskit Runtime", "AWS Braket (IBM)"],
+      "sdk": ["qiskit", "pennylane (qiskit plugin)", "aws_braket"],
+      "qubit_count": 127,
+      "topology": "heavy-hex",
+      "native_gates": ["id", "rz", "sx", "x", "cx", "reset", "measure"],
+      "all_to_all": false,
+      "connectivity_fraction": 0.019,
+      "metrics": {
+        "single_qubit_gate_fidelity_avg": 0.9995,
+        "two_qubit_gate_fidelity_avg": 0.990,
+        "t1_us_avg": 250,
+        "t2_us_avg": 180,
+        "gate_time_single_ns": 35,
+        "gate_time_cx_ns": 400,
+        "readout_fidelity_avg": 0.977,
+        "median_ecr_error": 0.010,
+        "queue_time_min_typical": 15
+      },
+      "supports": {
+        "mid_circuit_measurement": true,
+        "dynamic_circuits": true,
+        "pulse_control": true,
+        "qctrl_fire_opal": true,
+        "error_mitigation": ["zne", "pec", "twirling", "qctrl_optimized_pulses"],
+        "max_shots": 100000,
+        "parameterized_circuits": true
+      },
+      "cost": {
+        "model": "credits_per_second",
+        "ibm_open_plan_seconds_free": 600,
+        "premium_usd_per_second": 0.0016
+      },
+      "best_for": ["Large qubit count experiments", "Surface code QEC", "QAOA > 50 qubits", "Long circuits with dynamic feedback"],
+      "pennylane_device": "qiskit.ibmq",
+      "braket_arn": "arn:aws:braket:us-east-1::device/qpu/ibm/Eagle",
+      "status_endpoint": "https://quantum.ibm.com/services/runtime",
+      "documentation": "https://quantum.ibm.com/lab"
+    },
+    "ibm_heron_r1": {
+      "id": "ibm_heron_r1",
+      "name": "IBM Heron R1",
+      "provider": "IBM Quantum",
+      "access_via": ["IBM Quantum Platform", "Qiskit Runtime"],
+      "sdk": ["qiskit", "pennylane (qiskit plugin)"],
+      "qubit_count": 133,
+      "topology": "heavy-hex-enhanced",
+      "native_gates": ["id", "rz", "sx", "x", "cx", "cz", "reset", "measure"],
+      "all_to_all": false,
+      "connectivity_fraction": 0.022,
+      "metrics": {
+        "single_qubit_gate_fidelity_avg": 0.9998,
+        "two_qubit_gate_fidelity_avg": 0.9975,
+        "t1_us_avg": 400,
+        "t2_us_avg": 300,
+        "gate_time_single_ns": 25,
+        "gate_time_cx_ns": 170,
+        "readout_fidelity_avg": 0.990,
+        "queue_time_min_typical": 25
+      },
+      "supports": {
+        "mid_circuit_measurement": true,
+        "dynamic_circuits": true,
+        "pulse_control": true,
+        "qctrl_fire_opal": true,
+        "error_mitigation": ["zne", "pec", "twirling", "qctrl_optimized_pulses", "dd_sequences"],
+        "max_shots": 100000,
+        "parameterized_circuits": true
+      },
+      "cost": {
+        "model": "credits_per_second",
+        "premium_usd_per_second": 0.0016
+      },
+      "best_for": ["Highest fidelity experiments", "QEC at threshold", "Long coherence circuits", "Q-CTRL optimal control showcase"],
+      "pennylane_device": "qiskit.ibmq",
+      "status_endpoint": "https://quantum.ibm.com/services/runtime"
+    },
+    "ibm_nighthawk": {
+      "id": "ibm_nighthawk",
+      "name": "IBM Nighthawk (Next-Gen)",
+      "provider": "IBM Quantum",
+      "access_via": ["IBM Quantum Platform — scheduled 2025"],
+      "sdk": ["qiskit", "pennylane"],
+      "qubit_count": 408,
+      "topology": "flamingo-lattice",
+      "native_gates": ["id", "rz", "sx", "x", "cx", "cz", "ecr", "reset", "measure"],
+      "all_to_all": false,
+      "connectivity_fraction": 0.015,
+      "metrics": {
+        "single_qubit_gate_fidelity_avg": 0.9999,
+        "two_qubit_gate_fidelity_avg": 0.9990,
+        "t1_us_avg": 600,
+        "t2_us_avg": 450,
+        "gate_time_single_ns": 20,
+        "gate_time_cx_ns": 120,
+        "readout_fidelity_avg": 0.995,
+        "queue_time_min_typical": 45
+      },
+      "supports": {
+        "mid_circuit_measurement": true,
+        "dynamic_circuits": true,
+        "pulse_control": true,
+        "qctrl_fire_opal": true,
+        "error_mitigation": ["zne", "pec", "twirling", "qctrl_optimized_pulses", "dd_sequences", "readout_mitigation"],
+        "max_shots": 100000,
+        "parameterized_circuits": true,
+        "modular_quantum_computing": true
+      },
+      "cost": {
+        "model": "credits_per_second",
+        "note": "Premium tier access required"
+      },
+      "best_for": ["Utility-scale experiments", "Fault-tolerant algorithm development", "400+ qubit circuits", "Modular quantum network experiments"],
+      "status": "upcoming_2025",
+      "roadmap_source": "https://research.ibm.com/blog/ibm-quantum-development-roadmap"
+    },
+    "rigetti_aspen_m3": {
+      "id": "rigetti_aspen_m3",
+      "name": "Rigetti Aspen-M-3",
+      "provider": "Rigetti Computing",
+      "access_via": ["Rigetti QCS", "AWS Braket"],
+      "sdk": ["pyquil", "quilc", "pennylane (rigetti plugin)", "aws_braket"],
+      "qubit_count": 79,
+      "topology": "octagonal-lattice",
+      "native_gates": ["rx", "rz", "cz", "xy", "measure"],
+      "all_to_all": false,
+      "connectivity_fraction": 0.031,
+      "metrics": {
+        "single_qubit_gate_fidelity_avg": 0.9960,
+        "two_qubit_gate_fidelity_avg": 0.9620,
+        "t1_us_avg": 35,
+        "t2_us_avg": 25,
+        "gate_time_single_ns": 50,
+        "gate_time_cz_ns": 200,
+        "readout_fidelity_avg": 0.948,
+        "queue_time_min_typical": 5
+      },
+      "supports": {
+        "mid_circuit_measurement": false,
+        "dynamic_circuits": false,
+        "pulse_control": true,
+        "qctrl_fire_opal": false,
+        "error_mitigation": ["zne", "clifford_data_regression"],
+        "max_shots": 100000,
+        "parameterized_circuits": true,
+        "native_quil": true
+      },
+      "cost": {
+        "model": "task_based",
+        "braket_usd_per_task": 0.00035,
+        "braket_usd_per_shot": 0.00009
+      },
+      "best_for": ["Quick circuit prototyping", "Accessible superconducting hardware", "AWS Braket integration", "Native Quil programs"],
+      "pennylane_device": "rigetti.qvm OR rigetti.qpu",
+      "braket_arn": "arn:aws:braket:us-west-1::device/qpu/rigetti/Aspen-M-3",
+      "documentation": "https://docs.rigetti.com"
+    },
+    "ionq_aria_1": {
+      "id": "ionq_aria_1",
+      "name": "IonQ Aria-1",
+      "provider": "IonQ",
+      "access_via": ["IonQ Cloud", "AWS Braket", "Azure Quantum", "Google Cloud"],
+      "sdk": ["cirq-ionq", "pennylane (ionq plugin)", "qiskit-ionq", "aws_braket"],
+      "qubit_count": 25,
+      "topology": "all-to-all",
+      "native_gates": ["gpi", "gpi2", "ms", "measure"],
+      "all_to_all": true,
+      "connectivity_fraction": 1.0,
+      "metrics": {
+        "single_qubit_gate_fidelity_avg": 0.9997,
+        "two_qubit_gate_fidelity_avg": 0.9970,
+        "t1_us_avg": 100000000,
+        "t2_us_avg": 1000000,
+        "gate_time_single_us": 10,
+        "gate_time_ms_us": 600,
+        "readout_fidelity_avg": 0.9965,
+        "#IQ_score": 22,
+        "queue_time_min_typical": 30
+      },
+      "supports": {
+        "mid_circuit_measurement": false,
+        "dynamic_circuits": false,
+        "pulse_control": false,
+        "qctrl_fire_opal": false,
+        "error_mitigation": ["debiasing", "sharpening"],
+        "max_shots": 10000,
+        "parameterized_circuits": true,
+        "all_to_all_native": true
+      },
+      "cost": {
+        "model": "shot_and_task_based",
+        "braket_usd_per_task": 0.30000,
+        "braket_usd_per_shot": 0.01000
+      },
+      "best_for": ["High-fidelity 2-qubit gate experiments", "Algorithms requiring many CX gates (no SWAP overhead)", "Quantum chemistry VQE", "Bell inequality tests"],
+      "pennylane_device": "ionq.simulator OR ionq.qpu",
+      "braket_arn": "arn:aws:braket:us-east-1::device/qpu/ionq/Aria-1",
+      "note": "Much slower gate times than superconducting but far superior coherence. No SWAP needed.",
+      "documentation": "https://ionq.com/docs"
+    },
+    "ionq_forte": {
+      "id": "ionq_forte",
+      "name": "IonQ Forte (36 qubits)",
+      "provider": "IonQ",
+      "access_via": ["IonQ Cloud", "AWS Braket"],
+      "sdk": ["cirq-ionq", "pennylane", "qiskit-ionq", "aws_braket"],
+      "qubit_count": 36,
+      "topology": "all-to-all",
+      "native_gates": ["gpi", "gpi2", "ms", "measure"],
+      "all_to_all": true,
+      "connectivity_fraction": 1.0,
+      "metrics": {
+        "single_qubit_gate_fidelity_avg": 0.99965,
+        "two_qubit_gate_fidelity_avg": 0.9975,
+        "t1_us_avg": 200000000,
+        "t2_us_avg": 2000000,
+        "gate_time_single_us": 10,
+        "gate_time_ms_us": 550,
+        "readout_fidelity_avg": 0.9980,
+        "#IQ_score": 35,
+        "queue_time_min_typical": 45
+      },
+      "supports": {
+        "mid_circuit_measurement": true,
+        "dynamic_circuits": true,
+        "error_mitigation": ["debiasing", "sharpening"],
+        "max_shots": 10000,
+        "parameterized_circuits": true
+      },
+      "best_for": ["Highest fidelity trapped-ion", "Mid-circuit measurement protocols", "Quantum error correction experiments", "Complex quantum chemistry"],
+      "braket_arn": "arn:aws:braket:us-east-1::device/qpu/ionq/Forte-1"
+    },
+    "quantinuum_h2": {
+      "id": "quantinuum_h2",
+      "name": "Quantinuum H2-1",
+      "provider": "Quantinuum (Honeywell)",
+      "access_via": ["Quantinuum Cloud", "Azure Quantum"],
+      "sdk": ["pytket", "pennylane (pytket plugin)", "qiskit (pytket-qiskit)"],
+      "qubit_count": 56,
+      "topology": "all-to-all",
+      "native_gates": ["rz", "rzz", "u1q", "measure"],
+      "all_to_all": true,
+      "connectivity_fraction": 1.0,
+      "metrics": {
+        "single_qubit_gate_fidelity_avg": 0.99991,
+        "two_qubit_gate_fidelity_avg": 0.99820,
+        "t1_us_avg": 3600000000,
+        "t2_us_avg": 3000000,
+        "gate_time_single_us": 15,
+        "gate_time_2q_us": 1200,
+        "readout_fidelity_avg": 0.9993,
+        "QLQVM": 2048,
+        "queue_time_min_typical": 120
+      },
+      "supports": {
+        "mid_circuit_measurement": true,
+        "dynamic_circuits": true,
+        "qubit_reuse": true,
+        "pulse_control": false,
+        "error_mitigation": ["built_in_mid_circuit_correction"],
+        "max_shots": 10000,
+        "parameterized_circuits": true
+      },
+      "cost": {
+        "model": "HQC_credits",
+        "note": "H-System Quantum Credits (HQC). Premium pricing."
+      },
+      "best_for": ["Highest fidelity commercially available", "QEC experiments (highest reported fidelity)", "Mid-circuit measurement and qubit reuse", "Algorithms requiring very deep circuits"],
+      "pennylane_device": "pytket.quantinuum",
+      "documentation": "https://docs.quantinuum.com"
+    },
+    "aws_braket_sv1": {
+      "id": "aws_braket_sv1",
+      "name": "AWS Braket SV1 (State Vector Simulator)",
+      "provider": "Amazon Web Services",
+      "access_via": ["AWS Braket"],
+      "sdk": ["aws_braket", "pennylane (braket plugin)", "qiskit (braket plugin)"],
+      "qubit_count": 34,
+      "topology": "all-to-all (simulated)",
+      "native_gates": ["all standard gates"],
+      "all_to_all": true,
+      "type": "simulator",
+      "metrics": {
+        "simulation_fidelity": 1.0,
+        "max_qubits": 34,
+        "shots_per_second_34q": 1000,
+        "latency_ms": 100,
+        "parallel_tasks": "unlimited"
+      },
+      "supports": {
+        "mid_circuit_measurement": true,
+        "noise_models": true,
+        "density_matrix": false,
+        "verbatim_compilation": false,
+        "custom_noise": true,
+        "parameterized_circuits": true
+      },
+      "cost": {
+        "usd_per_task": 0.00375,
+        "usd_per_shot": 0,
+        "free_tier_tasks_per_month": 0
+      },
+      "best_for": ["Noiseless simulation up to 34 qubits", "Algorithm validation before hardware runs", "Parallel sweeps over parameters"],
+      "pennylane_device": "braket.aws.qubit[sv1]"
+    },
+    "aws_braket_dm1": {
+      "id": "aws_braket_dm1",
+      "name": "AWS Braket DM1 (Density Matrix Simulator)",
+      "provider": "Amazon Web Services",
+      "access_via": ["AWS Braket"],
+      "sdk": ["aws_braket", "pennylane"],
+      "qubit_count": 17,
+      "topology": "all-to-all (simulated)",
+      "type": "simulator",
+      "metrics": {
+        "simulation_fidelity": 1.0,
+        "max_qubits": 17,
+        "noise_modeling": true
+      },
+      "supports": {
+        "noise_models": true,
+        "density_matrix": true,
+        "depolarizing_noise": true,
+        "amplitude_damping": true,
+        "custom_kraus_operators": true
+      },
+      "cost": {
+        "usd_per_task": 0.00375,
+        "usd_per_shot": 0
+      },
+      "best_for": ["Noisy circuit simulation", "Hardware noise modeling before physical runs", "Decoherence studies", "Error channel characterization"]
+    },
+    "aws_braket_tn1": {
+      "id": "aws_braket_tn1",
+      "name": "AWS Braket TN1 (Tensor Network Simulator)",
+      "provider": "Amazon Web Services",
+      "access_via": ["AWS Braket"],
+      "sdk": ["aws_braket", "pennylane"],
+      "qubit_count": 50,
+      "topology": "low-entanglement-optimized",
+      "type": "simulator",
+      "metrics": {
+        "max_qubits": 50,
+        "max_circuit_depth_for_practical_runtime": 25,
+        "optimal_for_entanglement_entropy_below": 10
+      },
+      "supports": {
+        "noise_models": false,
+        "best_for_low_entanglement": true,
+        "mps_contraction": true
+      },
+      "cost": {
+        "usd_per_minute": 0.275
+      },
+      "best_for": ["Large circuits with limited entanglement", "QAOA at low depth", "Tensor network study circuits", "Circuits where MPS approximation is valid"]
+    },
+    "pennylane_lightning_qubit": {
+      "id": "pennylane_lightning_qubit",
+      "name": "PennyLane Lightning Qubit (Local)",
+      "provider": "Xanadu PennyLane",
+      "access_via": ["local Python", "any cloud with pennylane installed"],
+      "sdk": ["pennylane"],
+      "qubit_count": 32,
+      "topology": "all-to-all (simulated)",
+      "type": "simulator_local",
+      "metrics": {
+        "simulation_fidelity": 1.0,
+        "max_qubits_practical": 28,
+        "shots_per_second_20q": 50000,
+        "latency_ms": 1,
+        "autodiff": true
+      },
+      "supports": {
+        "adjoint_differentiation": true,
+        "parameter_shift": true,
+        "finite_diff": true,
+        "noise_models": false,
+        "mid_circuit_measurement": true,
+        "qjit_compilation": true,
+        "jax_backend": true,
+        "torch_backend": true,
+        "tensorflow_backend": true
+      },
+      "cost": {
+        "model": "free",
+        "usd_per_shot": 0
+      },
+      "best_for": ["VQE/QAOA gradient optimization", "Quantum machine learning", "Fast parameter sweeps", "Research and prototyping", "Zero-cost unlimited simulation"],
+      "pennylane_device": "lightning.qubit",
+      "special_features": ["Adjoint method: O(p) memory gradient for p parameters", "Catalyst JIT compiler", "Native JAX/PyTorch integration"]
+    },
+    "pennylane_lightning_gpu": {
+      "id": "pennylane_lightning_gpu",
+      "name": "PennyLane Lightning GPU (CUDA)",
+      "provider": "Xanadu PennyLane",
+      "access_via": ["local NVIDIA GPU", "AWS/GCP GPU instances"],
+      "sdk": ["pennylane", "pennylane-lightning-gpu"],
+      "qubit_count": 30,
+      "topology": "all-to-all (simulated)",
+      "type": "simulator_local_gpu",
+      "metrics": {
+        "simulation_fidelity": 1.0,
+        "max_qubits_practical": 30,
+        "speedup_vs_cpu": "100-1000x on NVIDIA A100",
+        "autodiff": true
+      },
+      "supports": {
+        "adjoint_differentiation": true,
+        "custatevec_backend": true,
+        "multi_gpu": true,
+        "noise_models": false
+      },
+      "cost": {
+        "model": "gpu_instance_cost",
+        "aws_p4d_usd_per_hour": 32.77
+      },
+      "best_for": ["Large-scale VQE", "Quantum ML training", "Deep circuit simulation", "Batch gradient descent over many parameters"],
+      "pennylane_device": "lightning.gpu"
+    },
+    "pennylane_default_mixed": {
+      "id": "pennylane_default_mixed",
+      "name": "PennyLane Default Mixed (Noisy Simulator)",
+      "provider": "Xanadu PennyLane",
+      "access_via": ["local Python"],
+      "sdk": ["pennylane"],
+      "qubit_count": 20,
+      "type": "simulator_noisy",
+      "metrics": {
+        "simulation_fidelity": 1.0,
+        "max_qubits_practical": 20,
+        "density_matrix_simulation": true
+      },
+      "supports": {
+        "noise_channels": ["DepolarizingChannel", "AmplitudeDamping", "PhaseDamping", "BitFlip", "PhaseFlip", "GeneralizedAmplitudeDamping", "ThermalRelaxationError"],
+        "density_matrix": true,
+        "custom_kraus": true,
+        "autodiff_through_noise": true
+      },
+      "cost": { "model": "free" },
+      "best_for": ["Noisy VQE research", "Error mitigation algorithm development", "Realistic hardware noise modeling", "QCTRL noise model testing"],
+      "pennylane_device": "default.mixed"
+    },
+    "qctrl_fire_opal": {
+      "id": "qctrl_fire_opal",
+      "name": "Q-CTRL Fire Opal (Error Suppression Layer)",
+      "provider": "Q-CTRL",
+      "access_via": ["Q-CTRL Cloud", "IBM hardware (overlay)", "Rigetti hardware (overlay)"],
+      "sdk": ["fire_opal", "qiskit (compatible input)"],
+      "type": "error_suppression_layer",
+      "not_a_standalone_backend": true,
+      "description": "Fire Opal is an automated error suppression service that sits between your circuit and IBM/Rigetti hardware. It compiles circuits into hardware-optimized pulse sequences using Q-CTRL's optimal control algorithms.",
+      "compatible_hardware": ["ibm_eagle_r3", "ibm_heron_r1", "rigetti_aspen_m3"],
+      "metrics": {
+        "typical_error_reduction_factor": 10,
+        "max_reported_error_reduction_factor": 10000,
+        "gate_fidelity_improvement_cx_typical": "0.99 → 0.999",
+        "algorithm_success_rate_improvement": "up to 10000x on complex circuits"
+      },
+      "features": {
+        "automated_pulse_optimization": true,
+        "dynamical_decoupling": true,
+        "robust_gate_design": true,
+        "crosstalk_suppression": true,
+        "readout_error_mitigation": true,
+        "no_circuit_modification_needed": true
+      },
+      "cost": {
+        "model": "subscription_plus_hardware",
+        "note": "Q-CTRL Enterprise pricing + underlying hardware costs"
+      },
+      "best_for": ["Any circuit benefiting from lower error rates", "Algorithms near quantum advantage threshold", "Reducing physical-to-logical qubit overhead", "Demonstrating quantum advantage on NISQ hardware"],
+      "documentation": "https://docs.q-ctrl.com/fire-opal",
+      "paper": "arXiv:2211.07680 — 10,000x performance improvement on IBM hardware"
+    },
+    "qctrl_boulder_opal": {
+      "id": "qctrl_boulder_opal",
+      "name": "Q-CTRL Boulder Opal (Optimal Control Engine)",
+      "provider": "Q-CTRL",
+      "access_via": ["Q-CTRL Cloud", "local Python (boulder-opal package)"],
+      "sdk": ["boulder_opal", "pennylane (qctrl plugin)"],
+      "type": "optimal_control_engine",
+      "description": "Boulder Opal is Q-CTRL's professional quantum optimal control toolkit. Used to design robust control pulses for any hardware, suppress decoherence, perform system characterization, and maximize gate fidelity.",
+      "capabilities": {
+        "grape_optimization": true,
+        "robust_control": true,
+        "noise_spectroscopy": true,
+        "hamiltonian_learning": true,
+        "dynamical_decoupling_design": true,
+        "filter_function_analysis": true,
+        "calibration_automation": true,
+        "custom_hardware_models": true,
+        "open_system_simulation": true,
+        "closed_loop_optimization": true
+      },
+      "key_algorithms": {
+        "GRAPE": "Gradient Ascent Pulse Engineering — gradient-based pulse optimization",
+        "CRAB": "Chopped RAndom Basis — randomized pulse parameterization",
+        "dCRAB": "dressed CRAB — improved basis with random frequency sampling",
+        "DRAG": "Derivative Removal via Adiabatic Gate — leakage suppression",
+        "robust_GRAPE": "GRAPE with robustness constraints against Hamiltonian perturbations",
+        "filter_function": "Spectral analysis of DD sequences and pulse sensitivity"
+      },
+      "compatible_hardware": ["any — hardware model specified by user"],
+      "best_for": ["Academic research on new hardware", "Custom pulse design", "Hardware characterization", "Maximizing coherence time", "Designing new qubit architectures"],
+      "documentation": "https://docs.q-ctrl.com/boulder-opal"
+    },
+    "google_cirq_simulator": {
+      "id": "google_cirq_simulator",
+      "name": "Google Cirq / Sycamore Simulator",
+      "provider": "Google Quantum AI",
+      "access_via": ["Google Cloud Quantum Computing Service", "local cirq"],
+      "sdk": ["cirq", "pennylane (cirq plugin)"],
+      "qubit_count_physical": 72,
+      "qubit_count_simulator": 25,
+      "topology": "2d-grid",
+      "native_gates": ["sqrt_iswap", "cz", "phxz", "measure"],
+      "all_to_all": false,
+      "metrics": {
+        "single_qubit_gate_fidelity_avg": 0.9993,
+        "two_qubit_gate_fidelity_avg": 0.9956,
+        "t1_us_avg": 180,
+        "t2_us_avg": 120,
+        "gate_time_single_ns": 25,
+        "gate_time_2q_ns": 32
+      },
+      "supports": {
+        "noise_models": true,
+        "cirq_noise_models": true,
+        "density_matrix": true,
+        "parameterized_circuits": true,
+        "tfq_integration": true
+      },
+      "cost": { "model": "research_partner_access" },
+      "best_for": ["Research access", "TensorFlow Quantum (TFQ) integration", "Fast 2-qubit gates (32ns CZ)"],
+      "pennylane_device": "cirq.simulator OR cirq.google"
+    },
+    "xanadu_x8": {
+      "id": "xanadu_x8",
+      "name": "Xanadu X8 (Photonic)",
+      "provider": "Xanadu",
+      "access_via": ["Xanadu Cloud", "Strawberry Fields SDK"],
+      "sdk": ["strawberry_fields", "pennylane (sf plugin)"],
+      "modes": 8,
+      "type": "photonic_continuous_variable",
+      "topology": "programmable_gaussian_boson_sampling",
+      "metrics": {
+        "squeezing_db": 5.0,
+        "loss_per_mode": 0.15,
+        "sampling_rate_hz": 1000
+      },
+      "supports": {
+        "gaussian_boson_sampling": true,
+        "variational_algorithms_cv": true,
+        "molecular_vibronic_spectra": true
+      },
+      "cost": { "model": "cloud_access" },
+      "best_for": ["Photonic quantum computing", "Graph optimization via GBS", "Quantum chemistry (vibronic spectra)", "Boson sampling experiments"],
+      "pennylane_device": "strawberryfields.remote"
+    }
+  },
+  "pipeline_templates": {
+    "vqe_hybrid": {
+      "name": "VQE Hybrid Pipeline",
+      "description": "Validate on PennyLane, prototype on IBM free tier, refine on IonQ for high fidelity",
+      "stages": [
+        { "stage": 1, "name": "Ansatz design + gradient test", "backend": "pennylane_lightning_qubit", "mode": "series", "purpose": "Free, fast autodiff optimization of circuit parameters" },
+        { "stage": 2, "name": "Noise simulation", "backend": "pennylane_default_mixed", "mode": "series", "purpose": "Verify algorithm robustness under realistic noise" },
+        { "stage": 3, "name": "Hardware prototype", "backend": "ibm_eagle_r3", "mode": "series", "purpose": "First hardware run to check fidelity" },
+        { "stage": 4, "name": "High-fidelity final run", "backend": "ionq_aria_1", "mode": "series", "purpose": "Best 2-qubit gate fidelity for final results" }
+      ]
+    },
+    "benchmark_all_parallel": {
+      "name": "All-Backend Parallel Benchmark",
+      "description": "Run same circuit on all available backends simultaneously for comparison",
+      "stages": [
+        { "stage": 1, "name": "Parallel hardware runs", "backends": ["ibm_eagle_r3", "ionq_aria_1", "rigetti_aspen_m3", "quantinuum_h2"], "mode": "parallel", "purpose": "Statistical comparison of hardware fidelity and queue times" },
+        { "stage": 2, "name": "Classical baseline", "backends": ["pennylane_lightning_qubit", "aws_braket_sv1"], "mode": "parallel", "purpose": "Ideal simulation reference for comparison" }
+      ]
+    },
+    "error_suppression_chain": {
+      "name": "Q-CTRL Error Suppression Chain",
+      "description": "Design optimal pulses → deploy with Fire Opal → verify with simulation",
+      "stages": [
+        { "stage": 1, "name": "Pulse design", "backend": "qctrl_boulder_opal", "mode": "series", "purpose": "Design robust pulses for target hardware" },
+        { "stage": 2, "name": "Simulation validation", "backend": "aws_braket_dm1", "mode": "series", "purpose": "Test optimized pulses under noise model" },
+        { "stage": 3, "name": "Hardware execution with Fire Opal", "backend": "qctrl_fire_opal", "targets": ["ibm_heron_r1"], "mode": "series", "purpose": "Execute on hardware with automatic error suppression" }
+      ]
+    },
+    "qaoa_optimization_pipeline": {
+      "name": "QAOA Production Pipeline",
+      "description": "Classical pre-solve + quantum refinement + hardware execution",
+      "stages": [
+        { "stage": 1, "name": "Classical warm-start", "backend": "classical", "mode": "series", "purpose": "Goemans-Williamson SDP for initial γ,β parameters" },
+        { "stage": 2, "name": "Gradient sweep p=1..5", "backend": "pennylane_lightning_gpu", "mode": "series", "purpose": "GPU-accelerated QAOA depth optimization" },
+        { "stage": 3, "name": "Hardware test p=2", "backends": ["ibm_eagle_r3", "rigetti_aspen_m3"], "mode": "parallel", "purpose": "Compare hardware performance at optimal depth" },
+        { "stage": 4, "name": "Best-result execution", "backend": "auto_select", "mode": "series", "purpose": "Run winning configuration for maximum shots" }
+      ]
+    }
+  }
+}
