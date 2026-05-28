@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NVIDIA TensorFlow Inference Pipeline — QuanV1</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/pages.css">
+  <style>
+    :root {
+      --bg:#0a0a14; --panel:#10101e; --border:#252540;
+      --text:#e2e8f0; --green:#76b900; --orange:#ff6f00;
+      --accent:#76b900; --red:#ef4444; --blue:#3b82f6;
+    }
+    body { background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; margin:0; }
+    .layout { max-width:1300px; margin:0 auto; padding:24px 20px; }
+
+    /* ── Stat bar ── */
+    .stat-bar { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; margin-bottom:28px; }
+    .stat-card { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px 16px; text-align:center; }
+    .stat-card .val { font-size:26px; font-weight:700; color:var(--green); }
+    .stat-card .lbl { font-size:11px; opacity:.55; margin-top:2px; }
+
+    /* ── Section headings ── */
+    h2 { font-size:15px; font-weight:700; color:var(--green); letter-spacing:.05em;
+         text-transform:uppercase; margin:0 0 14px; }
+
+    /* ── Panels ── */
+    .panel { background:var(--panel); border:1px solid var(--border); border-radius:12px;
+             padding:20px; margin-bottom:24px; }
+
+    /* ── Node grid ── */
+    .node-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; }
+    .node-card { background:#141428; border:1px solid var(--border); border-radius:10px; padding:16px; }
+    .node-card.busy { border-color:var(--orange); }
+    .node-card.idle { border-color:var(--green); }
+    .node-card.error { border-color:var(--red); }
+    .node-name { font-weight:700; font-size:13px; }
+    .node-meta { font-size:11px; opacity:.55; margin-top:3px; }
+    .node-badges { margin-top:8px; display:flex; gap:6px; flex-wrap:wrap; }
+    .nbadge { padding:2px 7px; border-radius:4px; font-size:10px; font-weight:700; }
+    .nbadge-gpu  { background:#3b1f6b; color:#c4b5fd; }
+    .nbadge-ram  { background:#1e3a5f; color:#60a5fa; }
+    .nbadge-prec { background:#1a3a2a; color:#34d399; }
+    .nbadge-idle { background:#1a3a1a; color:#4ade80; }
+    .nbadge-busy { background:#3a2000; color:#fb923c; }
+    .nbadge-error{ background:#3a0000; color:#f87171; }
+    .node-queue  { font-size:11px; margin-top:8px; opacity:.7; }
+    .node-del    { margin-top:10px; padding:5px 12px; background:transparent; border:1px solid #444;
+                   color:#aaa; border-radius:6px; cursor:pointer; font-size:11px; }
+    .node-del:hover { background:var(--red); border-color:var(--red); color:#fff; }
+
+    /* ── Forms ── */
+    .form-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px; margin-bottom:12px; }
+    .form-row label { display:block; font-size:11px; opacity:.6; margin-bottom:4px; }
+    .form-row input, .form-row select {
+      width:100%; box-sizing:border-box; background:#0d0d20; border:1px solid var(--border);
+      color:var(--text); border-radius:6px; padding:7px 10px; font-size:12px;
+    }
+    .form-row input:focus, .form-row select:focus { outline:none; border-color:var(--green); }
+    .btn { padding:9px 20px; border:none; border-radius:7px; cursor:pointer; font-size:13px; font-weight:600; }
+    .btn-green  { background:var(--green);  color:#000; }
+    .btn-orange { background:var(--orange); color:#fff; }
+    .btn-blue   { background:var(--blue);   color:#fff; }
+    .btn:hover { opacity:.85; }
+
+    /* ── Job table ── */
+    .job-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .job-table th { text-align:left; padding:7px 10px; opacity:.5; border-bottom:1px solid var(--border); font-weight:600; }
+    .job-table td { padding:7px 10px; border-bottom:1px solid #1a1a30; }
+    .job-table tr:hover td { background:#141428; }
+    .status-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px; }
+    .dot-queued   { background:#fbbf24; }
+    .dot-running  { background:#60a5fa; }
+    .dot-completed{ background:#4ade80; }
+    .dot-failed   { background:#f87171; }
+
+    /* ── Bootstrap notice ── */
+    .notice { background:#0f1f0a; border:1px solid #2d5a1b; border-radius:8px; padding:12px 16px;
+              font-size:12px; color:#86efac; margin-bottom:20px; }
+
+    /* ── Empty state ── */
+    .empty { text-align:center; padding:40px; opacity:.4; font-size:13px; }
+
+    /* ── Toast ── */
+    #toast { position:fixed; bottom:24px; right:24px; background:#1e3a5f; color:#fff;
+             padding:12px 20px; border-radius:8px; font-size:13px; display:none;
+             border-left:4px solid var(--green); z-index:9999; max-width:340px; }
+    #toast.err { background:#3a0000; border-color:var(--red); }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="main-nav">
+    <div class="nav-container">
+      <h1 class="nav-title">QuanV1 — Arkitek Builder</h1>
+      <ul class="nav-menu">
+        <li><a href="/" class="nav-link">🏠 Home</a></li>
+        <li><a href="/cluster-config" class="nav-link">⚙️ Clusters</a></li>
+        <li><a href="/ipxe-boot" class="nav-link">🚀 Boot</a></li>
+        <li><a href="/system-info" class="nav-link">💻 System</a></li>
+        <li><a href="/quantum-school" class="nav-link">🎓 School</a></li>
+        <li><a href="/quantum-analyzer" class="nav-link">🔬 Analyzer</a></li>
+        <li><a href="/quantum-pipeline" class="nav-link">🔗 Pipeline</a></li>
+        <li><a href="/quantum-rag-vault" class="nav-link">🔐 Vault</a></li>
+        <li><a href="/quantum-vortex" class="nav-link">🌀 Vortex</a></li>
+        <li><a href="/nvidia-pipeline" class="nav-link active">🟢 NVIDIA</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="layout">
+    <h1 style="font-size:22px; margin-bottom:6px;">🟢 NVIDIA TensorFlow Inference Pipeline</h1>
+    <p style="opacity:.5; font-size:13px; margin-bottom:24px;">
+      Register GPU nodes, distribute TensorFlow inference jobs across the cluster, and monitor throughput in real time.
+    </p>
+
+    <% if (nodes.length === 0) { %>
+      <div class="notice">
+        💡 No GPU nodes registered yet. Add a TensorFlow cluster in
+        <a href="/cluster-config" style="color:#86efac;">Cluster Config</a>
+        and click <strong>Bootstrap from Clusters</strong> below, or register nodes manually.
+      </div>
+    <% } %>
+
+    <!-- ── Stat bar ── -->
+    <div class="stat-bar">
+      <div class="stat-card"><div class="val"><%= report.totalNodes %></div><div class="lbl">GPU Nodes</div></div>
+      <div class="stat-card"><div class="val" style="color:#4ade80"><%= report.idleNodes %></div><div class="lbl">Idle</div></div>
+      <div class="stat-card"><div class="val" style="color:var(--orange)"><%= report.busyNodes %></div><div class="lbl">Busy</div></div>
+      <div class="stat-card"><div class="val"><%= report.totalVramGB %></div><div class="lbl">Total VRAM (GB)</div></div>
+      <div class="stat-card"><div class="val"><%= report.totalJobs %></div><div class="lbl">Total Jobs</div></div>
+      <div class="stat-card"><div class="val" style="color:#fbbf24"><%= report.queuedJobs %></div><div class="lbl">Queued</div></div>
+      <div class="stat-card"><div class="val" style="color:#60a5fa"><%= report.runningJobs %></div><div class="lbl">Running</div></div>
+      <div class="stat-card"><div class="val" style="color:#4ade80"><%= report.completedJobs %></div><div class="lbl">Completed</div></div>
+      <div class="stat-card">
+        <div class="val"><%= report.avgLatencyMs !== null ? report.avgLatencyMs + 'ms' : '—' %></div>
+        <div class="lbl">Avg Latency</div>
+      </div>
+    </div>
+
+    <!-- ── Register / Bootstrap ── -->
+    <div class="panel">
+      <h2>Register GPU Node</h2>
+      <div class="form-row">
+        <div>
+          <label>Node Name *</label>
+          <input id="nodeName" placeholder="e.g., gpu-node-01">
+        </div>
+        <div>
+          <label>TF-Serving Endpoint *</label>
+          <input id="nodeEndpoint" placeholder="http://host:8501">
+        </div>
+        <div>
+          <label>GPU Model</label>
+          <select id="nodeGpu">
+            <% Object.entries(gpuTiers).forEach(([k, v]) => { %>
+              <option value="<%= k %>"><%= k %> (<%= v.vram %>GB VRAM)</option>
+            <% }) %>
+          </select>
+        </div>
+        <div>
+          <label>GPU Count</label>
+          <input id="nodeGpuCount" type="number" min="1" max="16" value="1">
+        </div>
+        <div>
+          <label>VM RAM</label>
+          <input id="nodeVmRam" placeholder="e.g., 64GB">
+        </div>
+        <div>
+          <label>Precision</label>
+          <select id="nodePrecision">
+            <% precisionModes.forEach(p => { %>
+              <option value="<%= p %>" <%= p === 'fp16' ? 'selected' : '' %>><%= p %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-green" onclick="registerNode()">＋ Register Node</button>
+      &nbsp;
+      <button class="btn btn-blue" onclick="bootstrapNodes()">⚡ Bootstrap from TF Clusters</button>
+    </div>
+
+    <!-- ── Node grid ── -->
+    <div class="panel">
+      <h2>Active GPU Nodes</h2>
+      <div id="nodeGrid" class="node-grid">
+        <% if (nodes.length === 0) { %>
+          <div class="empty">No nodes registered. Add one above.</div>
+        <% } %>
+        <% nodes.forEach(n => { %>
+          <div class="node-card <%= n.status %>" id="nc-<%= n.id %>">
+            <div class="node-name">🖥 <%= n.name %></div>
+            <div class="node-meta"><%= n.endpoint %></div>
+            <div class="node-badges">
+              <span class="nbadge nbadge-gpu"><%= n.gpuModel %> ×<%= n.gpuCount %></span>
+              <% if (n.vmRamGB) { %><span class="nbadge nbadge-ram"><%= n.vmRamGB %>GB RAM</span><% } %>
+              <span class="nbadge nbadge-prec"><%= n.precision %></span>
+              <span class="nbadge nbadge-<%= n.status %>"><%= n.status.toUpperCase() %></span>
+            </div>
+            <div class="node-queue">VRAM: <%= n.totalVramGB %>GB &nbsp;|&nbsp; Queue: <%= n.queueDepth %></div>
+            <button class="node-del" onclick="deleteNode('<%= n.id %>')">Remove</button>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+
+    <!-- ── Submit inference job ── -->
+    <div class="panel">
+      <h2>Submit Inference Job</h2>
+      <div class="form-row">
+        <div>
+          <label>Model Name *</label>
+          <input id="jobModel" placeholder="e.g., resnet50, bert-large">
+        </div>
+        <div>
+          <label>Model Version</label>
+          <input id="jobVersion" placeholder="latest" value="latest">
+        </div>
+        <div>
+          <label>Batch Size (auto if blank)</label>
+          <input id="jobBatch" type="number" min="1" max="256" placeholder="auto">
+        </div>
+        <div>
+          <label>Model Size (GB)</label>
+          <input id="jobModelSize" type="number" min="0.1" step="0.1" value="1" placeholder="1">
+        </div>
+        <div>
+          <label>Precision Override</label>
+          <select id="jobPrecision">
+            <option value="">— node default —</option>
+            <% precisionModes.forEach(p => { %>
+              <option value="<%= p %>"><%= p %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div>
+          <label>Load-Balance Strategy</label>
+          <select id="jobStrategy">
+            <% Object.entries(lbStrategies).forEach(([k, desc]) => { %>
+              <option value="<%= k %>"><%= k.replace(/_/g,' ') %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-orange" onclick="submitJob()">▶ Submit Inference Job</button>
+    </div>
+
+    <!-- ── Job table ── -->
+    <div class="panel">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h2 style="margin:0;">Recent Jobs</h2>
+        <button class="btn btn-blue" style="font-size:11px; padding:5px 14px;" onclick="refreshJobs()">↺ Refresh</button>
+      </div>
+      <table class="job-table">
+        <thead>
+          <tr>
+            <th>Status</th><th>Model</th><th>Version</th><th>Node</th>
+            <th>Batch</th><th>Precision</th><th>Strategy</th><th>Latency</th><th>Created</th>
+          </tr>
+        </thead>
+        <tbody id="jobBody">
+          <% if (jobs.length === 0) { %>
+            <tr><td colspan="9" class="empty">No jobs yet. Submit one above.</td></tr>
+          <% } %>
+          <% jobs.slice().reverse().forEach(j => { %>
+            <tr>
+              <td><span class="status-dot dot-<%= j.status %>"></span><%= j.status %></td>
+              <td><%= j.modelName %></td>
+              <td><%= j.modelVersion %></td>
+              <td style="font-size:11px; opacity:.7"><%= j.nodeName %></td>
+              <td><%= j.batchSize %></td>
+              <td><%= j.precision %></td>
+              <td style="font-size:10px; opacity:.6"><%= j.strategy %></td>
+              <td><%= j.latencyMs !== null ? j.latencyMs + 'ms' : '—' %></td>
+              <td style="font-size:10px; opacity:.5"><%= new Date(j.createdAt).toLocaleTimeString() %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── GPU Tier reference ── -->
+    <div class="panel">
+      <h2>GPU Tier Reference</h2>
+      <table class="job-table">
+        <thead>
+          <tr><th>GPU</th><th>VRAM (GB)</th><th>FP16 TFLOPs</th><th>INT8 TOPs</th><th>NVLink</th></tr>
+        </thead>
+        <tbody>
+          <% Object.entries(gpuTiers).forEach(([name, spec]) => { %>
+            <tr>
+              <td style="font-weight:700; color:var(--green)"><%= name %></td>
+              <td><%= spec.vram %></td>
+              <td><%= spec.fp16_tflops %></td>
+              <td><%= spec.int8_tops || '—' %></td>
+              <td><%= spec.nvlink ? '✅' : '—' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    function toast(msg, err = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = err ? 'err' : '';
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 4000);
+    }
+
+    async function registerNode() {
+      const body = {
+        name:      document.getElementById('nodeName').value.trim(),
+        endpoint:  document.getElementById('nodeEndpoint').value.trim(),
+        gpuModel:  document.getElementById('nodeGpu').value,
+        gpuCount:  parseInt(document.getElementById('nodeGpuCount').value, 10) || 1,
+        vmRam:     document.getElementById('nodeVmRam').value.trim(),
+        precision: document.getElementById('nodePrecision').value,
+      };
+      if (!body.name || !body.endpoint) { toast('Name and endpoint are required', true); return; }
+      try {
+        const r = await fetch('/api/nvidia/nodes', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+        });
+        const d = await r.json();
+        if (!r.ok) { toast(d.error, true); return; }
+        toast('Node registered: ' + d.name);
+        setTimeout(() => location.reload(), 800);
+      } catch (e) { toast(e.message, true); }
+    }
+
+    async function deleteNode(id) {
+      if (!confirm('Remove this node from the pipeline?')) return;
+      try {
+        const r = await fetch('/api/nvidia/nodes/' + id, { method: 'DELETE' });
+        if (!r.ok) { const d = await r.json(); toast(d.error, true); return; }
+        toast('Node removed');
+        setTimeout(() => location.reload(), 600);
+      } catch (e) { toast(e.message, true); }
+    }
+
+    async function bootstrapNodes() {
+      try {
+        const r = await fetch('/api/nvidia/bootstrap', { method: 'POST' });
+        const d = await r.json();
+        toast('Bootstrapped ' + d.bootstrapped + ' node(s) from TF cluster links');
+        setTimeout(() => location.reload(), 800);
+      } catch (e) { toast(e.message, true); }
+    }
+
+    async function submitJob() {
+      const body = {
+        modelName:    document.getElementById('jobModel').value.trim(),
+        modelVersion: document.getElementById('jobVersion').value.trim() || 'latest',
+        batchSize:    parseInt(document.getElementById('jobBatch').value, 10) || undefined,
+        modelSizeGB:  parseFloat(document.getElementById('jobModelSize').value) || 1,
+        precision:    document.getElementById('jobPrecision').value || undefined,
+        strategy:     document.getElementById('jobStrategy').value,
+      };
+      if (!body.modelName) { toast('Model name is required', true); return; }
+      try {
+        const r = await fetch('/api/nvidia/jobs', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+        });
+        const d = await r.json();
+        if (!r.ok) { toast(d.error, true); return; }
+        toast('Job queued on ' + d.nodeName + ' (batch=' + d.batchSize + ')');
+        setTimeout(() => refreshJobs(), 1200);
+      } catch (e) { toast(e.message, true); }
+    }
+
+    async function refreshJobs() {
+      try {
+        const r = await fetch('/api/nvidia/jobs');
+        const jobs = await r.json();
+        const tbody = document.getElementById('jobBody');
+        if (jobs.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="9" class="empty">No jobs yet. Submit one above.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = jobs.slice().reverse().map(j => `
+          <tr>
+            <td><span class="status-dot dot-${j.status}"></span>${j.status}</td>
+            <td>${j.modelName}</td>
+            <td>${j.modelVersion}</td>
+            <td style="font-size:11px;opacity:.7">${j.nodeName}</td>
+            <td>${j.batchSize}</td>
+            <td>${j.precision}</td>
+            <td style="font-size:10px;opacity:.6">${j.strategy}</td>
+            <td>${j.latencyMs !== null ? j.latencyMs + 'ms' : '—'}</td>
+            <td style="font-size:10px;opacity:.5">${new Date(j.createdAt).toLocaleTimeString()}</td>
+          </tr>`).join('');
+      } catch (e) { toast(e.message, true); }
+    }
+  </script>
+</body>
+</html>

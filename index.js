@@ -17,6 +17,7 @@ const {
   harmonise369, SOLFEGGIO, BASE_TRIAD, CARRIER_HZ, reverseEngineer,
   reinventTopology, quantumPath, classicalPath, mergeOutcomes,
 } = require('./harmonic-engine');
+const nvidiaPipeline       = require('./nvidia-pipeline');
 
 // Load static JSON corpora
 function loadJSON(file) {
@@ -142,7 +143,7 @@ app.get('/api/cluster-links', (req, res) => {
 
 // API endpoint to create a new cluster link
 app.post('/api/cluster-links', (req, res) => {
-  const { name, endpoint, credentials, builderType } = req.body;
+  const { name, endpoint, credentials, builderType, vmRam } = req.body;
   
   if (!name || !endpoint) {
     return res.status(400).json({ error: 'Name and endpoint are required' });
@@ -161,6 +162,7 @@ app.post('/api/cluster-links', (req, res) => {
     endpoint,
     credentials: credentials || '',
     builderType: builderType || 'generic',
+    vmRam: vmRam || '',
     createdAt: new Date().toISOString(),
     status: 'active'
   };
@@ -189,7 +191,7 @@ app.delete('/api/cluster-links/:id', (req, res) => {
 // API endpoint to update a cluster link
 app.put('/api/cluster-links/:id', (req, res) => {
   const { id } = req.params;
-  const { name, endpoint, credentials, builderType } = req.body;
+  const { name, endpoint, credentials, builderType, vmRam } = req.body;
 
   if (!name || !endpoint) {
     return res.status(400).json({ error: 'Name and endpoint are required' });
@@ -213,6 +215,7 @@ app.put('/api/cluster-links/:id', (req, res) => {
     endpoint,
     credentials: credentials || '',
     builderType: builderType || 'generic',
+    vmRam: vmRam || '',
     updatedAt: new Date().toISOString()
   };
 
@@ -257,6 +260,7 @@ app.post('/api/cluster-links/import', (req, res) => {
       endpoint: item.endpoint,
       credentials: '',
       builderType: item.builderType || 'generic',
+      vmRam: item.vmRam || '',
       createdAt: new Date().toISOString(),
       status: 'active'
     });
@@ -703,6 +707,90 @@ app.post('/api/nonagonal/reasoning', (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NVIDIA TensorFlow INFERENCE PIPELINE routes
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Page
+app.get('/nvidia-pipeline', (req, res) => {
+  // Bootstrap nodes from TensorFlow cluster links on every page load
+  const clusterLinks = readClusterLinks();
+  nvidiaPipeline.bootstrapFromClusterLinks(clusterLinks);
+  res.render('nvidia-pipeline', {
+    report:      nvidiaPipeline.clusterReport(),
+    nodes:       nvidiaPipeline.listNodes(),
+    jobs:        nvidiaPipeline.listJobs(),
+    gpuTiers:    nvidiaPipeline.GPU_TIERS,
+    lbStrategies: nvidiaPipeline.LB_STRATEGIES,
+    precisionModes: nvidiaPipeline.PRECISION_MODES,
+  });
+});
+
+// Cluster health report
+app.get('/api/nvidia/report', (req, res) => {
+  res.json(nvidiaPipeline.clusterReport());
+});
+
+// List nodes
+app.get('/api/nvidia/nodes', (req, res) => {
+  res.json(nvidiaPipeline.listNodes());
+});
+
+// Register a new GPU node
+app.post('/api/nvidia/nodes', (req, res) => {
+  const { name, endpoint, gpuModel, gpuCount, vmRam, precision } = req.body;
+  try {
+    const node = nvidiaPipeline.registerNode({ name, endpoint, gpuModel, gpuCount, vmRam, precision });
+    res.status(201).json(node);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Deregister a node
+app.delete('/api/nvidia/nodes/:id', (req, res) => {
+  const removed = nvidiaPipeline.deregisterNode(req.params.id);
+  if (!removed) return res.status(404).json({ error: 'Node not found' });
+  res.json({ message: 'Node removed' });
+});
+
+// List jobs
+app.get('/api/nvidia/jobs', (req, res) => {
+  const { status } = req.query;
+  res.json(nvidiaPipeline.listJobs(status || null));
+});
+
+// Submit an inference job
+app.post('/api/nvidia/jobs', (req, res) => {
+  const { modelName, modelVersion, batchSize, precision, strategy, inputShape, modelSizeGB } = req.body;
+  try {
+    const job = nvidiaPipeline.createInferenceJob({
+      modelName, modelVersion, batchSize, precision, strategy, inputShape, modelSizeGB,
+    });
+    // Simulate async execution: start immediately, complete after a mock latency
+    nvidiaPipeline.startJob(job.id);
+    const mockLatency = Math.round(10 + Math.random() * 90); // 10–100 ms mock
+    setTimeout(() => nvidiaPipeline.completeJob(job.id, true, mockLatency), mockLatency);
+    res.status(202).json(job);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Get a specific job
+app.get('/api/nvidia/jobs/:id', (req, res) => {
+  const job = nvidiaPipeline.getJob(req.params.id);
+  if (!job) return res.status(404).json({ error: 'Job not found' });
+  res.json(job);
+});
+
+// Bootstrap nodes from existing TensorFlow cluster links
+app.post('/api/nvidia/bootstrap', (req, res) => {
+  const clusterLinks = readClusterLinks();
+  const registered = nvidiaPipeline.bootstrapFromClusterLinks(clusterLinks);
+  res.json({ bootstrapped: registered.length, nodes: registered });
 });
 
 // 404 handler
