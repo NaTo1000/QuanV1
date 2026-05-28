@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Vortex — QuanV1</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/pages.css">
+  <style>
+    :root {
+      --logic:#3b82f6; --bayes:#10b981; --quantum:#8b5cf6; --pattern:#f59e0b;
+      --bg:#0a0a1a; --panel:#111128; --border:#2a2a4a; --text:#e2e8f0;
+    }
+    body { background:var(--bg); color:var(--text); font-family:'Courier New',monospace; margin:0; }
+    .vortex-layout { display:grid; grid-template-columns:1fr 420px; grid-template-rows:auto 1fr auto; min-height:100vh; gap:0; }
+    /* Canvas area */
+    #vortex-canvas { display:block; width:100%; background:var(--bg); cursor:crosshair; }
+    .canvas-wrap { position:relative; background:var(--bg); overflow:hidden; }
+    .canvas-wrap canvas { display:block; }
+    /* Right panel */
+    .side-panel { background:var(--panel); border-left:1px solid var(--border); overflow-y:auto; display:flex; flex-direction:column; gap:0; }
+    .panel-section { padding:14px 16px; border-bottom:1px solid var(--border); }
+    .panel-section h3 { margin:0 0 10px; font-size:13px; text-transform:uppercase; letter-spacing:.08em; opacity:.6; }
+    /* Brain cards */
+    .brain-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .brain-card { border-radius:8px; padding:10px; border:1px solid var(--border); }
+    .brain-card.logic   { border-color:var(--logic); }
+    .brain-card.bayes   { border-color:var(--bayes); }
+    .brain-card.quantum { border-color:var(--quantum); }
+    .brain-card.pattern { border-color:var(--pattern); }
+    .brain-name { font-size:11px; font-weight:700; text-transform:uppercase; margin-bottom:4px; }
+    .brain-conf { font-size:20px; font-weight:700; }
+    .brain-hyp  { font-size:10px; opacity:.6; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:140px; }
+    /* Matrix */
+    #matrix-canvas { display:block; }
+    /* Deliberation log */
+    .deliberation-log { font-size:11px; max-height:160px; overflow-y:auto; }
+    .deliberation-log .entry { padding:4px 0; border-bottom:1px solid var(--border); }
+    .deliberation-log .entry b { color:#a78bfa; }
+    /* Query box */
+    .query-section { padding:12px 16px; background:var(--panel); border-top:1px solid var(--border); }
+    .query-section input { width:100%; box-sizing:border-box; background:#0d0d22; border:1px solid var(--border); color:var(--text); padding:10px 12px; border-radius:6px; font-family:inherit; font-size:13px; }
+    .query-section button { margin-top:8px; width:100%; padding:10px; background:#6d28d9; border:none; color:#fff; border-radius:6px; cursor:pointer; font-size:13px; font-weight:700; transition:background .2s; }
+    .query-section button:hover { background:#7c3aed; }
+    /* Symbiosis banner */
+    #symbiosis-banner { background:linear-gradient(90deg,#1e1b4b,#312e81,#1e1b4b); padding:10px 20px; text-align:center; font-size:13px; letter-spacing:.05em; border-bottom:1px solid var(--border); }
+    #symbiosis-banner .winner { color:#fbbf24; font-weight:700; font-size:15px; }
+    /* Harmonic bar */
+    .harmonic-bars { display:flex; gap:3px; align-items:flex-end; height:40px; }
+    .harmonic-bar { flex:1; background:#6d28d9; border-radius:2px 2px 0 0; transition:height .3s; min-height:2px; }
+    /* Consensus gauge */
+    .gauge-row { display:flex; align-items:center; gap:10px; margin-top:4px; }
+    .gauge-track { flex:1; height:6px; background:#1e1e3f; border-radius:3px; overflow:hidden; }
+    .gauge-fill  { height:100%; background:linear-gradient(90deg,#6d28d9,#22d3ee); border-radius:3px; transition:width .4s; }
+    .gauge-label { font-size:11px; opacity:.7; white-space:nowrap; }
+    /* Prediction quality */
+    .pq-score { font-size:28px; font-weight:900; background:linear-gradient(135deg,#f472b6,#a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    /* Spinner */
+    .spin { animation:spin 1s linear infinite; display:inline-block; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    /* Overlay loader */
+    #loading-overlay { position:fixed; inset:0; background:rgba(10,10,26,.85); display:flex; align-items:center; justify-content:center; z-index:999; flex-direction:column; gap:12px; }
+    #loading-overlay.hidden { display:none; }
+    #loading-overlay p { color:#a78bfa; font-size:14px; }
+    /* 369 badge */
+    .badge-369 { display:inline-block; background:#f59e0b22; color:#fbbf24; border:1px solid #f59e0b55; border-radius:4px; padding:1px 6px; font-size:10px; font-weight:700; margin-left:4px; }
+  </style>
+</head>
+<body>
+
+<nav class="main-nav">
+  <div class="nav-container">
+    <h1 class="nav-title">QuanV1</h1>
+    <ul class="nav-menu">
+      <li><a href="/" class="nav-link">🏠 Home</a></li>
+      <li><a href="/cluster-config" class="nav-link">⚙️ Clusters</a></li>
+      <li><a href="/ipxe-boot" class="nav-link">🚀 Boot</a></li>
+      <li><a href="/system-info" class="nav-link">💻 System</a></li>
+      <li><a href="/quantum-school" class="nav-link">🎓 School</a></li>
+      <li><a href="/quantum-analyzer" class="nav-link">🔬 Analyzer</a></li>
+      <li><a href="/quantum-pipeline" class="nav-link">🔗 Pipeline</a></li>
+      <li><a href="/quantum-rag-vault" class="nav-link">🔐 Vault</a></li>
+      <li><a href="/quantum-vortex" class="nav-link active">🌀 Vortex</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div id="loading-overlay" class="hidden">
+  <div style="font-size:32px;" class="spin">🌀</div>
+  <p>Running Quad-Brain Inference…</p>
+</div>
+
+<!-- Symbiosis banner -->
+<div id="symbiosis-banner">
+  Predictive Symbiosis: <span class="winner" id="banner-winner">awaiting query…</span>
+  &nbsp;|&nbsp; Confidence: <span id="banner-conf">—</span>
+  &nbsp;|&nbsp; Consensus: <span id="banner-cons">—</span>
+  &nbsp;|&nbsp; Entropy: <span id="banner-ent">—</span>
+  &nbsp;<span class="badge-369">369Hz</span>
+</div>
+
+<div class="vortex-layout">
+  <!-- Canvas -->
+  <div class="canvas-wrap">
+    <canvas id="vortex-canvas"></canvas>
+  </div>
+
+  <!-- Side panel -->
+  <div class="side-panel">
+
+    <!-- Brain cards -->
+    <div class="panel-section">
+      <h3>🧠 Quad Brain Status</h3>
+      <div class="brain-grid">
+        <div class="brain-card logic">
+          <div class="brain-name" style="color:var(--logic)">Logic</div>
+          <div class="brain-conf" id="logic-conf" style="color:var(--logic)">—</div>
+          <div class="brain-hyp" id="logic-hyp">deductive</div>
+        </div>
+        <div class="brain-card bayes">
+          <div class="brain-name" style="color:var(--bayes)">Bayes</div>
+          <div class="brain-conf" id="bayes-conf" style="color:var(--bayes)">—</div>
+          <div class="brain-hyp" id="bayes-hyp">probabilistic</div>
+        </div>
+        <div class="brain-card quantum">
+          <div class="brain-name" style="color:var(--quantum)">Quantum</div>
+          <div class="brain-conf" id="quantum-conf" style="color:var(--quantum)">—</div>
+          <div class="brain-hyp" id="quantum-hyp">superposition</div>
+        </div>
+        <div class="brain-card pattern">
+          <div class="brain-name" style="color:var(--pattern)">Pattern</div>
+          <div class="brain-conf" id="pattern-conf" style="color:var(--pattern)">—</div>
+          <div class="brain-hyp" id="pattern-hyp">stochastic</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consensus gauge -->
+    <div class="panel-section">
+      <h3>📐 8×8 OctoMatrix Consensus</h3>
+      <div class="gauge-row">
+        <div class="gauge-track"><div class="gauge-fill" id="cons-fill" style="width:0%"></div></div>
+        <div class="gauge-label" id="cons-pct">0%</div>
+      </div>
+      <div class="gauge-row" style="margin-top:8px;">
+        <div class="gauge-track"><div class="gauge-fill" id="pq-fill" style="width:0%; background:linear-gradient(90deg,#f472b6,#fbbf24);"></div></div>
+        <div class="gauge-label" id="pq-pct">PQ 0%</div>
+      </div>
+    </div>
+
+    <!-- 8×8 matrix heatmap -->
+    <div class="panel-section">
+      <h3>🔢 Octo Correlation Matrix</h3>
+      <canvas id="matrix-canvas" width="388" height="180"></canvas>
+    </div>
+
+    <!-- 369Hz harmonic bars -->
+    <div class="panel-section">
+      <h3>🎵 369Hz Harmonic Weights <span class="badge-369">carrier</span></h3>
+      <div class="harmonic-bars" id="harmonic-bars">
+        <!-- filled by JS -->
+      </div>
+      <div style="font-size:10px; opacity:.5; margin-top:4px;" id="harmonic-axis">—</div>
+    </div>
+
+    <!-- Deliberation log -->
+    <div class="panel-section" style="flex:1;">
+      <h3>💬 Deliberation Log</h3>
+      <div class="deliberation-log" id="delib-log">
+        <div class="entry" style="opacity:.4;">Awaiting first query…</div>
+      </div>
+    </div>
+
+    <!-- Query input -->
+    <div class="query-section">
+      <input type="text" id="query-input" placeholder="Query all 4 brains… (e.g. 'Grover algorithm noise')" />
+      <button onclick="runBrainQuery()">⚡ Run Quad-Brain Inference</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Canvas vortex renderer ────────────────────────────────────────────────────
+const canvas = document.getElementById('vortex-canvas');
+const ctx = canvas.getContext('2d');
+
+let vortexState = null;
+let animFrame = null;
+let t = 0;
+
+const BRAIN_COLORS = ['#3b82f6','#93c5fd','#10b981','#6ee7b7','#8b5cf6','#c4b5fd','#f59e0b','#fcd34d'];
+const SOLFEGGIO_HZ = [396,417,528,639,741,852,963];
+
+function resizeCanvas() {
+  const wrap = canvas.parentElement;
+  canvas.width  = wrap.clientWidth;
+  canvas.height = Math.max(400, window.innerHeight - 130);
+}
+window.addEventListener('resize', () => { resizeCanvas(); });
+resizeCanvas();
+
+function drawVortex() {
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2;
+  const R  = Math.min(W, H) * 0.38;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Background radial gradient
+  const radGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.5);
+  radGrad.addColorStop(0,   'rgba(109,40,217,0.12)');
+  radGrad.addColorStop(0.5, 'rgba(10,10,26,0.6)');
+  radGrad.addColorStop(1,   'rgba(10,10,26,0)');
+  ctx.fillStyle = radGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid rings
+  for (let r = R * 0.2; r <= R * 1.1; r += R * 0.15) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(109,40,217,0.12)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // 8 channel arms
+  const channels = vortexState ? vortexState.channels : defaultChannels();
+  channels.forEach((ch, i) => {
+    const baseAngle = ch.angle + t * (ch.rotating ? 0.4 : -0.15) * (ch.amplitude + 0.1);
+    const armR = R * Math.max(0.05, ch.radius);
+
+    // Spiral arm (3 loops)
+    ctx.beginPath();
+    for (let s = 0; s <= 200; s++) {
+      const frac  = s / 200;
+      const angle = baseAngle + frac * Math.PI * 6 * (ch.type === 'adversarial' ? -1 : 1);
+      const r     = armR * frac * (1 + 0.1 * Math.sin(frac * 12 + t * 3));
+      const px = cx + r * Math.cos(angle);
+      const py = cy + r * Math.sin(angle);
+      if (s === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    const grad = ctx.createLinearGradient(cx, cy, cx + armR, cy);
+    grad.addColorStop(0, ch.color + '00');
+    grad.addColorStop(1, ch.color + (ch.type === 'adversarial' ? '55' : 'cc'));
+    ctx.strokeStyle = grad;
+    ctx.lineWidth   = ch.type === 'primary' ? 2 : 1;
+    ctx.stroke();
+
+    // Node dot at arm tip
+    const tipAngle = baseAngle + Math.PI * 6;
+    const tx = cx + armR * Math.cos(tipAngle);
+    const ty = cy + armR * Math.sin(tipAngle);
+    ctx.beginPath();
+    ctx.arc(tx, ty, ch.type === 'primary' ? 5 : 3, 0, Math.PI * 2);
+    ctx.fillStyle = ch.color;
+    ctx.fill();
+
+    // Label
+    if (ch.type === 'primary') {
+      ctx.font = '11px Courier New';
+      ctx.fillStyle = ch.color + 'cc';
+      ctx.fillText(ch.brain.replace('Brain',''), tx + 7, ty + 4);
+    }
+  });
+
+  // Centre collapse indicator
+  const cons = vortexState ? vortexState.consensus : 0;
+  const colR = R * 0.08 * (1 + 0.5 * Math.sin(t * 4));
+  const colGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, colR);
+  colGrad.addColorStop(0, cons > 0.7 ? '#fbbf24ff' : '#8b5cf6ff');
+  colGrad.addColorStop(1, '#00000000');
+  ctx.beginPath();
+  ctx.arc(cx, cy, colR, 0, Math.PI * 2);
+  ctx.fillStyle = colGrad;
+  ctx.fill();
+
+  // 369 text at centre
+  ctx.font = 'bold 14px Courier New';
+  ctx.fillStyle = cons > 0.7 ? '#fbbf24' : '#a78bfa';
+  ctx.textAlign = 'center';
+  ctx.fillText('369', cx, cy + 5);
+  ctx.textAlign = 'left';
+
+  // Winner label
+  if (vortexState && vortexState.winner !== 'computing') {
+    ctx.font = '12px Courier New';
+    ctx.fillStyle = '#fbbf2488';
+    ctx.textAlign = 'center';
+    ctx.fillText(`↓ ${vortexState.winner}`, cx, cy + R * 0.95);
+    ctx.textAlign = 'left';
+  }
+
+  t += 0.016;
+  animFrame = requestAnimationFrame(drawVortex);
+}
+
+function defaultChannels() {
+  return Array.from({length:8}, (_,i) => ({
+    brain: ['LogicBrain','LogicBrain','BayesBrain','BayesBrain','QuantumBrain','QuantumBrain','PatternBrain','PatternBrain'][i],
+    angle: i * Math.PI / 4,
+    radius: 0.3,
+    amplitude: 0.3,
+    type: i % 2 === 0 ? 'primary' : 'adversarial',
+    rotating: i % 2 === 0,
+    color: BRAIN_COLORS[i],
+  }));
+}
+
+// ── 8×8 Matrix heatmap ────────────────────────────────────────────────────────
+function drawMatrix(matrix) {
+  const mc = document.getElementById('matrix-canvas');
+  const mx = mc.getContext('2d');
+  const W = mc.width, H = mc.height;
+  const cell = Math.floor(Math.min(W, H) / 8);
+  mx.clearRect(0, 0, W, H);
+  const labels = ['L-P','L-A','Ba-P','Ba-A','Q-P','Q-A','Pa-P','Pa-A'];
+
+  if (!matrix) return;
+  for (let i = 0; i < 8; i++) {
+    for (let j = 0; j < 8; j++) {
+      const v = matrix[i]?.[j] || 0;
+      const r = i === j ? 255 : Math.round(v * 100);
+      const g = i === j ? 200 : Math.round(v * 50);
+      const b = i === j ? 100 : Math.round(v * 255);
+      mx.fillStyle = `rgb(${r},${g},${b})`;
+      mx.fillRect(j * cell, i * cell, cell - 1, cell - 1);
+    }
+  }
+  // Axis labels
+  mx.font = '8px Courier New';
+  mx.fillStyle = '#a0a0c0';
+  for (let i = 0; i < 8; i++) {
+    mx.fillText(labels[i], i * cell + 1, H - 2);
+    mx.fillText(labels[i].slice(0,3), W - 22, i * cell + 10);
+  }
+}
+
+// ── Harmonic bars ─────────────────────────────────────────────────────────────
+function renderHarmonicBars(weights) {
+  const container = document.getElementById('harmonic-bars');
+  container.innerHTML = '';
+  if (!weights || !weights.length) return;
+  const maxW = Math.max(...weights.map(w => Math.abs(w.harmonicWeight || 0)), 0.001);
+  weights.forEach((w, i) => {
+    const bar = document.createElement('div');
+    bar.className = 'harmonic-bar';
+    const pct = Math.round((Math.abs(w.harmonicWeight || 0) / maxW) * 100);
+    bar.style.height = pct + '%';
+    bar.style.background = w.is369axis ? '#f59e0b' : '#6d28d9';
+    bar.title = `${w.snappedHz}Hz (dr${w.digitalRoot})`;
+    container.appendChild(bar);
+  });
+}
+
+// ── Brain query ───────────────────────────────────────────────────────────────
+async function runBrainQuery() {
+  const q = document.getElementById('query-input').value.trim();
+  if (!q) return;
+
+  document.getElementById('loading-overlay').classList.remove('hidden');
+
+  try {
+    // 1 — Quad-brain inference
+    const brainRes = await fetch('/api/brain/query', {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ query: q }),
+    }).then(r => r.json());
+
+    // 2 — Harmonic parallel run on the first brain's vector
+    const vec = brainRes.brains?.[0]?.vector || [0.5,0.4,0.3,0.2,0.1,0.1,0.05,0.05];
+    const harmRes = await fetch('/api/harmonic/parallel', {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ vector: vec }),
+    }).then(r => r.json());
+
+    // Update vortex state
+    vortexState = brainRes.vortexState;
+
+    // Update banner
+    const ps = brainRes.predictiveSymbiosis;
+    document.getElementById('banner-winner').textContent = ps.winner;
+    document.getElementById('banner-conf').textContent   = (ps.confidence * 100).toFixed(1) + '%';
+    document.getElementById('banner-cons').textContent   = (ps.consensusStrength * 100).toFixed(1) + '%';
+    document.getElementById('banner-ent').textContent    = ps.stochasticEntropy?.toFixed(3) || '—';
+
+    // Update brain cards
+    const names = ['logic','bayes','quantum','pattern'];
+    brainRes.brains.forEach((b, i) => {
+      document.getElementById(names[i] + '-conf').textContent = (b.confidence * 100).toFixed(0) + '%';
+      document.getElementById(names[i] + '-hyp').textContent  = b.hypothesis;
+    });
+
+    // Consensus gauges
+    const consVal = ps.consensusStrength * 100;
+    document.getElementById('cons-fill').style.width = consVal + '%';
+    document.getElementById('cons-pct').textContent  = consVal.toFixed(1) + '%';
+    const pqVal = ps.predictionQuality * 100;
+    document.getElementById('pq-fill').style.width = pqVal + '%';
+    document.getElementById('pq-pct').textContent  = 'PQ ' + pqVal.toFixed(1) + '%';
+
+    // Matrix
+    drawMatrix(brainRes.octoMatrix);
+
+    // Harmonic bars (from harmonic engine parallel run)
+    if (harmRes.merged && harmRes.merged.merged) {
+      const hw = harmRes.merged.merged.map((v,i) => ({
+        harmonicWeight: v,
+        snappedHz: Math.round(v * 369),
+        digitalRoot: ((Math.round(v * 369) - 1) % 9) + 1,
+        is369axis: [3,6,9].includes(((Math.round(v * 369) - 1) % 9) + 1),
+      }));
+      renderHarmonicBars(hw);
+      if (harmRes.reverseEngineering) {
+        document.getElementById('harmonic-axis').textContent =
+          harmRes.reverseEngineering.dominantAxis + ' — ' +
+          (harmRes.reverseEngineering.harmonicDNA?.[0]?.nearestSolfeggio?.meaning || '');
+      }
+    }
+
+    // Deliberation log
+    const log = document.getElementById('delib-log');
+    const del = brainRes.deliberation;
+    if (del) {
+      const entries = (del.arguments || []).map(a =>
+        `<div class="entry"><b>${a.brain}</b> → ${a.hypothesis} (conf:${(a.confidence*100).toFixed(0)}% × dw:${a.delegationWeight} = <b>${(a.weightedVote*100).toFixed(1)}</b>)</div>`
+      ).join('');
+      log.innerHTML = entries +
+        `<div class="entry" style="color:#fbbf24">🏆 Winner: <b>${del.outcome?.winner}</b> (${((del.outcome?.confidence||0)*100).toFixed(1)}%)</div>`;
+    }
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById('delib-log').innerHTML =
+      `<div class="entry" style="color:#f87171">Error: ${err.message}</div>`;
+  } finally {
+    document.getElementById('loading-overlay').classList.add('hidden');
+  }
+}
+
+document.getElementById('query-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') runBrainQuery();
+});
+
+// Start animation
+drawVortex();
+</script>
+</body>
+</html>

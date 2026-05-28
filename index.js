@@ -4,6 +4,66 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
+// Quantum & AI modules
+const { swarm }            = require('./rag-swarm');
+const { QuadBrainOrchestrator } = require('./quad-brain');
+const vault                = require('./blockchain-vault');
+const {
+  harmonicEngine, digitalRoot, vortexSequence, carrierHarmonics,
+  harmonise369, SOLFEGGIO, BASE_TRIAD, CARRIER_HZ, reverseEngineer,
+  reinventTopology, quantumPath, classicalPath, mergeOutcomes,
+} = require('./harmonic-engine');
+
+// Load static JSON corpora
+function loadJSON(file) {
+  try { return JSON.parse(fs.readFileSync(path.join(__dirname, file), 'utf8')); }
+  catch { return {}; }
+}
+const curriculum   = loadJSON('quantum-curriculum.json');
+const circuits     = loadJSON('quantum-circuit-scenarios.json');
+const backends     = loadJSON('quantum-backends.json');
+const qctrlLib     = loadJSON('qctrl-pennylane-library.json');
+
+// Initialise RAG swarm index (background, non-blocking)
+swarm.init();
+
+// Shared corpus for QuadBrain (flatten all knowledge to {id, text} docs)
+function buildSharedCorpus() {
+  const docs = [];
+  // Curriculum concepts
+  if (curriculum.concepts) {
+    Object.entries(curriculum.concepts).forEach(([k, c]) => {
+      const ddmText = Object.values(c.ddm || {}).join(' ');
+      docs.push({ id: `concept_${k}`, text: `${k} ${c.title || ''} ${ddmText}` });
+    });
+  }
+  // Circuit names
+  (circuits.circuits || []).forEach((c, i) => {
+    docs.push({ id: `circuit_${c.id || i}`, text: `${c.name || ''} ${c.description || ''}` });
+  });
+  // Backend names
+  Object.entries(backends.backends || {}).forEach(([id, b]) => {
+    docs.push({ id: `backend_${id}`, text: `${b.name} ${b.provider} ${(b.best_for || []).join(' ')}` });
+  });
+  // Library ops
+  function walkOps(obj, prefix) {
+    if (!obj || typeof obj !== 'object') return;
+    if (obj.ddm) {
+      const ddmText = Object.values(obj.ddm).join(' ');
+      docs.push({ id: `op_${prefix}`, text: `${obj.full_name || prefix} ${ddmText}` });
+      return;
+    }
+    Object.entries(obj).forEach(([k, v]) => walkOps(v, prefix ? `${prefix}_${k}` : k));
+  }
+  walkOps(qctrlLib.qctrl_operations || {});
+  walkOps(qctrlLib.pennylane_operations || {});
+  Object.entries(qctrlLib.key_papers || {}).forEach(([id, p]) => {
+    docs.push({ id: `paper_${id}`, text: `${p.title} ${p.authors} ${p.hotkey_summary || ''} ${p.ddm_short || ''}` });
+  });
+  return docs;
+}
+const quadBrain = new QuadBrainOrchestrator(buildSharedCorpus());
+
 // Handle --version flag so `npm test` can exit cleanly
 if (process.argv.includes('--version')) {
   const pkg = require('./package.json');
@@ -370,6 +430,183 @@ app.get('/api/system-info', (req, res) => {
     pathSeparator: path.sep,
     lineEnding: os.EOL === '\r\n' ? 'CRLF (Windows)' : 'LF (Unix/Mac)'
   });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// QUANTUM SCHOOL routes
+// ═══════════════════════════════════════════════════════════════════════════════
+app.get('/quantum-school', (req, res) => {
+  res.render('quantum-school', { curriculum, qctrlLib });
+});
+app.get('/api/quantum/concepts', (req, res) => {
+  res.json({ stages: curriculum.pipeline_stages || [], concepts: curriculum.concepts || {} });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// QUANTUM ANALYZER routes
+// ═══════════════════════════════════════════════════════════════════════════════
+app.get('/quantum-analyzer', (req, res) => {
+  res.render('quantum-analyzer', { circuits, backends, qctrlLib });
+});
+app.get('/api/quantum/circuits', (req, res) => {
+  const list = (circuits.circuits || []).map(c => ({
+    id: c.id, name: c.name, description: c.description, qubits: c.qubits,
+  }));
+  res.json(list);
+});
+app.get('/api/quantum/circuits/:id', (req, res) => {
+  const c = (circuits.circuits || []).find(c => String(c.id) === req.params.id);
+  if (!c) return res.status(404).json({ error: 'Circuit not found' });
+  res.json(c);
+});
+app.get('/api/quantum/hardware', (req, res) => {
+  res.json(circuits.hardware_profiles || backends.backends || {});
+});
+app.get('/api/quantum/backends', (req, res) => {
+  res.json(backends);
+});
+app.get('/api/quantum/hotkeys', (req, res) => {
+  res.json({ map: qctrlLib.hotkey_map || {}, operations: qctrlLib.pennylane_operations || {} });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// QUANTUM PIPELINE routes
+// ═══════════════════════════════════════════════════════════════════════════════
+app.get('/quantum-pipeline', (req, res) => {
+  res.render('quantum-pipeline', { backends });
+});
+app.get('/api/pipeline/templates', (req, res) => {
+  res.json(backends.pipeline_templates || {});
+});
+app.post('/api/pipeline/route', (req, res) => {
+  const { circuit, algorithm, qubitCount, budget } = req.body;
+  const rules  = (backends.routing_strategy || {}).auto_rules || [];
+  const bList  = Object.values(backends.backends || {});
+  const matches = rules.filter(r => {
+    if (r.condition.includes('algorithm') && algorithm && r.condition.includes(algorithm)) return true;
+    if (r.condition.includes('qubits > 50') && qubitCount > 50) return true;
+    if (r.condition.includes('budget') && budget === 'free') return true;
+    return false;
+  });
+  const recommended = matches.length
+    ? matches[0]
+    : { recommend: 'pennylane_lightning_qubit', reason: 'Default: free local simulation' };
+  res.json({ recommended, allMatches: matches, availableBackends: bList.map(b => ({ id: b.id, name: b.name })) });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BLOCKCHAIN VAULT routes
+// ═══════════════════════════════════════════════════════════════════════════════
+app.get('/quantum-rag-vault', (req, res) => {
+  const summary = vault.getChainSummary();
+  const ragStatus = swarm.status();
+  res.render('quantum-rag-vault', { vaultSummary: summary, ragStatus });
+});
+app.get('/api/vault/summary', (req, res) => res.json(vault.getChainSummary()));
+app.get('/api/vault/chain/:location', (req, res) => {
+  const loc = req.params.location.toUpperCase();
+  if (!vault.VAULT_LOCATIONS.includes(loc)) return res.status(400).json({ error: 'Unknown vault location' });
+  res.json(vault.getChain(loc));
+});
+app.get('/api/vault/verify', (req, res) => res.json(vault.verifyAllVaults()));
+app.post('/api/vault/write', (req, res) => {
+  const { data, type } = req.body;
+  if (!data) return res.status(400).json({ error: 'data field required' });
+  const results = vault.writeToAllVaults(data, type || 'RECORD');
+  res.json({ written: results });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TRI-RAG SWARM routes
+// ═══════════════════════════════════════════════════════════════════════════════
+app.get('/api/rag/status', (req, res) => res.json(swarm.status()));
+app.post('/api/rag/query', async (req, res) => {
+  const { query, topK } = req.body;
+  if (!query) return res.status(400).json({ error: 'query field required' });
+  try {
+    const result = await swarm.query(query, topK || 5);
+    // Persist to vault
+    vault.writeToAllVaults({ type: 'RAG_QUERY', query, topResult: result.topResult?.id }, 'RAG');
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// QUAD BRAIN OCTO-INFERENCE routes
+// ═══════════════════════════════════════════════════════════════════════════════
+app.get('/quantum-vortex', (req, res) => {
+  res.render('quantum-vortex', {
+    brainStatus: quadBrain.status(),
+    harmonicRef: harmonicEngine.reference(),
+  });
+});
+app.get('/api/brain/status', (req, res) => res.json(quadBrain.status()));
+app.post('/api/brain/query', async (req, res) => {
+  const { query } = req.body;
+  if (!query) return res.status(400).json({ error: 'query field required' });
+  try {
+    const result = await quadBrain.query(query);
+    vault.writeToAllVaults({ type: 'BRAIN_QUERY', query, winner: result.predictiveSymbiosis.winner }, 'INFERENCE');
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HARMONIC ENGINE routes  (369Hz quantum-classical parallel + reverse engineering)
+// ═══════════════════════════════════════════════════════════════════════════════
+app.get('/api/harmonic/reference', (req, res) => res.json(harmonicEngine.reference()));
+app.get('/api/harmonic/status',    (req, res) => res.json(harmonicEngine.status()));
+
+app.post('/api/harmonic/run', async (req, res) => {
+  const { vector, topology, labels } = req.body;
+  if (!Array.isArray(vector) || vector.length === 0) {
+    return res.status(400).json({ error: 'vector must be a non-empty number array' });
+  }
+  try {
+    const result = await harmonicEngine.run(
+      vector.map(Number),
+      topology || {},
+      labels   || [],
+    );
+    vault.writeToAllVaults({ type: 'HARMONIC_RUN', axis: result.tesla369Summary.dominantAxis }, 'HARMONIC');
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/harmonic/parallel', async (req, res) => {
+  /* Run quantum and classical paths separately then merge */
+  const { vector } = req.body;
+  if (!Array.isArray(vector) || vector.length === 0) {
+    return res.status(400).json({ error: 'vector required' });
+  }
+  const input = vector.map(Number);
+  const [qRes, cRes] = await Promise.all([
+    Promise.resolve(quantumPath(input)),
+    Promise.resolve(classicalPath(input)),
+  ]);
+  const merged   = mergeOutcomes(qRes, cRes);
+  const reversed = reverseEngineer(merged.merged, []);
+  res.json({ quantumPath: qRes, classicalPath: cRes, merged, reverseEngineering: reversed });
+});
+
+app.post('/api/harmonic/topology', (req, res) => {
+  const { nodes, edges } = req.body;
+  if (!Array.isArray(nodes)) return res.status(400).json({ error: 'nodes array required' });
+  const result = reinventTopology({ nodes, edges: edges || [] });
+  vault.writeToAllVaults({ type: 'TOPOLOGY_REINVENTION', nodeCount: nodes.length, score: result.overallHarmonicScore }, 'HARMONIC');
+  res.json(result);
+});
+
+app.post('/api/harmonic/harmonise', (req, res) => {
+  const { weights } = req.body;
+  if (!Array.isArray(weights)) return res.status(400).json({ error: 'weights array required' });
+  res.json({ harmonised: harmonise369(weights.map(Number)), carrier: CARRIER_HZ, solfeggio: SOLFEGGIO });
 });
 
 // 404 handler
