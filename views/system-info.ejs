@@ -105,13 +105,23 @@
           `;
         } catch (error) {
           const content = document.getElementById('systemInfoContent');
-          content.innerHTML = `
-            <div class="info-card" style="border-color: #d73a49;">
-              <h3>❌ Error Loading System Information</h3>
-              <p style="color: #d73a49;">Failed to fetch system information: ${error.message}</p>
-              <button onclick="loadSystemInfo()" style="margin-top: 10px;">Retry</button>
-            </div>
-          `;
+          const msg = document.createElement('p');
+          msg.style.color = '#d73a49';
+          msg.textContent = 'Failed to fetch system information: ' + error.message;
+          const card = document.createElement('div');
+          card.className = 'info-card';
+          card.style.borderColor = '#d73a49';
+          const heading = document.createElement('h3');
+          heading.textContent = '❌ Error Loading System Information';
+          const btn = document.createElement('button');
+          btn.style.marginTop = '10px';
+          btn.textContent = 'Retry';
+          btn.onclick = loadSystemInfo;
+          card.appendChild(heading);
+          card.appendChild(msg);
+          card.appendChild(btn);
+          content.innerHTML = '';
+          content.appendChild(card);
         }
       }
 

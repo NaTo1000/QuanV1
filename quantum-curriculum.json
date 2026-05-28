@@ -1,0 +1,642 @@
+{
+  "version": "1.0.0",
+  "title": "Q-CTRL Quantum Schooling Pipeline",
+  "description": "Full-spectrum quantum computing curriculum with classical crossover explanations and DDM breakdowns",
+  "pipeline_stages": [
+    {
+      "id": "stage-1",
+      "stage": 1,
+      "title": "Classical Foundations",
+      "subtitle": "What you already know — the bridge to quantum",
+      "color": "#28a745",
+      "icon": "🖥️",
+      "prerequisite": null,
+      "concepts": ["bits", "logic-gates", "binary-math", "determinism", "classical-probability"]
+    },
+    {
+      "id": "stage-2",
+      "stage": 2,
+      "title": "Quantum Primitives",
+      "subtitle": "Qubits, superposition, and the quantum coin flip",
+      "color": "#0366d6",
+      "icon": "⚛️",
+      "prerequisite": "stage-1",
+      "concepts": ["qubits", "superposition", "bloch-sphere", "measurement", "wave-function"]
+    },
+    {
+      "id": "stage-3",
+      "stage": 3,
+      "title": "Quantum Operations",
+      "subtitle": "Gates, circuits, and quantum transformations",
+      "color": "#6f42c1",
+      "icon": "🔬",
+      "prerequisite": "stage-2",
+      "concepts": ["quantum-gates", "quantum-circuits", "unitary-operations", "pauli-matrices", "hadamard"]
+    },
+    {
+      "id": "stage-4",
+      "stage": 4,
+      "title": "Quantum Phenomena",
+      "subtitle": "Entanglement, interference, and non-locality",
+      "color": "#e36209",
+      "icon": "🔗",
+      "prerequisite": "stage-3",
+      "concepts": ["entanglement", "bell-states", "quantum-interference", "no-cloning", "teleportation"]
+    },
+    {
+      "id": "stage-5",
+      "stage": 5,
+      "title": "Quantum Noise & Control",
+      "subtitle": "Decoherence, error correction, and Q-CTRL optimal control",
+      "color": "#d73a49",
+      "icon": "🛡️",
+      "prerequisite": "stage-4",
+      "concepts": ["decoherence", "quantum-noise", "error-correction", "qctrl-pulses", "dynamical-decoupling"]
+    },
+    {
+      "id": "stage-6",
+      "stage": 6,
+      "title": "Quantum Algorithms",
+      "subtitle": "Grover, Shor, VQE, and quantum advantage",
+      "color": "#1e3a8a",
+      "icon": "🚀",
+      "prerequisite": "stage-5",
+      "concepts": ["grovers-algorithm", "shors-algorithm", "vqe", "qaoa", "quantum-advantage"]
+    }
+  ],
+  "concepts": {
+    "bits": {
+      "id": "bits",
+      "title": "Classical Bits",
+      "stage": 1,
+      "ddm": {
+        "level_1_intuition": "A light switch. It is either ON (1) or OFF (0). That is all it can ever be — one definite state at a time.",
+        "level_2_bridge": "Every piece of information in a classical computer — every photo, video, message — is stored as billions of these switches flipping between 0 and 1. The switch cannot be half-on.",
+        "level_3_formal": "A classical bit is the fundamental unit of classical information. It occupies exactly one of two discrete states: {0, 1}. Shannon entropy of a fair classical bit is 1 bit.",
+        "level_4_math": "State space: {0, 1}. Classical register of n bits: 2ⁿ possible states, but only ONE is occupied at any time.",
+        "level_5_quantum_bridge": "This determinism is what quantum computing challenges. A qubit can be BOTH 0 and 1 simultaneously — until observed."
+      },
+      "classical_analogy": "A light switch: definitively ON or OFF",
+      "key_fact": "1 classical bit = 1 binary digit. 8 bits = 1 byte.",
+      "quiz": {
+        "question": "How many states can 3 classical bits represent simultaneously?",
+        "answer": "1 (only one of the 8 possible combinations at any time)",
+        "explanation": "3 bits have 2³=8 possible values (000 to 111), but a classical register holds exactly one value at a time."
+      }
+    },
+    "qubits": {
+      "id": "qubits",
+      "title": "Qubits",
+      "stage": 2,
+      "ddm": {
+        "level_1_intuition": "Imagine a coin spinning in the air. While spinning, it is neither heads nor tails — it is both at once. Only when it lands (when you look) does it become one or the other.",
+        "level_2_bridge": "A qubit is like that spinning coin. Before measurement it can be in a combination of |0⟩ and |1⟩ simultaneously. The 'spin' is called superposition.",
+        "level_3_formal": "A qubit is a two-level quantum system. Its state is described by a vector in a 2D complex Hilbert space: |ψ⟩ = α|0⟩ + β|1⟩, where α,β are complex amplitudes.",
+        "level_4_math": "Constraint: |α|² + |β|² = 1. Probability of measuring |0⟩ = |α|², probability of |1⟩ = |β|². The state lives on the surface of the Bloch sphere.",
+        "level_5_quantum_bridge": "3 qubits can represent all 8 states (000–111) simultaneously. This exponential parallelism is the foundation of quantum speedup."
+      },
+      "classical_analogy": "A spinning coin: both heads and tails until observed",
+      "physical_implementations": ["Superconducting circuits (IBM, Google)", "Trapped ions (IonQ, Honeywell)", "Photonic qubits", "Topological qubits (Microsoft)"],
+      "key_fact": "n qubits can encode 2ⁿ states simultaneously during computation.",
+      "quiz": {
+        "question": "After measuring a qubit in state |ψ⟩ = 0.6|0⟩ + 0.8|1⟩, what is the probability of getting |1⟩?",
+        "answer": "64% (|0.8|² = 0.64)",
+        "explanation": "The probability equals the squared magnitude of the amplitude: |0.8|² = 0.64 = 64%."
+      }
+    },
+    "superposition": {
+      "id": "superposition",
+      "title": "Superposition",
+      "stage": 2,
+      "ddm": {
+        "level_1_intuition": "Imagine sending a letter to a friend, but before they open it, the letter simultaneously contains EVERY possible message. The moment they read it, one message becomes real.",
+        "level_2_bridge": "Superposition means a quantum system genuinely exists in multiple states at once — not that we just don't know which. It is a physical reality, confirmed by interference experiments.",
+        "level_3_formal": "Superposition is the quantum principle that a system can exist in a linear combination of basis states. |ψ⟩ = Σᵢ cᵢ|i⟩. All terms are physically real until measurement collapses the state.",
+        "level_4_math": "For a qubit: |+⟩ = (1/√2)|0⟩ + (1/√2)|1⟩ is the equal superposition state, created by applying the Hadamard gate to |0⟩.",
+        "level_5_quantum_bridge": "Superposition enables quantum parallelism: a quantum processor evaluates a function on all inputs simultaneously, then uses interference to extract the useful answer."
+      },
+      "classical_analogy": "A radio antenna receiving all frequencies at once — a filter (measurement) picks one",
+      "misconception": "Superposition does NOT mean the qubit randomly flips. The amplitudes encode structured information that interference can exploit.",
+      "key_fact": "Superposition collapses irreversibly upon measurement — Heisenberg's measurement problem.",
+      "quiz": {
+        "question": "Does superposition mean a qubit is in an unknown state?",
+        "answer": "No — the superposition IS the known state",
+        "explanation": "A qubit in |+⟩ is in a perfectly known, definite quantum state. It is not unknown — it is genuinely both 0 and 1 until measured."
+      }
+    },
+    "bloch-sphere": {
+      "id": "bloch-sphere",
+      "title": "Bloch Sphere",
+      "stage": 2,
+      "ddm": {
+        "level_1_intuition": "Think of a globe. Every point on the surface of the Earth represents a different qubit state. The North Pole is |0⟩, the South Pole is |1⟩, and every other point is a unique superposition.",
+        "level_2_bridge": "The Bloch sphere is a 3D map of all possible single-qubit states. Quantum gates rotate the qubit around this sphere. The equator holds all equal superpositions.",
+        "level_3_formal": "Any pure qubit state |ψ⟩ = cos(θ/2)|0⟩ + eⁱᵠsin(θ/2)|1⟩ maps to a unique point (θ, φ) on the unit sphere in ℝ³. Mixed states lie inside the sphere.",
+        "level_4_math": "Bloch vector r = (sin θ cos φ, sin θ sin φ, cos θ). The X, Y, Z Pauli gates perform 180° rotations around the respective axes. Rₓ(α) rotates by α around X.",
+        "level_5_quantum_bridge": "Q-CTRL optimal control designs smooth rotation paths on the Bloch sphere that are robust to noise — avoiding the poles where decoherence is worst."
+      },
+      "classical_analogy": "A globe: every geographic point represents a distinct quantum state",
+      "key_fact": "Two classical bits can describe 4 states. One qubit's Bloch sphere has infinitely many states — but only 1 classical bit of extractable information per measurement.",
+      "quiz": {
+        "question": "Where on the Bloch sphere is the state |−⟩ = (|0⟩ − |1⟩)/√2?",
+        "answer": "On the equator, pointing in the −X direction",
+        "explanation": "|+⟩ is +X, |−⟩ is −X. Both are on the equator (θ=90°), representing equal superpositions with different phases."
+      }
+    },
+    "measurement": {
+      "id": "measurement",
+      "title": "Quantum Measurement",
+      "stage": 2,
+      "ddm": {
+        "level_1_intuition": "Take a photograph of a hummingbird in flight. The photo captures one frozen moment — but before the photo, the bird occupied many positions. The act of photographing collapses the motion.",
+        "level_2_bridge": "Measuring a qubit forces it to choose: 0 or 1. The choice is probabilistic (governed by the amplitudes), and once measured, the superposition is destroyed forever.",
+        "level_3_formal": "Measurement in basis {|0⟩,|1⟩} projects state |ψ⟩ = α|0⟩ + β|1⟩ onto either |0⟩ (probability |α|²) or |1⟩ (probability |β|²). Post-measurement state is the projected basis state.",
+        "level_4_math": "Born rule: P(outcome i) = |⟨i|ψ⟩|². General measurement: POVM operators {Mₘ} satisfying Σₘ Mₘ†Mₘ = I. Post-measurement state: Mₘ|ψ⟩/√P(m).",
+        "level_5_quantum_bridge": "This irreversibility is why quantum algorithms must extract answers using interference BEFORE measuring. Grover's algorithm amplifies the right answer's amplitude before the final measurement."
+      },
+      "classical_analogy": "Schrödinger's cat thought experiment: the cat is alive AND dead until the box is opened",
+      "key_fact": "No-cloning theorem: an unknown quantum state cannot be copied before measurement.",
+      "quiz": {
+        "question": "If a qubit is measured and gives |1⟩, what happens if you measure it again immediately?",
+        "answer": "You get |1⟩ with 100% certainty",
+        "explanation": "Measurement collapses the state. The qubit is now definitively in |1⟩ and will stay there until another operation is applied."
+      }
+    },
+    "logic-gates": {
+      "id": "logic-gates",
+      "title": "Classical Logic Gates",
+      "stage": 1,
+      "ddm": {
+        "level_1_intuition": "Light switches wired together. AND gate: light turns on only if BOTH switches are on. OR gate: light turns on if EITHER switch is on. NOT gate: flips a switch.",
+        "level_2_bridge": "Every CPU operation — adding numbers, rendering graphics, running AI — is built from billions of these simple gate combinations.",
+        "level_3_formal": "Logic gates implement Boolean functions f: {0,1}ⁿ → {0,1}ᵐ. The universal set {AND, NOT} or {NAND} can implement any Boolean function. Gates are irreversible (many-to-one).",
+        "level_4_math": "AND: output = A∧B. OR: A∨B. XOR: A⊕B. NOT: ¬A. NAND: ¬(A∧B). Truth tables fully specify their behavior.",
+        "level_5_quantum_bridge": "Unlike classical gates, ALL quantum gates are reversible (unitary). There is no quantum NAND — information is never destroyed, only transformed."
+      },
+      "classical_analogy": "Electrical relay switches: physical AND/OR/NOT built from transistors",
+      "key_fact": "Classical irreversibility generates heat (Landauer's principle: kT·ln2 per erased bit). Quantum reversibility avoids this.",
+      "quiz": {
+        "question": "Why can't quantum computers use classical NAND gates?",
+        "answer": "NAND is irreversible (loses information), but quantum gates must be unitary (reversible)",
+        "explanation": "Quantum mechanics requires reversible evolution. Discarding information would violate unitarity."
+      }
+    },
+    "quantum-gates": {
+      "id": "quantum-gates",
+      "title": "Quantum Gates",
+      "stage": 3,
+      "ddm": {
+        "level_1_intuition": "A quantum gate is like a precise rotation of the spinning coin. Instead of flipping the coin, you tilt it to a specific angle — changing the probabilities of heads vs tails without collapsing it.",
+        "level_2_bridge": "Quantum gates rotate qubits on the Bloch sphere. They are reversible (you can undo them), and they operate on superpositions — transforming all states simultaneously.",
+        "level_3_formal": "A quantum gate on n qubits is a 2ⁿ × 2ⁿ unitary matrix U (UU† = I). Single-qubit gates: 2×2 unitaries. Two-qubit gates: 4×4 unitaries. Universality: {H, T, CNOT} gates are sufficient.",
+        "level_4_math": "Pauli-X (NOT): [[0,1],[1,0]]. Hadamard H: (1/√2)[[1,1],[1,-1]]. Phase S: [[1,0],[0,i]]. T gate: [[1,0],[0,e^(iπ/4)]]. CNOT: [[1,0,0,0],[0,1,0,0],[0,0,0,1],[0,0,1,0]].",
+        "level_5_quantum_bridge": "Q-CTRL optimizes the physical pulses that implement these gates on real hardware, compensating for noise to achieve higher gate fidelity."
+      },
+      "classical_analogy": "Classical gates (AND/OR/NOT) but reversible and acting on probability amplitudes",
+      "key_fact": "Any quantum computation can be decomposed into single-qubit rotations + CNOT gates.",
+      "quiz": {
+        "question": "What does the Hadamard gate do to |0⟩?",
+        "answer": "Creates equal superposition |+⟩ = (|0⟩ + |1⟩)/√2",
+        "explanation": "H|0⟩ = (|0⟩+|1⟩)/√2. H|1⟩ = (|0⟩-|1⟩)/√2. Hadamard is its own inverse: H² = I."
+      }
+    },
+    "hadamard": {
+      "id": "hadamard",
+      "title": "Hadamard Gate",
+      "stage": 3,
+      "ddm": {
+        "level_1_intuition": "Imagine a perfectly fair coin-flipper. You give it a coin showing heads (|0⟩) and it puts the coin into perfect 50/50 spin. Give it a coin showing tails (|1⟩) and it does the same spin, but with a hidden 'phase' difference.",
+        "level_2_bridge": "The Hadamard is the most important single-qubit gate. It creates superposition from a definite state, and is its own inverse — applying it twice returns to the start.",
+        "level_3_formal": "H = (1/√2)[[1,1],[1,-1]]. Creates the basis {|+⟩, |−⟩} from {|0⟩, |1⟩}. Used to initialize register superpositions and in QFT, Grover's, and virtually every quantum algorithm.",
+        "level_4_math": "H|0⟩ = |+⟩ = (|0⟩+|1⟩)/√2. H|1⟩ = |−⟩ = (|0⟩-|1⟩)/√2. H² = I. H†=H (Hermitian). Bloch sphere: 180° rotation around X+Z axis.",
+        "level_5_quantum_bridge": "The Hadamard is the quantum superposition generator. n parallel Hadamards on n qubits creates a uniform superposition of all 2ⁿ states in one step."
+      },
+      "classical_analogy": "A perfect random number generator that can be undone",
+      "key_fact": "The Hadamard transforms between the computational basis and the Fourier basis.",
+      "quiz": {
+        "question": "What is H(H|0⟩)?",
+        "answer": "|0⟩ — applying Hadamard twice returns to the original state",
+        "explanation": "H² = I (identity). The Hadamard is its own inverse."
+      }
+    },
+    "pauli-matrices": {
+      "id": "pauli-matrices",
+      "title": "Pauli Matrices",
+      "stage": 3,
+      "ddm": {
+        "level_1_intuition": "Think of three axis-aligned mirrors in 3D space: X-mirror, Y-mirror, and Z-mirror. Each reflects (flips) a qubit's Bloch vector along one of the three axes.",
+        "level_2_bridge": "The Pauli X, Y, Z gates are the fundamental quantum building blocks. X is the quantum NOT gate. Z adds a phase flip. Y does both. Together they span all possible qubit operations.",
+        "level_3_formal": "σₓ = [[0,1],[1,0]], σᵧ = [[0,-i],[i,0]], σᵤ = [[1,0],[0,-1]]. Together with identity I, they form a basis for all 2×2 Hermitian matrices and generate SU(2).",
+        "level_4_math": "Anti-commutation: {σᵢ,σⱼ} = 2δᵢⱼI. Commutation: [σᵢ,σⱼ] = 2iεᵢⱼₖσₖ. Eigenvalues: ±1. Trace: 0. Determinant: -1. Exponentials: e^(iθσₙ/2) = cos(θ/2)I + i·sin(θ/2)σₙ (rotation by θ around n).",
+        "level_5_quantum_bridge": "Quantum noise is described in terms of Pauli channels: X errors (bit flips), Z errors (phase flips), Y errors (both). Q-CTRL error suppression targets these specific error channels."
+      },
+      "classical_analogy": "X is classical NOT. Z and Y have no classical equivalent — they operate on phase, which classical bits don't have.",
+      "key_fact": "Physical quantum noise decomposes into Pauli errors. Error correction codes detect and correct these.",
+      "quiz": {
+        "question": "What does the Pauli-Z gate do to |+⟩ = (|0⟩+|1⟩)/√2?",
+        "answer": "Converts it to |−⟩ = (|0⟩-|1⟩)/√2 — a phase flip",
+        "explanation": "Z|0⟩=|0⟩, Z|1⟩=-|1⟩. So Z|+⟩ = (|0⟩-|1⟩)/√2 = |−⟩. Z flips phase but not measurement probabilities in the Z basis."
+      }
+    },
+    "quantum-circuits": {
+      "id": "quantum-circuits",
+      "title": "Quantum Circuits",
+      "stage": 3,
+      "ddm": {
+        "level_1_intuition": "A musical score. Each horizontal line is a qubit (instrument). Symbols on each line are gates (notes). Time flows left to right. The orchestra plays the computation.",
+        "level_2_bridge": "A quantum circuit is the standard way to describe a quantum algorithm. Gates operate on qubits in sequence. Multi-qubit gates connect lines (creating entanglement). Measurement is the final act.",
+        "level_3_formal": "Quantum circuit model: n-qubit register initialized to |0⟩⊗ⁿ, acted on by a sequence of unitary gates U₁U₂...Uₖ, then measured in the computational basis. Gate complexity = number of elementary gates.",
+        "level_4_math": "Total operation: U = Uₖ...U₂U₁. Circuit depth = maximum number of sequential gate layers. T-count (number of T gates) governs fault-tolerant overhead.",
+        "level_5_quantum_bridge": "Q-CTRL Fire Opal compiles high-level quantum circuits into optimal physical pulse sequences that minimize errors on real quantum hardware."
+      },
+      "classical_analogy": "An electronic circuit schematic, but for quantum states",
+      "key_fact": "Quantum circuit complexity classes: BQP (efficiently solvable by quantum computer) vs BPP (classical probabilistic).",
+      "quiz": {
+        "question": "In a quantum circuit, what does 'circuit depth' mean?",
+        "answer": "The number of sequential gate layers (the length of the critical path)",
+        "explanation": "Depth measures how many gate operations must happen in sequence. Lower depth = faster computation = less decoherence."
+      }
+    },
+    "unitary-operations": {
+      "id": "unitary-operations",
+      "title": "Unitary Operations",
+      "stage": 3,
+      "ddm": {
+        "level_1_intuition": "A perfect, frictionless rotation of a 3D object. You can always rotate it back to its original position. No information is lost, no energy is dissipated.",
+        "level_2_bridge": "All valid quantum operations are unitary: they preserve the total probability (|α|²+|β|²=1) and are perfectly reversible. This is what makes quantum computation fundamentally different from classical.",
+        "level_3_formal": "A unitary matrix U satisfies UU† = U†U = I. All quantum gates are unitary. Time evolution of a closed quantum system is governed by the Schrödinger equation: i ℏ d|ψ⟩/dt = H|ψ⟩, giving U(t) = e^(-iHt/ℏ).",
+        "level_4_math": "Properties: |det(U)| = 1, eigenvalues lie on the unit circle, columns form an orthonormal basis. Group structure: n-qubit unitaries form U(2ⁿ), physical gates are often in SU(2ⁿ).",
+        "level_5_quantum_bridge": "Q-CTRL optimal control finds the unitary that implements a target gate while minimizing sensitivity to noise — solving a constrained optimization problem over the space of unitaries."
+      },
+      "classical_analogy": "A lossless rotation (unlike classical erasure which loses information and generates heat)",
+      "key_fact": "Quantum reversibility means heat dissipation can theoretically approach zero — unlike classical irreversible computing.",
+      "quiz": {
+        "question": "Why must quantum gates be unitary?",
+        "answer": "To preserve total probability (normalization) and maintain reversibility",
+        "explanation": "UU†=I ensures probabilities sum to 1 and that the operation can be undone by applying U†."
+      }
+    },
+    "entanglement": {
+      "id": "entanglement",
+      "title": "Quantum Entanglement",
+      "stage": 4,
+      "ddm": {
+        "level_1_intuition": "Imagine two magic dice. No matter how far apart you take them, if one shows 6, the other always shows 6. If one shows 3, the other shows 3 instantly. They are correlated beyond any possible classical explanation.",
+        "level_2_bridge": "Entangled qubits cannot be described independently. Measuring one instantly determines the other's state — even across vast distances. Einstein called it 'spooky action at a distance.'",
+        "level_3_formal": "A state |ψ⟩ of two qubits is entangled if it CANNOT be written as |ψ⟩ = |a⟩⊗|b⟩ for any single-qubit states |a⟩, |b⟩. Bell state: |Φ+⟩ = (|00⟩+|11⟩)/√2.",
+        "level_4_math": "Entanglement measure: von Neumann entropy S(ρ_A) = -Tr(ρ_A log ρ_A) where ρ_A is the reduced density matrix. For |Φ+⟩: S = 1 ebit (maximum). Schmidt decomposition detects entanglement.",
+        "level_5_quantum_bridge": "Entanglement is the resource that powers quantum teleportation, superdense coding, and quantum error correction. Q-CTRL uses entangling gate optimization to maximize fidelity of two-qubit operations."
+      },
+      "classical_analogy": "Perfectly correlated gloves: finding a left glove tells you the other must be right — but quantum correlations are stronger than any classical correlation can explain",
+      "misconception": "Entanglement does NOT allow faster-than-light communication. The correlations appear only when comparing measurements classically.",
+      "key_fact": "Entanglement was confirmed by Bell test experiments (Nobel Prize Physics 2022: Aspect, Clauser, Zeilinger).",
+      "quiz": {
+        "question": "Is the state |ψ⟩ = (|00⟩ + |01⟩)/√2 entangled?",
+        "answer": "No — it factors as |0⟩ ⊗ (|0⟩+|1⟩)/√2",
+        "explanation": "The first qubit is always |0⟩ regardless of the second. They are independent (separable), not entangled."
+      }
+    },
+    "bell-states": {
+      "id": "bell-states",
+      "title": "Bell States",
+      "stage": 4,
+      "ddm": {
+        "level_1_intuition": "Bell states are the four 'maximally entangled' two-qubit states — the most correlated quantum states two qubits can share. They are the EPR pairs at the heart of quantum communication.",
+        "level_2_bridge": "Bell states are created by a Hadamard gate followed by a CNOT gate. They underpin quantum teleportation, superdense coding, and entanglement-based quantum key distribution (E91 protocol).",
+        "level_3_formal": "|Φ+⟩ = (|00⟩+|11⟩)/√2, |Φ-⟩ = (|00⟩-|11⟩)/√2, |Ψ+⟩ = (|01⟩+|10⟩)/√2, |Ψ-⟩ = (|01⟩-|10⟩)/√2. These form a maximally entangled orthonormal basis for 2-qubit space.",
+        "level_4_math": "Created by: H⊗I followed by CNOT. Violation of CHSH inequality |⟨CHSH⟩| ≤ 2 (classical) vs ≤ 2√2 (quantum). Bell states saturate Tsirelson's bound: ⟨CHSH⟩ = 2√2.",
+        "level_5_quantum_bridge": "Two-qubit gate fidelity in Q-CTRL is measured by how accurately the Bell state creation circuit succeeds. State tomography verifies the density matrix approaches the ideal Bell state."
+      },
+      "classical_analogy": "The most correlated classical pair would be two coins always landing the same — Bell pairs are even more correlated than any physical mechanism can explain classically",
+      "key_fact": "Bell states have maximum entanglement entropy of 1 ebit.",
+      "quiz": {
+        "question": "Which circuit creates the Bell state |Φ+⟩ from |00⟩?",
+        "answer": "H on qubit 1, then CNOT with qubit 1 as control and qubit 2 as target",
+        "explanation": "H|0⟩=|+⟩=(|0⟩+|1⟩)/√2. CNOT|+0⟩ = (|00⟩+|11⟩)/√2 = |Φ+⟩."
+      }
+    },
+    "quantum-interference": {
+      "id": "quantum-interference",
+      "title": "Quantum Interference",
+      "stage": 4,
+      "ddm": {
+        "level_1_intuition": "Two ocean waves meeting: if peaks align, they amplify (constructive). If a peak meets a trough, they cancel (destructive). Quantum algorithms use this to amplify correct answers and cancel wrong ones.",
+        "level_2_bridge": "Interference is the mechanism that gives quantum computers their power. Without it, a quantum computer would just be a slow probabilistic classical computer.",
+        "level_3_formal": "Interference occurs when multiple computational paths contribute to the same final state. If amplitudes add constructively, probability increases. If they cancel destructively, probability decreases. Total amplitude for outcome |x⟩: A(x) = Σ_paths amplitude(path → x).",
+        "level_4_math": "For a circuit U on |+⟩⊗ⁿ: amplitude A(x) = (1/2ⁿ) Σ_y (-1)^{f(y)} e^{iφ(y,x)}. Grover's algorithm achieves constructive interference for the marked item after O(√N) iterations.",
+        "level_5_quantum_bridge": "Phase kickback — a key interference technique — is used in quantum phase estimation, the Quantum Fourier Transform, and Shor's algorithm. Q-CTRL pulse sequences are designed to maintain phase coherence for interference to work."
+      },
+      "classical_analogy": "Radio noise cancellation: two speakers playing the same frequency out of phase cancel each other out",
+      "key_fact": "Quantum interference requires coherence — this is why decoherence (from noise) destroys quantum advantage.",
+      "quiz": {
+        "question": "A quantum algorithm measures the right answer with probability near 0 after 1 step. What is needed?",
+        "answer": "More Grover iterations to amplify the correct amplitude via constructive interference",
+        "explanation": "Grover's algorithm iteratively applies phase oracle + diffusion (Grover diffusion operator) to constructively interfere the marked state's amplitude."
+      }
+    },
+    "no-cloning": {
+      "id": "no-cloning",
+      "title": "No-Cloning Theorem",
+      "stage": 4,
+      "ddm": {
+        "level_1_intuition": "You cannot photocopy a thought. If you copy it perfectly, the original is changed. In quantum mechanics, copying an unknown quantum state is physically impossible.",
+        "level_2_bridge": "The no-cloning theorem proves that you cannot create an identical copy of an unknown quantum state. This protects quantum cryptography — an eavesdropper cannot copy quantum keys.",
+        "level_3_formal": "Theorem: There is no unitary U such that U|ψ⟩|0⟩ = |ψ⟩|ψ⟩ for all |ψ⟩. Proof by contradiction using linearity of quantum mechanics.",
+        "level_4_math": "Suppose U|a⟩|0⟩=|a⟩|a⟩ and U|b⟩|0⟩=|b⟩|b⟩. Then U(|a⟩+|b⟩)|0⟩ = |a⟩|a⟩+|b⟩|b⟩ ≠ (|a⟩+|b⟩)(|a⟩+|b⟩). Contradiction.",
+        "level_5_quantum_bridge": "No-cloning enables quantum key distribution (BB84): Eve cannot clone intercepted photons without introducing detectable disturbance."
+      },
+      "classical_analogy": "Classical bits CAN be copied (Ctrl+C). Quantum states cannot — this fundamental asymmetry secures quantum cryptography",
+      "key_fact": "No-cloning is what makes quantum money (Wiesner 1970) and quantum key distribution fundamentally secure.",
+      "quiz": {
+        "question": "Can you clone a qubit if you already know its state?",
+        "answer": "Yes — but only if the state is KNOWN. Unknown states cannot be cloned.",
+        "explanation": "If |ψ⟩ = |0⟩ you can prepare |0⟩|0⟩. But for unknown |ψ⟩ = α|0⟩+β|1⟩, no universal cloning is possible."
+      }
+    },
+    "teleportation": {
+      "id": "teleportation",
+      "title": "Quantum Teleportation",
+      "stage": 4,
+      "ddm": {
+        "level_1_intuition": "Fax machine for quantum states. Alice destroys her quantum state while Bob reconstructs an identical one — using a shared entangled pair and 2 classical bits of communication.",
+        "level_2_bridge": "Teleportation transfers a quantum state without physically moving the particle. The state is 'disassembled' by Alice's measurement and 'reassembled' by Bob using classical instructions.",
+        "level_3_formal": "Protocol: (1) Share Bell pair |Φ+⟩_{AB}. (2) Alice entangles her unknown qubit |ψ⟩ with her Bell qubit. (3) Alice measures 2 bits. (4) Bob applies correction gates based on Alice's 2 classical bits. Bob now has |ψ⟩.",
+        "level_4_math": "|ψ⟩|Φ+⟩ = (1/2)[|00⟩(α|0⟩+β|1⟩) + |01⟩(α|1⟩+β|0⟩) + |10⟩(α|0⟩-β|1⟩) + |11⟩(α|1⟩-β|0⟩)]. Bob applies I, X, Z, or XZ based on Alice's 2-bit result.",
+        "level_5_quantum_bridge": "Teleportation is the foundation of quantum networks and distributed quantum computing. Q-CTRL develops high-fidelity entangled pair generation for teleportation-based quantum interconnects."
+      },
+      "classical_analogy": "Fax machine: destroys the original while transmitting sufficient information to recreate it (but quantum — the original is irreversibly destroyed)",
+      "key_fact": "Teleportation requires 2 classical bits per qubit. It does NOT transmit information faster than light (the classical channel limits speed).",
+      "quiz": {
+        "question": "How many classical bits does quantum teleportation require to transfer one qubit?",
+        "answer": "2 classical bits",
+        "explanation": "Alice's Bell measurement has 4 outcomes (2 bits), which Bob needs to apply the correct correction gate."
+      }
+    },
+    "decoherence": {
+      "id": "decoherence",
+      "title": "Decoherence",
+      "stage": 5,
+      "ddm": {
+        "level_1_intuition": "A whisper in a noisy room. Your delicate quantum information — the superposition — is gradually corrupted by the surrounding environment, like background noise drowning out a quiet signal.",
+        "level_2_bridge": "Decoherence is the biggest obstacle to practical quantum computing. The quantum superposition leaks into the environment and the qubit behaves more and more like a classical bit.",
+        "level_3_formal": "Decoherence: entanglement with the environment causes the system's density matrix ρ to lose off-diagonal terms (coherences). Pure state |ψ⟩⟨ψ| → mixed state Σᵢ pᵢ|i⟩⟨i|. Characterized by T₁ (energy relaxation) and T₂ (dephasing) times.",
+        "level_4_math": "Lindblad master equation: dρ/dt = -i[H,ρ] + Σₖ(LₖρLₖ† - ½{Lₖ†Lₖ,ρ}). Lindblad operators Lₖ model specific noise channels. T₁ models amplitude damping; T₂ models dephasing.",
+        "level_5_quantum_bridge": "Q-CTRL's entire mission is fighting decoherence. Dynamical decoupling sequences, optimal control pulses, and error-robust gates all extend effective coherence time."
+      },
+      "classical_analogy": "A tuning fork in a room full of other sounds — it gradually loses its pure tone and blends with the noise",
+      "key_fact": "Current superconducting qubits have T₁ ≈ 100–500 μs, T₂ ≈ 50–300 μs. Fault tolerance requires error rates below ~1%.",
+      "quiz": {
+        "question": "What is the difference between T₁ and T₂?",
+        "answer": "T₁ = energy relaxation time (|1⟩ → |0⟩). T₂ = total dephasing time (T₂ ≤ 2T₁).",
+        "explanation": "T₁ measures how long excited qubits take to decay. T₂ measures total coherence loss, including both T₁ effects and pure dephasing."
+      }
+    },
+    "quantum-noise": {
+      "id": "quantum-noise",
+      "title": "Quantum Noise Channels",
+      "stage": 5,
+      "ddm": {
+        "level_1_intuition": "Static on a phone call. Every quantum operation has imperfections — small random errors that accumulate. Without correction, even perfect algorithms fail on real hardware.",
+        "level_2_bridge": "Noise in quantum computers comes from many sources: electromagnetic interference, temperature fluctuations, control pulse imperfections, and crosstalk between qubits. Each has a specific mathematical model.",
+        "level_3_formal": "Quantum channels are completely positive trace-preserving (CPTP) maps: ε(ρ) = Σₖ EₖρEₖ† where Σₖ Eₖ†Eₖ = I (Kraus operators). Key channels: depolarizing, amplitude damping, phase damping, bit-flip, phase-flip.",
+        "level_4_math": "Depolarizing: ε(ρ) = (1-p)ρ + (p/3)(XρX + YρY + ZρZ). Amplitude damping (T₁): E₀=[[1,0],[0,√(1-γ)]], E₁=[[0,√γ],[0,0]]. Dephasing (T₂): E₀=√(1-p/2)·I, E₁=√(p/2)·Z.",
+        "level_5_quantum_bridge": "Q-CTRL characterizes hardware-specific noise through randomized benchmarking and quantum process tomography, then designs noise-biased gates that are robust to the dominant error channel."
+      },
+      "classical_analogy": "Bit-flip errors (like flipping a 0 to 1 during transmission) exist classically too — but quantum computers also suffer phase errors with no classical equivalent",
+      "key_fact": "Google's 2023 error correction milestone: logical error rate of 2.9×10⁻³ below physical error rate of 3.0×10⁻³.",
+      "quiz": {
+        "question": "What makes phase errors uniquely quantum (no classical equivalent)?",
+        "answer": "Classical bits have no phase. Phase errors change the relative sign/angle of superposition amplitudes — invisible until interference occurs.",
+        "explanation": "A qubit in |+⟩ affected by a Z error becomes |−⟩, which still measures 50/50 in the Z basis but is completely different in the X basis."
+      }
+    },
+    "error-correction": {
+      "id": "error-correction",
+      "title": "Quantum Error Correction",
+      "stage": 5,
+      "ddm": {
+        "level_1_intuition": "Redundant backups. Classical computers store data 3 times and use 'majority vote' to correct errors. Quantum computers use similar logic, but cannot copy qubits — so they spread quantum information non-locally across many physical qubits.",
+        "level_2_bridge": "A logical qubit is encoded in many physical qubits. Errors on individual physical qubits are detected and corrected without ever measuring the logical qubit's state.",
+        "level_3_formal": "QEC requires: (1) encoding logical qubits in code subspace, (2) syndrome measurement to detect error type without collapsing logical state, (3) classical decoding, (4) correction operations. Quantum Hamming bound: [[n,k,d]] codes encode k logical qubits in n physical qubits with distance d (corrects ⌊(d-1)/2⌋ errors).",
+        "level_4_math": "Surface code (most practical): [[d², 1, d]] — one logical qubit in d² physical qubits, corrects up to ⌊(d-1)/2⌋ errors. Logical error rate: p_L ≈ (p/p_th)^((d+1)/2) for physical error rate p below threshold p_th ≈ 1%.",
+        "level_5_quantum_bridge": "Q-CTRL's error suppression reduces physical error rates, lowering the overhead needed for fault-tolerant quantum error correction with surface codes."
+      },
+      "classical_analogy": "RAID disk redundancy and Hamming error-correcting codes — but quantum codes must handle both bit and phase errors simultaneously",
+      "key_fact": "Surface code requires ~1000 physical qubits per logical qubit at current error rates. Future fault-tolerant computers need millions of physical qubits.",
+      "quiz": {
+        "question": "Why can't quantum error correction simply copy a qubit to create backups?",
+        "answer": "No-cloning theorem forbids copying unknown quantum states",
+        "explanation": "QEC instead spreads quantum information non-locally across entangled qubits using encoding circuits, allowing error detection without copying."
+      }
+    },
+    "qctrl-pulses": {
+      "id": "qctrl-pulses",
+      "title": "Q-CTRL Optimal Control Pulses",
+      "stage": 5,
+      "ddm": {
+        "level_1_intuition": "A master locksmith crafting a key to fit a complex lock perfectly. Each quantum gate must be implemented as a precisely shaped electromagnetic pulse. Q-CTRL finds the pulse shape that works even when the lock is slightly different each time.",
+        "level_2_bridge": "Physical quantum gates are implemented by microwave or laser pulses. The exact shape of these pulses determines gate fidelity. Q-CTRL uses optimal control theory to find pulse shapes that are inherently robust to hardware noise.",
+        "level_3_formal": "Optimal control: minimize cost functional J[u(t)] = 1 - F(U_target, U[u(t)]) + λ·||u(t)||². Subject to: Schrödinger equation constraint, bandwidth limits, amplitude bounds. Algorithms: GRAPE (gradient ascent pulse engineering), CRAB, evolutionary methods.",
+        "level_4_math": "GRAPE: iteratively update u(t) via δu_k = -ε · ∂J/∂u_k. Gradient: ∂F/∂u_k = 2/d² · Re[Tr(U†_target · ∂U/∂u_k)]. Q-CTRL extends GRAPE with robustness against drift Hamiltonian errors.",
+        "level_5_quantum_bridge": "Q-CTRL's Boulder Opal toolkit optimizes pulses for specific hardware (IBM, Rigetti, IonQ), enabling 10-100× gate error reduction without hardware modifications."
+      },
+      "classical_analogy": "PID controller tuning in industrial automation — finding control signals that achieve precise outcomes despite system uncertainty",
+      "key_fact": "Q-CTRL demonstrated 10,000× improvement in computational performance on IBM hardware using optimized pulses.",
+      "quiz": {
+        "question": "What does 'pulse robustness' mean in Q-CTRL optimal control?",
+        "answer": "The gate performs correctly even when hardware parameters (like qubit frequency) drift within a tolerance range",
+        "explanation": "Robust pulses are designed with extra degrees of freedom to cancel the first-order sensitivity to common noise sources like frequency drift and amplitude fluctuations."
+      }
+    },
+    "dynamical-decoupling": {
+      "id": "dynamical-decoupling",
+      "title": "Dynamical Decoupling",
+      "stage": 5,
+      "ddm": {
+        "level_1_intuition": "Spin a top fast enough and gravity cannot pull it over. Apply rapid quantum 'kicks' to a qubit and environmental noise averages out to zero. Speed defeats decoherence.",
+        "level_2_bridge": "Dynamical decoupling applies sequences of fast pulses during idle periods to average out the noise Hamiltonian. It extends qubit coherence time during wait periods in a quantum circuit.",
+        "level_3_formal": "DD sequence for qubit idling: apply Pauli gates at precise intervals so that noise Hamiltonians Hₙ are refocused: Σₖ τₖ Uₖ†HₙUₖ = 0. Hahn echo (X·wait·X), CPMG, XY-4, XY-8 are standard sequences.",
+        "level_4_math": "Filter function F(ω) = |∫ y(t)e^{iωt}dt|² characterizes DD sequence's noise suppression spectrum. Optimal DD: design y(t) to minimize ∫ S(ω)F(ω)dω where S(ω) is noise power spectral density.",
+        "level_5_quantum_bridge": "Q-CTRL's dynamical decoupling sequences are customized to hardware-specific noise spectra, providing optimal coherence extension for each platform."
+      },
+      "classical_analogy": "Noise-cancelling headphones: rapid sampling and phase inversion cancels ambient noise in real time",
+      "key_fact": "Dynamical decoupling can extend T₂ by 10-100× in some systems, converting them from decoherence-limited to gate-fidelity-limited.",
+      "quiz": {
+        "question": "Why does dynamical decoupling work better against low-frequency (1/f) noise?",
+        "answer": "The pulse sequence acts as a high-pass filter, suppressing low-frequency components that cause slow drift errors",
+        "explanation": "The filter function F(ω) suppresses noise at low ω when pulses are applied frequently enough, and 1/f noise is concentrated at low frequencies."
+      }
+    },
+    "grovers-algorithm": {
+      "id": "grovers-algorithm",
+      "title": "Grover's Search Algorithm",
+      "stage": 6,
+      "ddm": {
+        "level_1_intuition": "Finding a name in an unsorted phone book of 1 million people. Classical: check 500,000 on average. Grover's quantum algorithm: only ~1,000 checks needed. Quadratic speedup over classical search.",
+        "level_2_bridge": "Grover's algorithm uses quantum superposition and interference to find the one 'marked' item in an unsorted database of N items in O(√N) oracle queries vs classical O(N).",
+        "level_3_formal": "Algorithm: (1) Initialize |s⟩ = H⊗ⁿ|0⟩ⁿ (uniform superposition). (2) Apply Grover iteration G = (2|s⟩⟨s| - I)(oracle) ≈ √N/π times. (3) Measure to obtain marked item with high probability.",
+        "level_4_math": "Geometric interpretation: G rotates state vector by angle 2θ in 2D subspace, where sin²θ = 1/N. After ⌊π√N/4⌋ iterations, overlap with marked state ≈ 1. Speedup: O(√N) vs O(N) classical.",
+        "level_5_quantum_bridge": "Grover's provides provably optimal quadratic quantum speedup for unstructured search. Combined with amplitude amplification, it accelerates sub-routines inside larger quantum algorithms."
+      },
+      "classical_analogy": "Classical linear search vs quantum amplitude amplification — like checking every room in a building vs having a magic compass pointing toward the right room",
+      "key_fact": "Grover's is provably optimal: no quantum algorithm can search N items in fewer than O(√N) queries.",
+      "quiz": {
+        "question": "How many Grover iterations are needed to find 1 item in a database of 1,000,000?",
+        "answer": "About 785 iterations (≈ π√N/4 = π·1000/4 ≈ 785)",
+        "explanation": "Optimal Grover iterations: ⌊π/(4arcsin(1/√N))⌋ ≈ π√N/4 for large N."
+      }
+    },
+    "shors-algorithm": {
+      "id": "shors-algorithm",
+      "title": "Shor's Factoring Algorithm",
+      "stage": 6,
+      "ddm": {
+        "level_1_intuition": "Breaking a combination lock by finding its rhythm. Shor's algorithm finds a hidden period in a mathematical function, allowing it to factor huge numbers that would take classical computers longer than the age of the universe.",
+        "level_2_bridge": "RSA encryption relies on the fact that multiplying two primes is easy but factoring the result is hard (classically). Shor's algorithm factors N-bit numbers in polynomial time using quantum Fourier transform.",
+        "level_3_formal": "Shor's reduces factoring to period finding: find smallest r such that aʳ ≡ 1 (mod N). Quantum part: QFT-based period finding in O((log N)²) operations. Classical part: GCD to extract factors.",
+        "level_4_math": "QFT maps |j⟩ → (1/√N)Σₖ e^{2πijk/N}|k⟩. Period finding: |ψ⟩ = Σⱼ|j⟩|aʲ mod N⟩, QFT collapses to superposition of period r multiples. Factor via GCD(aʳ/²±1, N).",
+        "level_5_quantum_bridge": "Shor's requires error-corrected logical qubits — thousands of physical qubits per logical qubit. This motivates the entire quantum error correction research agenda and Q-CTRL's error suppression work."
+      },
+      "classical_analogy": "Like finding the secret heartbeat of a mathematical rhythm using the quantum equivalent of a musical Fourier analysis",
+      "key_fact": "A quantum computer running Shor's could break RSA-2048 in hours. This drives post-quantum cryptography (NIST standards: CRYSTALS-Kyber, CRYSTALS-Dilithium).",
+      "quiz": {
+        "question": "What classical problem does Shor's algorithm solve exponentially faster?",
+        "answer": "Integer factorization (and discrete logarithm)",
+        "explanation": "Classical best: sub-exponential GNFS. Shor's: polynomial O((log N)³) — exponential speedup, threatening RSA/ECC cryptography."
+      }
+    },
+    "vqe": {
+      "id": "vqe",
+      "title": "Variational Quantum Eigensolver (VQE)",
+      "stage": 6,
+      "ddm": {
+        "level_1_intuition": "A sculptor and computer working together. The quantum computer measures how close a proposed shape is to the target. A classical computer tweaks the shape. Repeat until perfect. VQE finds the lowest energy state of a molecule.",
+        "level_2_bridge": "VQE is a hybrid quantum-classical algorithm for quantum chemistry. It uses near-term noisy quantum hardware (NISQ devices) to estimate molecular ground state energies that are intractable classically.",
+        "level_3_formal": "VQE minimizes ⟨ψ(θ)|H|ψ(θ)⟩ over variational parameters θ. Quantum part: prepare ansatz state |ψ(θ)⟩ and measure Hamiltonian expectation values. Classical part: optimize θ using gradient descent.",
+        "level_4_math": "Variational principle: E₀ ≤ ⟨ψ(θ)|H|ψ(θ)⟩ for all θ. H = Σᵢ cᵢ Pᵢ (Pauli decomposition). Measurement: estimate ⟨Pᵢ⟩ per Pauli term. UCCSD ansatz commonly used for molecular simulations.",
+        "level_5_quantum_bridge": "VQE noise sensitivity is a major challenge — Q-CTRL's error mitigation and noise-robust gates directly improve VQE accuracy on current hardware."
+      },
+      "classical_analogy": "Simulated annealing optimization: iteratively improving a guess using feedback — but with a quantum 'energy evaluator'",
+      "key_fact": "VQE can simulate molecular systems (drug discovery, materials science, fertilizer catalysis) that are beyond classical computers.",
+      "quiz": {
+        "question": "Why is VQE called 'hybrid'?",
+        "answer": "It uses a quantum processor for state preparation and measurement, and a classical optimizer for parameter updates",
+        "explanation": "The quantum circuit prepares the ansatz and measures energy. Classical computer uses these measurements to update variational parameters θ."
+      }
+    },
+    "qaoa": {
+      "id": "qaoa",
+      "title": "QAOA — Quantum Approximate Optimization",
+      "stage": 6,
+      "ddm": {
+        "level_1_intuition": "Planning the most efficient delivery route when there are too many roads to check classically. QAOA finds good (not necessarily perfect) solutions to hard optimization problems using quantum interference.",
+        "level_2_bridge": "QAOA solves combinatorial optimization problems (like MaxCut, portfolio optimization, logistics) by alternating between two quantum operations to guide the state toward the optimal solution.",
+        "level_3_formal": "QAOA prepares |ψ(γ,β)⟩ = ∏ₚ e^{-iβₚHB} e^{-iγₚHC} |+⟩⊗ⁿ where HC encodes the problem (cost Hamiltonian), HB is mixing Hamiltonian. Classical optimization finds optimal γ,β parameters.",
+        "level_4_math": "At depth p=1 with MaxCut: F₁ = ⟨ψ(γ,β)|HC|ψ(γ,β)⟩ ≥ 0.6924 × OPT for 3-regular graphs. As p→∞, QAOA converges to exact solution (adiabatic theorem). Quantum advantage threshold under active research.",
+        "level_5_quantum_bridge": "QAOA performance is directly limited by gate fidelity and circuit depth. Q-CTRL's compilation reduces QAOA circuit error, pushing achievable approximation ratio higher."
+      },
+      "classical_analogy": "Simulated annealing or genetic algorithms for combinatorial optimization — but exploiting quantum tunneling through energy barriers",
+      "key_fact": "QAOA is the leading candidate for near-term quantum advantage in combinatorial optimization (finance, logistics, drug discovery).",
+      "quiz": {
+        "question": "What is the role of the mixing Hamiltonian HB in QAOA?",
+        "answer": "It creates quantum transitions between solutions, allowing quantum tunneling through energy barriers to escape local optima",
+        "explanation": "HB = Σᵢ Xᵢ applies X gates, mixing computational basis states and enabling quantum exploration of the solution space."
+      }
+    },
+    "quantum-advantage": {
+      "id": "quantum-advantage",
+      "title": "Quantum Advantage & Supremacy",
+      "stage": 6,
+      "ddm": {
+        "level_1_intuition": "A calculator versus an abacus for multiplying 10-digit numbers. Quantum advantage is the point where a quantum computer definitively solves a specific problem faster than any classical computer ever could.",
+        "level_2_bridge": "Quantum supremacy (demonstrated by Google 2019, China 2020) shows quantum computers can outperform classical for specific tasks. Quantum advantage requires a useful problem where this speedup matters.",
+        "level_3_formal": "Quantum supremacy: quantum device solves a specific (possibly artificial) problem that no classical computer can solve in practical time. Quantum advantage: supremacy for a practically useful problem. BQP ⊄ BPP (assumed, unproven).",
+        "level_4_math": "Google Sycamore (2019): 53-qubit random circuit sampling in 200 seconds vs estimated 10,000 years classically (disputed: IBM later claimed days on classical). Complexity theory: BPP ⊆ BQP ⊆ PSPACE. Factoring: classical in L^(1/3) space, quantum in poly time.",
+        "level_5_quantum_bridge": "Q-CTRL's mission is accelerating the path to practical quantum advantage by maximizing the usable computation achievable on today's noisy hardware."
+      },
+      "classical_analogy": "Breaking the 4-minute mile: once thought impossible, then achieved, then routine — quantum advantage awaits its Roger Bannister moment",
+      "key_fact": "Timeline estimates: fault-tolerant quantum computing with Shor's-scale advantage: 2030–2035. Near-term quantum advantage (VQE, QAOA): potentially 2025–2028.",
+      "quiz": {
+        "question": "What is the difference between quantum supremacy and quantum advantage?",
+        "answer": "Supremacy: beats classical at any task (even artificial). Advantage: beats classical at a practically useful, economically valuable task.",
+        "explanation": "Google's 2019 result was supremacy (random circuit sampling). True quantum advantage requires useful problems like drug discovery, optimization, or breaking encryption."
+      }
+    },
+    "wave-function": {
+      "id": "wave-function",
+      "title": "Wave Function",
+      "stage": 2,
+      "ddm": {
+        "level_1_intuition": "Imagine a weather probability map. It doesn't tell you exactly where the rain will be, but it tells you the probability of rain at every location. The wave function is a probability map for where a particle IS.",
+        "level_2_bridge": "The wave function ψ(x) encodes all information about a quantum particle. Its squared magnitude gives the probability of finding the particle at each location. It is the complete quantum state description.",
+        "level_3_formal": "Wave function ψ: ℝ³ → ℂ for a single particle. Born rule: P(x) = |ψ(x)|². Normalization: ∫|ψ(x)|² dx = 1. Time evolution: Schrödinger equation iℏ ∂ψ/∂t = Ĥψ.",
+        "level_4_math": "For discrete systems (qubits): |ψ⟩ = Σᵢ cᵢ|i⟩ ∈ Hilbert space ℋ. Inner product: ⟨φ|ψ⟩ = Σᵢ cᵢ*dᵢ. Observable A: ⟨A⟩ = ⟨ψ|A|ψ⟩. Uncertainty principle: ΔxΔp ≥ ℏ/2.",
+        "level_5_quantum_bridge": "In quantum computing, the qubit state vector IS the wave function. Gate operations evolve it; measurement collapses it. All quantum algorithms manipulate wave functions."
+      },
+      "classical_analogy": "A probability distribution over possible positions — but unlike classical probability, quantum probability amplitudes can interfere (add or cancel)",
+      "key_fact": "Two-slit experiment: the wave function passes through both slits simultaneously, creating an interference pattern. Observation destroys the interference.",
+      "quiz": {
+        "question": "If ψ(x) = 0.6|0⟩ + 0.8|1⟩, what is the probability of finding the particle at state |1⟩?",
+        "answer": "64% (Born rule: |0.8|² = 0.64)",
+        "explanation": "The probability is the squared magnitude of the amplitude: |0.8|² = 0.64 = 64%."
+      }
+    },
+    "binary-math": {
+      "id": "binary-math",
+      "title": "Binary Mathematics",
+      "stage": 1,
+      "ddm": {
+        "level_1_intuition": "Counting with only two fingers. Instead of 10 digits (0-9), binary uses only 0 and 1. 0=0, 1=1, 10=2, 11=3, 100=4. Everything a computer knows is expressed in this two-symbol language.",
+        "level_2_bridge": "Binary maps perfectly to electrical signals (on/off). All digital computation — your phone, internet, AI — is ultimately billions of binary operations per second.",
+        "level_3_formal": "Binary (base-2) represents integers as Σᵢ bᵢ·2ⁱ where bᵢ ∈ {0,1}. n-bit integer range: 0 to 2ⁿ-1. Two's complement handles negatives. IEEE 754 handles floating point.",
+        "level_4_math": "Addition: carry propagation. Multiplication: shift-and-add. XOR = binary addition mod 2. Quantum binary: n-qubit computational basis {|0...0⟩ to |1...1⟩} represents all n-bit strings simultaneously.",
+        "level_5_quantum_bridge": "Quantum arithmetic circuits (quantum adders, multipliers) manipulate binary representations of numbers in superposition — enabling quantum speedup for number-theoretic problems like Shor's."
+      },
+      "classical_analogy": "Light switches in a row: each switch is one bit, and the pattern of on/off switches encodes a number",
+      "key_fact": "64-bit integers represent numbers up to ~18 quintillion (1.8×10¹⁹). Quantum computers work in the space of 2ⁿ such integers simultaneously.",
+      "quiz": {
+        "question": "What is the binary number 1011 in decimal?",
+        "answer": "11 (= 8 + 0 + 2 + 1 = 1×2³ + 0×2² + 1×2¹ + 1×2⁰)",
+        "explanation": "Read right to left: 1×1 + 1×2 + 0×4 + 1×8 = 1+2+0+8 = 11."
+      }
+    },
+    "determinism": {
+      "id": "determinism",
+      "title": "Classical Determinism",
+      "stage": 1,
+      "ddm": {
+        "level_1_intuition": "A billiard ball shot perfectly: if you know its exact position and speed, you can calculate exactly where it will be in 10 seconds. Classical physics is predictable and deterministic.",
+        "level_2_bridge": "Classical computers are perfectly deterministic: same input always produces same output. Quantum computers are fundamentally probabilistic: same input produces different measurement outcomes with specific probabilities.",
+        "level_3_formal": "Classical determinism: complete knowledge of system state → exact prediction of future evolution. Church-Turing thesis: all classical computation is equivalent to a Turing machine. Quantum: state determines probability distribution, not definite outcome.",
+        "level_4_math": "Classical transition: deterministic δ: Q×Σ → Q×Σ×{L,R}. Quantum: unitary U acts on |ψ⟩, then probabilistic measurement. Hidden variable theories (Bell's theorem): cannot reproduce quantum statistics with classical determinism.",
+        "level_5_quantum_bridge": "Bell's theorem (1964) proved that quantum mechanics cannot be explained by any local deterministic hidden variable theory. The universe is fundamentally probabilistic at the quantum level."
+      },
+      "classical_analogy": "Clockwork universe: Laplace's demon knowing all positions and velocities could predict all future events",
+      "key_fact": "Bell test experiments have conclusively ruled out local hidden variable theories, confirming quantum indeterminism is fundamental, not just ignorance.",
+      "quiz": {
+        "question": "Is quantum randomness just 'hidden' classical randomness we don't know about?",
+        "answer": "No — Bell's theorem and experimental tests rule out local hidden variable explanations",
+        "explanation": "Bell inequalities are violated by quantum systems, proving that no classical hidden variable theory can reproduce quantum statistics. The randomness is genuinely irreducible."
+      }
+    },
+    "classical-probability": {
+      "id": "classical-probability",
+      "title": "Classical Probability",
+      "stage": 1,
+      "ddm": {
+        "level_1_intuition": "A coin flip: you know there's a 50% chance of heads before flipping. Classical probability describes ignorance about the true state. Quantum probability is fundamentally different — the state IS the superposition.",
+        "level_2_bridge": "Classical probability: the coin IS either heads or tails, we just don't know which. Quantum probability: the qubit genuinely IS both states simultaneously until measured. This difference is physical, not philosophical.",
+        "level_3_formal": "Classical probability: Kolmogorov axioms, probability as measure over definite outcomes. Quantum probability: Born rule P(i) = |⟨i|ψ⟩|², interference possible (no classical analog). Negative probabilities impossible classically, quasi-probability distributions (Wigner function) can be negative quantum mechanically.",
+        "level_4_math": "Classical: P(A∪B) = P(A)+P(B)-P(A∩B). Quantum: amplitude interference A(x) = Σ_paths aₚ, P(x) = |A(x)|². Cross terms enable constructive/destructive interference with no classical equivalent.",
+        "level_5_quantum_bridge": "The difference between quantum and classical probability is the foundation of quantum computing's power: constructive interference amplifies correct answers in ways classical probability cannot achieve."
+      },
+      "classical_analogy": "A die that you haven't looked at yet: classically, it's already showing a number; quantumly, it's genuinely in all states",
+      "key_fact": "Quantum interference means P(A or B) can be LESS than P(A) or P(B) alone — impossible in classical probability.",
+      "quiz": {
+        "question": "Can two quantum paths to the same outcome add up to give probability 0, even if each path individually has probability > 0?",
+        "answer": "Yes — destructive interference cancels amplitudes: |a + (-a)|² = 0",
+        "explanation": "In quantum mechanics, amplitudes (not probabilities) add. If two paths have equal and opposite amplitudes, their sum is zero — complete destructive interference."
+      }
+    }
+  }
+}

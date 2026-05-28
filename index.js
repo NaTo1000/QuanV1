@@ -4,9 +4,29 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
+// Handle --version flag so `npm test` can exit cleanly
+if (process.argv.includes('--version')) {
+  const pkg = require('./package.json');
+  console.log(`${pkg.name} v${pkg.version}`);
+  process.exit(0);
+}
+
 const app = express();
 const haikus = require('./haikus.json');
 const port = process.env.PORT || 3000;
+
+// Security headers middleware
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'"
+  );
+  next();
+});
 
 // Cross-platform compatibility check
 console.log('='.repeat(50));
@@ -100,6 +120,97 @@ app.delete('/api/cluster-links/:id', (req, res) => {
 
   writeClusterLinks(filteredLinks);
   res.json({ message: 'Cluster link deleted successfully' });
+});
+
+// API endpoint to update a cluster link
+app.put('/api/cluster-links/:id', (req, res) => {
+  const { id } = req.params;
+  const { name, endpoint, credentials, builderType } = req.body;
+
+  if (!name || !endpoint) {
+    return res.status(400).json({ error: 'Name and endpoint are required' });
+  }
+
+  const links = readClusterLinks();
+  const index = links.findIndex(link => link.id === id);
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'Cluster link not found' });
+  }
+
+  // Check for duplicate name (excluding the link being updated)
+  if (links.some(link => link.name === name && link.id !== id)) {
+    return res.status(400).json({ error: 'A cluster link with this name already exists' });
+  }
+
+  links[index] = {
+    ...links[index],
+    name,
+    endpoint,
+    credentials: credentials || '',
+    builderType: builderType || 'generic',
+    updatedAt: new Date().toISOString()
+  };
+
+  writeClusterLinks(links);
+  res.json(links[index]);
+});
+
+// API endpoint to export cluster links as JSON
+app.get('/api/cluster-links/export', (req, res) => {
+  const links = readClusterLinks();
+  // Strip credentials from export for security
+  const exportData = links.map(({ credentials, ...rest }) => rest);
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', 'attachment; filename="cluster-links-export.json"');
+  res.json(exportData);
+});
+
+// API endpoint to import cluster links from JSON
+app.post('/api/cluster-links/import', (req, res) => {
+  const { links: incoming } = req.body;
+
+  if (!Array.isArray(incoming)) {
+    return res.status(400).json({ error: 'Request body must contain a "links" array' });
+  }
+
+  const existing = readClusterLinks();
+  let added = 0;
+  let skipped = 0;
+
+  for (const item of incoming) {
+    if (!item.name || !item.endpoint) {
+      skipped++;
+      continue;
+    }
+    if (existing.some(link => link.name === item.name)) {
+      skipped++;
+      continue;
+    }
+    existing.push({
+      id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
+      name: item.name,
+      endpoint: item.endpoint,
+      credentials: '',
+      builderType: item.builderType || 'generic',
+      createdAt: new Date().toISOString(),
+      status: 'active'
+    });
+    added++;
+  }
+
+  writeClusterLinks(existing);
+  res.json({ added, skipped, total: existing.length });
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    version: require('./package.json').version
+  });
 });
 
 // Cluster link configuration page
@@ -259,6 +370,17 @@ app.get('/api/system-info', (req, res) => {
     pathSeparator: path.sep,
     lineEnding: os.EOL === '\r\n' ? 'CRLF (Windows)' : 'LF (Unix/Mac)'
   });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not found' });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err.message);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 // Start server with cross-platform error handling
