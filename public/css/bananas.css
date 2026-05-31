@@ -668,6 +668,56 @@
   100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
 }
 
+/* ─── AiUi Assessment — mood animations ─────────────────── */
+@keyframes banana-shy {
+  0%   { transform: translateY(0px)  scale(1);    }
+  100% { transform: translateY(18px) scale(0.78); }
+}
+.banana-avatar.shy {
+  animation: banana-shy 0.5s ease-out forwards !important;
+}
+
+@keyframes banana-laughing-spin {
+  0%   { transform: rotate(0deg)   scale(1);    }
+  15%  { transform: rotate(-22deg) scale(1.22); }
+  30%  { transform: rotate(22deg)  scale(1.25); }
+  45%  { transform: rotate(-16deg) scale(1.2);  }
+  60%  { transform: rotate(16deg)  scale(1.2);  }
+  75%  { transform: rotate(-8deg)  scale(1.1);  }
+  90%  { transform: rotate(8deg)   scale(1.1);  }
+  100% { transform: rotate(0deg)   scale(1);    }
+}
+.banana-avatar.laughing {
+  animation: banana-laughing-spin 0.75s ease-in-out infinite !important;
+}
+
+@keyframes banana-sad-droop {
+  0%,100% { transform: translateY(0px) scale(0.93); }
+  50%     { transform: translateY(6px) scale(0.90); }
+}
+.banana-avatar.sad-mood {
+  animation: banana-sad-droop 1.8s ease-in-out infinite !important;
+  filter: drop-shadow(0 4px 8px rgba(30, 60, 200, 0.25));
+}
+
+/* Mood indicator badge */
+.mood-indicator {
+  font-size: 1.15rem;
+  background: rgba(255,255,255,0.88);
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  margin: 2px auto 4px;
+  transition: all 0.35s;
+  user-select: none;
+  cursor: default;
+  line-height: 1;
+}
+
 /* ─── Responsive ─────────────────────────────────────────── */
 @media (max-width: 600px) {
   .bananas-layout { padding: 12px 10px 40px; }
