@@ -12,10 +12,26 @@
     <link rel="stylesheet" href="/css/pages.css" type="text/css">
   </head>
   <body>
+    <!-- Floating Particles -->
+    <div class="particles" aria-hidden="true">
+      <span class="particle">💖</span>
+      <span class="particle">✨</span>
+      <span class="particle">💫</span>
+      <span class="particle">🌟</span>
+      <span class="particle">💕</span>
+      <span class="particle">⭐</span>
+      <span class="particle">💗</span>
+      <span class="particle">✨</span>
+      <span class="particle">💖</span>
+      <span class="particle">🌸</span>
+      <span class="particle">💫</span>
+      <span class="particle">🌟</span>
+    </div>
+
     <!-- Navigation Bar -->
     <nav class="main-nav">
       <div class="nav-container">
-        <h1 class="nav-title">QuanV1 - Arkitek Builder</h1>
+        <h1 class="nav-title">✨ QuanV1 - Arkitek Builder</h1>
         <ul class="nav-menu">
           <li><a href="/" class="nav-link active" accesskey="h">🏠 Home</a></li>
           <li><a href="/cluster-config" class="nav-link" accesskey="c">⚙️ Clusters</a></li>
@@ -31,9 +47,28 @@
       </div>
     </nav>
 
+    <!-- Hero Banner -->
+    <div class="hero-banner">
+      <div class="hero-content">
+        <div class="hero-sparkle" aria-hidden="true">✨</div>
+        <h1 class="hero-title">Welcome to Arkitek Builder</h1>
+        <p class="hero-tagline">Built with 💖 for the builders, dreamers, and innovators</p>
+        <p class="hero-subtitle">Orchestrate clusters, generate boot files, and let the quantum magic flow</p>
+        <div class="hero-cta">
+          <a href="/cluster-config" class="hero-btn hero-btn-primary">⚙️ Start Building</a>
+          <a href="/quantum-school" class="hero-btn hero-btn-secondary">🎓 Learn Quantum</a>
+        </div>
+        <div class="hero-hearts" aria-hidden="true">
+          <span class="heart-pulse">💗</span>
+          <span class="heart-pulse" style="animation-delay:0.4s">💙</span>
+          <span class="heart-pulse" style="animation-delay:0.8s">💛</span>
+          <span class="heart-pulse" style="animation-delay:1.2s">💚</span>
+          <span class="heart-pulse" style="animation-delay:1.6s">💜</span>
+        </div>
+      </div>
+    </div>
+
     <div class="content-wrapper">
-      <h1>Welcome to Arkitek Builder</h1>
-      <p class="subtitle">Manage clusters and generate iPXE boot files with ease</p>
       
       <!-- Quick Start Guide -->
       <div class="quick-start">
@@ -131,12 +166,29 @@
       </div>
     </div>
     
+    <!-- Love Corner -->
+    <div class="love-corner">
+      <div class="love-corner-inner">
+        <div class="love-badge" aria-hidden="true">💖</div>
+        <h2 class="love-title">Made with Love, Powered by Vision</h2>
+        <p class="love-message">Every line of code here is a small act of love — for the craft, for the community, and for the curious minds building the future. You matter. What you create matters. Keep going. 🌟</p>
+        <div class="love-affirmations">
+          <span class="affirmation">✨ You are amazing</span>
+          <span class="affirmation">💡 You are creative</span>
+          <span class="affirmation">🚀 You are unstoppable</span>
+          <span class="affirmation">💖 You are loved</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Haiku Section -->
     <div class="haiku-section">
-      <h2>✨ Inspiration Corner</h2>
+      <h2 class="haiku-heading">✨ Inspiration Corner ✨</h2>
+      <p class="haiku-intro">A little poetry to spark your soul between deployments 🌸</p>
       <div class="haiku-grid">
         <% for(var i=0; i < haikus.length; i++) { %>
-          <div class="haiku-item">
+          <div class="haiku-item haiku-card">
+            <div class="haiku-glow" aria-hidden="true"></div>
             <img class="mona-images" src="images/<%= haikus[i].image %>" alt="<%= haikus[i].text.split(',')[0] %>">
             <div class="haiku-containers">
               <p class="haikus"><%- haikus[i].text %></p>
