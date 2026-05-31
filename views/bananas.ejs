@@ -425,19 +425,44 @@ function renderAnimalQuestion(area) {
     return;
   }
   const animal = animalShuffled[animalIdx];
-  area.innerHTML = `
-    <h4>🐾 What sound does this animal make?</h4>
-    <div class="animal-display">${animal.emoji}</div>
-    <div class="animal-name-display">${animal.name}</div>
-    <div class="quiz-options-grid">
-      ${animal.options.map(opt => `<button class="quiz-option-btn" onclick="answerAnimal(this,'${escHtml(opt)}','${escHtml(animal.sound)}')">${escHtml(opt)}</button>`).join('')}
-    </div>
-    <div class="score-display">Score: ${animalScore} ⭐</div>`;
+  // Build DOM nodes to avoid putting dynamic strings into onclick attributes
+  const wrapper = document.createElement('div');
+  const h4 = document.createElement('h4');
+  h4.textContent = '🐾 What sound does this animal make?';
+  const emojiDiv = document.createElement('div');
+  emojiDiv.className = 'animal-display';
+  emojiDiv.textContent = animal.emoji;
+  const nameDiv = document.createElement('div');
+  nameDiv.className = 'animal-name-display';
+  nameDiv.textContent = animal.name;
+  const grid = document.createElement('div');
+  grid.className = 'quiz-options-grid';
+  animal.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option-btn';
+    btn.textContent = opt;
+    btn.dataset.optIdx = i;
+    btn.addEventListener('click', function() { answerAnimal(this, i); });
+    grid.appendChild(btn);
+  });
+  const scoreDiv = document.createElement('div');
+  scoreDiv.className = 'score-display';
+  scoreDiv.textContent = `Score: ${animalScore} ⭐`;
+  wrapper.appendChild(h4);
+  wrapper.appendChild(emojiDiv);
+  wrapper.appendChild(nameDiv);
+  wrapper.appendChild(grid);
+  wrapper.appendChild(scoreDiv);
+  area.innerHTML = '';
+  area.appendChild(wrapper);
 }
 
-function answerAnimal(btn, chosen, correct) {
+function answerAnimal(btn, optIdx) {
   document.querySelectorAll('.quiz-option-btn').forEach(b => b.disabled = true);
-  const g = GAMES.games.animal_quiz;
+  const g      = GAMES.games.animal_quiz;
+  const animal = animalShuffled[animalIdx];
+  const chosen = animal.options[optIdx];
+  const correct = animal.sound;
   if (chosen === correct) {
     btn.classList.add('correct');
     animalScore++;
@@ -446,7 +471,9 @@ function answerAnimal(btn, chosen, correct) {
     celebrate();
   } else {
     btn.classList.add('wrong');
-    document.querySelectorAll('.quiz-option-btn').forEach(b => { if (b.textContent.trim() === correct) b.classList.add('correct'); });
+    document.querySelectorAll('.quiz-option-btn').forEach(b => {
+      if (b.textContent.trim() === correct) b.classList.add('correct');
+    });
     speak(g.encouragement[Math.floor(Math.random() * g.encouragement.length)]);
   }
   animalIdx++;
@@ -579,19 +606,28 @@ function showQuestion() {
   document.getElementById('questionBox').style.display = 'block';
   document.getElementById('questionText').textContent = q.text;
   document.getElementById('nextQBtn').style.display   = 'none';
+  // Build option buttons using DOM to avoid dynamic onclick string injection
   const opts = document.getElementById('questionOptions');
-  opts.innerHTML = q.options.map(opt => `
-    <button class="question-opt-btn" onclick="answerQuestion(this, '${escHtml(opt)}', '${escHtml(q.answer)}', '${escHtml(q.praise)}')">
-      ${escHtml(opt)}
-    </button>`).join('');
+  opts.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'question-opt-btn';
+    btn.textContent = opt;
+    btn.dataset.optIdx = i;
+    btn.addEventListener('click', function() { answerQuestion(this, i); });
+    opts.appendChild(btn);
+  });
   speak(`Question time! ${q.text} 🤔`);
 }
 
-function answerQuestion(btn, chosen, correct, praise) {
+function answerQuestion(btn, optIdx) {
   document.querySelectorAll('.question-opt-btn').forEach(b => b.disabled = true);
+  const q       = currentEpisode.questions[currentQIdx];
+  const chosen  = q.options[optIdx];
+  const correct = q.answer;
   if (chosen === correct) {
     btn.classList.add('correct-ans');
-    speak(praise);
+    speak(q.praise);
     celebrate();
   } else {
     btn.classList.add('wrong-ans');
@@ -639,7 +675,12 @@ function launchConfetti() {
 // HELPERS
 // ═══════════════════════════════════════════════════════════════
 function escHtml(str) {
-  return String(str).replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 </script>
 </body>
