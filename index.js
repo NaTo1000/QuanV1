@@ -24,10 +24,13 @@ function loadJSON(file) {
   try { return JSON.parse(fs.readFileSync(path.join(__dirname, file), 'utf8')); }
   catch { return {}; }
 }
-const curriculum   = loadJSON('quantum-curriculum.json');
-const circuits     = loadJSON('quantum-circuit-scenarios.json');
-const backends     = loadJSON('quantum-backends.json');
-const qctrlLib     = loadJSON('qctrl-pennylane-library.json');
+const curriculum      = loadJSON('quantum-curriculum.json');
+const circuits        = loadJSON('quantum-circuit-scenarios.json');
+const backends        = loadJSON('quantum-backends.json');
+const qctrlLib        = loadJSON('qctrl-pennylane-library.json');
+const bananasJokes    = loadJSON('bananas-jokes.json');
+const bananasContent  = loadJSON('bananas-content.json');
+const bananasGames    = loadJSON('bananas-games.json');
 
 // Initialise RAG swarm index (background, non-blocking)
 swarm.init();
@@ -791,6 +794,17 @@ app.post('/api/nvidia/bootstrap', (req, res) => {
   const clusterLinks = readClusterLinks();
   const registered = nvidiaPipeline.bootstrapFromClusterLinks(clusterLinks);
   res.json({ bootstrapped: registered.length, nodes: registered });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BANANAS AI — Interactive companion for sick kids
+// ═══════════════════════════════════════════════════════════════════════════════
+app.get('/bananas', (req, res) => {
+  res.render('bananas', {
+    jokes:   bananasJokes,
+    content: bananasContent,
+    games:   bananasGames,
+  });
 });
 
 // 404 handler
