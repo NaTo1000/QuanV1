@@ -18,7 +18,14 @@
           <li><a href="/cluster-config" class="nav-link" accesskey="c">⚙️ Clusters</a></li>
           <li><a href="/ipxe-boot" class="nav-link active" accesskey="b">🚀 Boot Generator</a></li>
           <li><a href="/system-info" class="nav-link" accesskey="s">💻 System</a></li>
-        </ul>
+                  <li><a href="/quantum-school" class="nav-link">🎓 School</a></li>
+          <li><a href="/quantum-analyzer" class="nav-link">🔬 Analyzer</a></li>
+          <li><a href="/quantum-pipeline" class="nav-link">🔗 Pipeline</a></li>
+          <li><a href="/quantum-rag-vault" class="nav-link">🔐 Vault</a></li>
+          <li><a href="/quantum-vortex" class="nav-link">🌀 Vortex</a></li>
+        <li><a href="/nvidia-pipeline" class="nav-link">🟢 NVIDIA</a></li>
+        <li><a href="/bananas" class="nav-link nav-banana">🍌 Bananas AI</a></li>
+</ul>
       </div>
     </nav>
 
@@ -143,13 +150,13 @@
             document.body.removeChild(a);
             
             showTestStatus('passed', 'iPXE Boot File Generated', 
-              `Successfully generated boot file for ${formData.serverCount} servers in cluster "${formData.clusterName}". File has been downloaded.`);
+              `Successfully generated boot file for ${escapeHtml(formData.serverCount)} servers in cluster &quot;${escapeHtml(formData.clusterName)}&quot;. File has been downloaded.`);
           } else {
             const data = await response.json();
-            showTestStatus('failed', 'Generation Failed', data.error || 'Failed to generate iPXE file');
+            showTestStatus('failed', 'Generation Failed', escapeHtml(data.error || 'Failed to generate iPXE file'));
           }
         } catch (error) {
-          showTestStatus('failed', 'Error', 'Error: ' + error.message);
+          showTestStatus('failed', 'Error', 'Error: ' + escapeHtml(error.message));
         }
       });
       
@@ -161,7 +168,7 @@
         }
         
         showTestStatus('running', 'Benchmark Test Running', 
-          `Running continuous stress test on cluster "${clusterName}" until failure is detected...`);
+          `Running continuous stress test on cluster &quot;${escapeHtml(clusterName)}&quot; until failure is detected...`);
         
         // Simulate benchmark test
         let iterations = 0;
@@ -171,7 +178,7 @@
           iterations++;
           const statusContent = document.getElementById('testStatusContent');
           statusContent.innerHTML = `
-            <p>Running continuous stress test on cluster "${clusterName}"...</p>
+            <p>Running continuous stress test on cluster &quot;${escapeHtml(clusterName)}&quot;...</p>
             <p>Iteration: ${iterations}/${maxIterations}</p>
             <p>Status: ${iterations < maxIterations ? 'Testing...' : 'Test completed - checking for failures'}</p>
           `;
@@ -182,10 +189,10 @@
             const failed = Math.random() > 0.5;
             if (failed) {
               showTestStatus('failed', 'Benchmark Test Failed', 
-                `Test failed at iteration ${iterations}. Cluster "${clusterName}" experienced issues under load.`);
+                `Test failed at iteration ${iterations}. Cluster &quot;${escapeHtml(clusterName)}&quot; experienced issues under load.`);
             } else {
               showTestStatus('passed', 'Benchmark Test Passed', 
-                `All ${iterations} iterations completed successfully. Cluster "${clusterName}" is stable under load.`);
+                `All ${iterations} iterations completed successfully. Cluster &quot;${escapeHtml(clusterName)}&quot; is stable under load.`);
             }
           }
         }, 100);
@@ -216,7 +223,7 @@
           if (response.ok) {
             const data = await response.json();
             showTestStatus('running', 'Continuous Test Running', 
-              `Running tests on cluster "${clusterName}" with ${serverCount} servers until failure is detected...`);
+              `Running tests on cluster &quot;${escapeHtml(clusterName)}&quot; with ${escapeHtml(serverCount)} servers until failure is detected...`);
             
             // Simulate continuous testing
             let iterations = 0;
@@ -228,8 +235,8 @@
               const statusContent = document.getElementById('testStatusContent');
               statusContent.innerHTML = `
                 <p><strong>VMware Container Benchmark - Run Until Fail</strong></p>
-                <p>Cluster: ${clusterName}</p>
-                <p>Servers: ${serverCount}</p>
+                <p>Cluster: ${escapeHtml(clusterName)}</p>
+                <p>Servers: ${escapeHtml(serverCount)}</p>
                 <p>Iteration: ${iterations}/${maxIterations}</p>
                 <p>Status: ${failureDetected ? 'Failure detected!' : 'Testing... all systems operational'}</p>
                 <p>Test Type: Continuous stress, latency, and throughput testing</p>
@@ -241,7 +248,7 @@
                 clearInterval(interval);
                 showTestStatus('failed', '❌ Test Failed - Failure Detected', 
                   `Failure detected at iteration ${iterations}/${maxIterations}.<br>
-                  <strong>Cluster:</strong> ${clusterName}<br>
+                  <strong>Cluster:</strong> ${escapeHtml(clusterName)}<br>
                   <strong>Failure Type:</strong> VMware container resource exhaustion<br>
                   <strong>Affected Servers:</strong> ${Math.ceil(Math.random() * parseInt(serverCount))}<br>
                   <strong>Test completed successfully - failure condition identified</strong>`);
@@ -249,16 +256,16 @@
                 clearInterval(interval);
                 showTestStatus('passed', '✅ Test Completed - No Failures', 
                   `Completed all ${iterations} iterations without failure.<br>
-                  <strong>Cluster:</strong> ${clusterName}<br>
-                  <strong>All ${serverCount} servers remained stable throughout testing</strong>`);
+                  <strong>Cluster:</strong> ${escapeHtml(clusterName)}<br>
+                  <strong>All ${escapeHtml(serverCount)} servers remained stable throughout testing</strong>`);
               }
             }, 50);
           } else {
             const data = await response.json();
-            showTestStatus('failed', 'Test Failed to Start', data.error || 'Failed to start continuous test');
+            showTestStatus('failed', 'Test Failed to Start', escapeHtml(data.error || 'Failed to start continuous test'));
           }
         } catch (error) {
-          showTestStatus('failed', 'Error', 'Error: ' + error.message);
+          showTestStatus('failed', 'Error', 'Error: ' + escapeHtml(error.message));
         }
       }
       
@@ -270,6 +277,12 @@
         statusDiv.className = 'test-status ' + status;
         titleEl.textContent = title;
         contentEl.innerHTML = '<p>' + content + '</p>';
+      }
+
+      function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.appendChild(document.createTextNode(String(str)));
+        return div.innerHTML;
       }
     </script>
   </body>

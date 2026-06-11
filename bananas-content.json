@@ -1,0 +1,220 @@
+{
+  "categories": [
+    {
+      "id": "paw_patrol",
+      "name": "Paw Patrol",
+      "emoji": "🐾",
+      "color": "#e74c3c",
+      "description": "No job is too big, no pup is too small!",
+      "episodes": [
+        {
+          "id": "pp1",
+          "title": "The Mighty Pups Save the Day",
+          "summary": "Chase, Marshall, Skye, Rocky, Rubble, and Zuma are the bravest pups in Adventure Bay! Today Marshall the fire pup has to rescue a kitten stuck in a tree. He uses his super-tall ladder to reach the kitten safely.",
+          "funFact": "Marshall is a Dalmatian — a dog breed that has traditionally helped firefighters throughout history! 🚒",
+          "questions": [
+            {
+              "text": "Which pup is the fire pup in Paw Patrol?",
+              "options": ["Chase", "Marshall", "Skye", "Rocky"],
+              "answer": "Marshall",
+              "praise": "That's right! Marshall is the brave fire pup! 🔥"
+            },
+            {
+              "text": "If you were a Paw Patrol pup, what would your special power be?",
+              "options": ["Flying", "Super speed", "Underwater breathing", "All of them!"],
+              "answer": "All of them!",
+              "praise": "Why choose? You'd be the most super pup ever! 🐾⭐"
+            }
+          ]
+        },
+        {
+          "id": "pp2",
+          "title": "Skye's High-Flying Adventure",
+          "summary": "Skye the helicopter pup is zooming through the sky when she spots a family of ducks stuck on a tiny island! She calls the other pups and together they build a tiny boat to bring the ducks safely to shore.",
+          "funFact": "Dogs can actually learn to swim quite easily — most dogs are natural swimmers! 🏊",
+          "questions": [
+            {
+              "text": "What does Skye use to fly?",
+              "options": ["Rocket boots", "A helicopter pack", "Wings", "A hot air balloon"],
+              "answer": "A helicopter pack",
+              "praise": "Yes! Skye's helicopter pack lets her soar through the clouds! 🚁"
+            },
+            {
+              "text": "What animals did Skye rescue?",
+              "options": ["Cats", "Rabbits", "Ducks", "Turtles"],
+              "answer": "Ducks",
+              "praise": "Exactly right! Those lucky ducks got saved by Skye! 🦆"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "science",
+      "name": "Science Fun",
+      "emoji": "🔬",
+      "color": "#3498db",
+      "description": "Discover amazing things about our world!",
+      "episodes": [
+        {
+          "id": "sci1",
+          "title": "Why is the Sky Blue?",
+          "summary": "Have you ever looked up and wondered why the sky is blue? The sun sends out light in every colour of the rainbow, but when this light hits the air around Earth, the blue part bounces around everywhere — that's why the whole sky looks blue! At sunset the light travels further through the air and we see oranges and reds instead.",
+          "funFact": "The sky on Mars is actually a pinkish-orange colour because the dust on Mars is red! 🔴",
+          "questions": [
+            {
+              "text": "Why does the sky look blue?",
+              "options": ["Because the ocean reflects onto the sky", "Because blue light bounces around in the air", "Because the clouds are blue inside", "Nobody knows!"],
+              "answer": "Because blue light bounces around in the air",
+              "praise": "Brilliant! You just explained one of nature's most beautiful tricks! 💙"
+            },
+            {
+              "text": "What colour is the sky on Mars?",
+              "options": ["Blue", "Purple", "Pinkish-orange", "Green"],
+              "answer": "Pinkish-orange",
+              "praise": "Amazing! You know about other planets too! 🚀"
+            }
+          ]
+        },
+        {
+          "id": "sci2",
+          "title": "How Do Rainbows Form?",
+          "summary": "A rainbow is like a magic trick by water and sunlight together! When sunlight shines through tiny water droplets in the air (like after rain), it bends and splits into all its colours — red, orange, yellow, green, blue, indigo, and violet. You always need the sun behind you to see a rainbow!",
+          "funFact": "You can make your own rainbow at home with a glass of water and sunlight! 🌈",
+          "questions": [
+            {
+              "text": "How many colours are in a rainbow?",
+              "options": ["5", "6", "7", "8"],
+              "answer": "7",
+              "praise": "Perfect! Red, orange, yellow, green, blue, indigo, violet — all 7! 🌈"
+            },
+            {
+              "text": "What two things do you need to make a rainbow?",
+              "options": ["Wind and clouds", "Sunlight and water droplets", "Moon and stars", "Ice and snow"],
+              "answer": "Sunlight and water droplets",
+              "praise": "You're a science superstar! 🌟"
+            }
+          ]
+        },
+        {
+          "id": "sci3",
+          "title": "Animals Big and Small",
+          "summary": "Did you know the blue whale is the biggest animal that has EVER lived on Earth? It's bigger than any dinosaur! It can be up to 30 metres long — that's about as long as 3 school buses! And on the other side, the bumblebee bat is the world's smallest mammal — it's barely bigger than a coin!",
+          "funFact": "A blue whale's heart is so big that a small child could crawl through its arteries! 🐋",
+          "questions": [
+            {
+              "text": "What is the biggest animal that has ever lived?",
+              "options": ["T-Rex", "Elephant", "Blue Whale", "Giraffe"],
+              "answer": "Blue Whale",
+              "praise": "Incredible! Bigger than any dinosaur ever! 🐋⭐"
+            },
+            {
+              "text": "How long can a blue whale grow?",
+              "options": ["10 metres", "20 metres", "30 metres", "50 metres"],
+              "answer": "30 metres",
+              "praise": "You remembered! That's as long as 3 school buses! 🚌🚌🚌"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kids_news",
+      "name": "Kids News",
+      "emoji": "📰",
+      "color": "#2ecc71",
+      "description": "Amazing things happening in our world!",
+      "episodes": [
+        {
+          "id": "news1",
+          "title": "Kids Who Are Changing the World",
+          "summary": "Amazing young people are doing incredible things! In Australia, a 10-year-old started a garden to grow vegetables for families who need food. In England, a 9-year-old wrote a book to help other kids understand feelings. And in Canada, a group of kids built tiny houses for wildlife in their neighbourhood forest!",
+          "funFact": "You are NEVER too young to make a difference. Every kind act, no matter how small, makes the world better! 💚",
+          "questions": [
+            {
+              "text": "If YOU could change one thing in your neighbourhood, what would it be?",
+              "options": ["Plant more flowers and trees", "Build a playground", "Start a community garden", "All of them!"],
+              "answer": "All of them!",
+              "praise": "You've got BIG ideas and a beautiful heart! 💚"
+            },
+            {
+              "text": "What did the 10-year-old in Australia do?",
+              "options": ["Wrote a book", "Started a garden for families", "Built tiny houses", "Rescued animals"],
+              "answer": "Started a garden for families",
+              "praise": "You were listening so carefully! That's wonderful! 🌱"
+            }
+          ]
+        },
+        {
+          "id": "news2",
+          "title": "Space Explorers",
+          "summary": "Scientists have discovered a planet outside our solar system that might have liquid water — and where there's water, there could be life! The planet is called Kepler-452b and it's about 1,400 light years away. Astronauts on the International Space Station are also growing food in space for the very first time!",
+          "funFact": "In space, astronauts grow taller! Without gravity pulling them down, their spine stretches slightly — up to 5cm! 🚀",
+          "questions": [
+            {
+              "text": "What have scientists discovered on another planet that could mean life is possible?",
+              "options": ["Mountains", "Liquid water", "Ice cream", "Oxygen tanks"],
+              "answer": "Liquid water",
+              "praise": "Brilliant! Water is the key ingredient for life! 💧🌟"
+            },
+            {
+              "text": "What surprising thing happens to astronauts in space?",
+              "options": ["They get shorter", "They grow taller", "Their hair turns blue", "They can fly like Superman"],
+              "answer": "They grow taller",
+              "praise": "Wow, you remembered that cool fact! You're amazing! 🚀⭐"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nature",
+      "name": "Nature & Animals",
+      "emoji": "🌿",
+      "color": "#27ae60",
+      "description": "Explore the wonders of the natural world!",
+      "episodes": [
+        {
+          "id": "nat1",
+          "title": "Butterflies: Nature's Magic",
+          "summary": "Butterflies start life as a tiny egg, then hatch into a caterpillar that eats and eats and grows. Then something incredible happens — the caterpillar wraps itself in a cocoon called a chrysalis. Inside, it completely transforms and emerges as a beautiful butterfly! This process is called metamorphosis.",
+          "funFact": "A butterfly tastes with its feet! It has tiny taste sensors on its legs so it can taste a flower just by landing on it! 🦋",
+          "questions": [
+            {
+              "text": "What is the name of the process when a caterpillar turns into a butterfly?",
+              "options": ["Transformation", "Metamorphosis", "Evolution", "Magic"],
+              "answer": "Metamorphosis",
+              "praise": "What a big word — and you got it right! You're brilliant! 🦋⭐"
+            },
+            {
+              "text": "How does a butterfly taste things?",
+              "options": ["With its tongue", "With its antennae", "With its feet", "With its wings"],
+              "answer": "With its feet",
+              "praise": "How amazing is that? Tasting with your feet! 🦋😄"
+            }
+          ]
+        },
+        {
+          "id": "nat2",
+          "title": "Oceans: The Deep Blue",
+          "summary": "The ocean covers more than 70% of our whole planet! It's so deep in some places that if you put Mount Everest at the bottom, the mountain's peak would still be underwater. The ocean is home to millions of creatures — from tiny glowing jellyfish to giant whale sharks!",
+          "funFact": "We know more about the surface of the Moon than we do about the deep ocean floor! 🌊",
+          "questions": [
+            {
+              "text": "What percentage of Earth is covered by ocean?",
+              "options": ["30%", "50%", "70%", "90%"],
+              "answer": "70%",
+              "praise": "Yes! Most of our beautiful planet is ocean! 🌊💙"
+            },
+            {
+              "text": "What is the world's biggest fish?",
+              "options": ["Blue Whale", "Whale Shark", "Giant Squid", "Great White Shark"],
+              "answer": "Whale Shark",
+              "praise": "You know so much about sea creatures! Amazing! 🦈⭐"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

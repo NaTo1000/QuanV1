@@ -1,0 +1,46 @@
+{
+  "games": {
+    "guess_number": {
+      "id": "guess_number",
+      "name": "Guess My Number! 🔢",
+      "emoji": "🔢",
+      "description": "Bananas is thinking of a number between 1 and 20. Can you guess it?",
+      "min": 1,
+      "max": 20,
+      "maxAttempts": 5,
+      "responses": {
+        "tooHigh": ["Too big! Try a smaller number 👇", "Nope, go lower! ⬇️", "Too high! Think smaller 🤔"],
+        "tooLow":  ["Too small! Try a bigger number 👆", "Nope, go higher! ⬆️", "Too low! Think bigger 🤔"],
+        "correct": ["🎉 YES! That's it! You're amazing!", "🍌 WOW! You got it! You're a superstar!", "⭐ INCREDIBLE! Correct! You rock!"],
+        "gameOver": ["Aww, the number was {number}! Better luck next time! 🍌", "The secret number was {number}! You'll get it next time! 💪"]
+      }
+    },
+    "animal_quiz": {
+      "id": "animal_quiz",
+      "name": "Animal Sounds! 🐾",
+      "emoji": "🐾",
+      "description": "What sound does the animal make? Let's see how many you know!",
+      "animals": [
+        { "name": "Dog", "emoji": "🐶", "sound": "Woof!", "options": ["Woof!", "Moo!", "Baa!", "Quack!"] },
+        { "name": "Cat", "emoji": "🐱", "sound": "Meow!", "options": ["Woof!", "Meow!", "Oink!", "Roar!"] },
+        { "name": "Cow", "emoji": "🐮", "sound": "Moo!", "options": ["Cluck!", "Neigh!", "Moo!", "Hiss!"] },
+        { "name": "Duck", "emoji": "🦆", "sound": "Quack!", "options": ["Quack!", "Tweet!", "Oink!", "Ribbit!"] },
+        { "name": "Lion", "emoji": "🦁", "sound": "Roar!", "options": ["Moo!", "Squeak!", "Roar!", "Baa!"] },
+        { "name": "Elephant", "emoji": "🐘", "sound": "Trumpet!", "options": ["Trumpet!", "Bark!", "Meow!", "Cluck!"] },
+        { "name": "Frog", "emoji": "🐸", "sound": "Ribbit!", "options": ["Ribbit!", "Moo!", "Buzz!", "Roar!"] },
+        { "name": "Pig", "emoji": "🐷", "sound": "Oink!", "options": ["Baa!", "Oink!", "Meow!", "Quack!"] },
+        { "name": "Horse", "emoji": "🐴", "sound": "Neigh!", "options": ["Neigh!", "Woof!", "Hiss!", "Cluck!"] },
+        { "name": "Sheep", "emoji": "🐑", "sound": "Baa!", "options": ["Moo!", "Baa!", "Roar!", "Squeak!"] }
+      ],
+      "praise": ["🎉 Correct! You're SO smart!", "⭐ Amazing! You got it!", "🍌 YES! Bananas is proud of you!", "🌟 Brilliant! Well done!"],
+      "encouragement": ["Almost! That was a great guess! 💪", "Oops! But don't worry, you'll get the next one! 🍌", "Not quite, but you're doing great! ⭐"]
+    },
+    "memory_match": {
+      "id": "memory_match",
+      "name": "Memory Match! 🃏",
+      "emoji": "🃏",
+      "description": "Flip the cards and find the matching pairs! How fast can you find them all?",
+      "cards": ["🐶", "🐱", "🐻", "🦁", "🐸", "🦆", "🐘", "🦋"]
+    }
+  }
+}

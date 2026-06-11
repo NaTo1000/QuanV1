@@ -18,7 +18,14 @@
           <li><a href="/cluster-config" class="nav-link" accesskey="c">⚙️ Clusters</a></li>
           <li><a href="/ipxe-boot" class="nav-link" accesskey="b">🚀 Boot Generator</a></li>
           <li><a href="/system-info" class="nav-link active" accesskey="s">💻 System Info</a></li>
-        </ul>
+                  <li><a href="/quantum-school" class="nav-link">🎓 School</a></li>
+          <li><a href="/quantum-analyzer" class="nav-link">🔬 Analyzer</a></li>
+          <li><a href="/quantum-pipeline" class="nav-link">🔗 Pipeline</a></li>
+          <li><a href="/quantum-rag-vault" class="nav-link">🔐 Vault</a></li>
+          <li><a href="/quantum-vortex" class="nav-link">🌀 Vortex</a></li>
+        <li><a href="/nvidia-pipeline" class="nav-link">🟢 NVIDIA</a></li>
+        <li><a href="/bananas" class="nav-link nav-banana">🍌 Bananas AI</a></li>
+</ul>
       </div>
     </nav>
 
@@ -105,13 +112,23 @@
           `;
         } catch (error) {
           const content = document.getElementById('systemInfoContent');
-          content.innerHTML = `
-            <div class="info-card" style="border-color: #d73a49;">
-              <h3>❌ Error Loading System Information</h3>
-              <p style="color: #d73a49;">Failed to fetch system information: ${error.message}</p>
-              <button onclick="loadSystemInfo()" style="margin-top: 10px;">Retry</button>
-            </div>
-          `;
+          const msg = document.createElement('p');
+          msg.style.color = '#d73a49';
+          msg.textContent = 'Failed to fetch system information: ' + error.message;
+          const card = document.createElement('div');
+          card.className = 'info-card';
+          card.style.borderColor = '#d73a49';
+          const heading = document.createElement('h3');
+          heading.textContent = '❌ Error Loading System Information';
+          const btn = document.createElement('button');
+          btn.style.marginTop = '10px';
+          btn.textContent = 'Retry';
+          btn.onclick = loadSystemInfo;
+          card.appendChild(heading);
+          card.appendChild(msg);
+          card.appendChild(btn);
+          content.innerHTML = '';
+          content.appendChild(card);
         }
       }
 

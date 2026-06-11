@@ -18,7 +18,14 @@
           <li><a href="/cluster-config" class="nav-link active" accesskey="c">⚙️ Clusters</a></li>
           <li><a href="/ipxe-boot" class="nav-link" accesskey="b">🚀 Boot Generator</a></li>
           <li><a href="/system-info" class="nav-link" accesskey="s">💻 System</a></li>
-        </ul>
+                  <li><a href="/quantum-school" class="nav-link">🎓 School</a></li>
+          <li><a href="/quantum-analyzer" class="nav-link">🔬 Analyzer</a></li>
+          <li><a href="/quantum-pipeline" class="nav-link">🔗 Pipeline</a></li>
+          <li><a href="/quantum-rag-vault" class="nav-link">🔐 Vault</a></li>
+          <li><a href="/quantum-vortex" class="nav-link">🌀 Vortex</a></li>
+        <li><a href="/nvidia-pipeline" class="nav-link">🟢 NVIDIA</a></li>
+        <li><a href="/bananas" class="nav-link nav-banana">🍌 Bananas AI</a></li>
+</ul>
       </div>
     </nav>
 
@@ -38,14 +45,21 @@
         
         <div class="form-group">
           <label for="builderType">Builder Type</label>
-          <select id="builderType" name="builderType">
+          <select id="builderType" name="builderType" onchange="toggleVmRam('vmRamGroup', this.value)">
             <option value="generic">Generic Cluster</option>
             <option value="docker-cloud">🐳 Docker Cloud Builder</option>
             <option value="kubernetes">☸️ Kubernetes</option>
             <option value="openshift">OpenShift</option>
             <option value="watsonx">🤖 Watson X Orchestrator</option>
+            <option value="tensorflow">🧠 TensorFlow Container</option>
           </select>
           <small class="form-help">Select the type of cluster or orchestrator you're using</small>
+        </div>
+
+        <div class="form-group" id="vmRamGroup" style="display:none;">
+          <label for="vmRam">VM RAM Allocation</label>
+          <input type="text" id="vmRam" name="vmRam" placeholder="e.g., 8GB, 16GB, 32GB">
+          <small class="form-help">Amount of VM RAM to allocate for the TensorFlow container cluster</small>
         </div>
         
         <div class="form-group">
@@ -65,6 +79,13 @@
       </form>
       
       <h2>Existing Cluster Links</h2>
+      <div style="margin-bottom: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button type="button" class="test-btn" onclick="exportClusters()">📥 Export Config</button>
+        <label style="display: inline-block; margin: 0;">
+          <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importClusters(this)">
+          <span class="test-btn" style="cursor: pointer; display: inline-block; padding: 10px 20px; background-color: #28a745; color: white; border-radius: 4px;">📤 Import Config</span>
+        </label>
+      </div>
       <div id="clusterLinksList">
         <% if (clusterLinks && clusterLinks.length > 0) { %>
           <% clusterLinks.forEach(function(link) { %>
@@ -81,11 +102,19 @@
                     <span class="badge badge-openshift">OpenShift</span>
                   <% } else if (link.builderType === 'watsonx') { %>
                     <span class="badge badge-watsonx">🤖 Watson X</span>
+                  <% } else if (link.builderType === 'tensorflow') { %>
+                    <span class="badge badge-tensorflow">🧠 TensorFlow</span>
                   <% } %>
                 </div>
-                <button class="delete-btn" onclick="deleteClusterLink('<%= link.id %>')">Delete</button>
+                <div>
+                  <button class="test-btn" style="padding: 6px 12px; font-size: 13px;" onclick="editClusterLink('<%= link.id %>', '<%= link.name.replace(/\'/g, "\\x27") %>', '<%= link.endpoint.replace(/\'/g, "\\x27") %>', '<%= link.builderType %>', '<%= (link.vmRam || "").replace(/\'/g, "\\x27") %>')">Edit</button>
+                  <button class="delete-btn" onclick="deleteClusterLink('<%= link.id %>')">Delete</button>
+                </div>
               </div>
               <div class="cluster-link-endpoint"><strong>Endpoint:</strong> <%= link.endpoint %></div>
+              <% if (link.vmRam) { %>
+                <div style="color: #586069; font-size: 12px;"><strong>VM RAM:</strong> <%= link.vmRam %></div>
+              <% } %>
               <div style="color: #586069; font-size: 12px;">Created: <%= new Date(link.createdAt).toLocaleString() %></div>
             </div>
           <% }); %>
@@ -94,7 +123,47 @@
         <% } %>
       </div>
     </div>
-    
+
+    <!-- Edit Cluster Modal -->
+    <div id="editModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
+      <div style="background:white; border-radius:8px; padding:30px; width:90%; max-width:500px; color:#24292e;">
+        <h2 style="margin-top:0;">✏️ Edit Cluster Link</h2>
+        <form id="editForm">
+          <input type="hidden" id="editId">
+          <div class="form-group">
+            <label for="editName">Link Name *</label>
+            <input type="text" id="editName" required>
+          </div>
+          <div class="form-group">
+            <label for="editBuilderType">Builder Type</label>
+            <select id="editBuilderType" onchange="toggleVmRam('editVmRamGroup', this.value)">
+              <option value="generic">Generic Cluster</option>
+              <option value="docker-cloud">🐳 Docker Cloud Builder</option>
+              <option value="kubernetes">☸️ Kubernetes</option>
+              <option value="openshift">OpenShift</option>
+              <option value="watsonx">🤖 Watson X Orchestrator</option>
+              <option value="tensorflow">🧠 TensorFlow Container</option>
+            </select>
+          </div>
+          <div class="form-group" id="editVmRamGroup" style="display:none;">
+            <label for="editVmRam">VM RAM Allocation</label>
+            <input type="text" id="editVmRam" placeholder="e.g., 8GB, 16GB, 32GB">
+            <small class="form-help">Amount of VM RAM to allocate for the TensorFlow container cluster</small>
+          </div>
+          <div class="form-group">
+            <label for="editEndpoint">Endpoint URL *</label>
+            <input type="text" id="editEndpoint" required>
+          </div>
+          <div class="form-group">
+            <label for="editCredentials">Credentials (leave blank to keep existing)</label>
+            <textarea id="editCredentials" rows="3" placeholder="Leave blank to keep existing credentials"></textarea>
+          </div>
+          <button type="submit">Save Changes</button>
+          <button type="button" onclick="closeEditModal()" style="background:#6c757d;">Cancel</button>
+        </form>
+      </div>
+    </div>
+
     <script>
       document.getElementById('clusterLinkForm').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -103,7 +172,8 @@
           name: document.getElementById('name').value,
           builderType: document.getElementById('builderType').value,
           endpoint: document.getElementById('endpoint').value,
-          credentials: document.getElementById('credentials').value
+          credentials: document.getElementById('credentials').value,
+          vmRam: document.getElementById('vmRam').value
         };
         
         try {
@@ -150,7 +220,101 @@
           showMessage('Error: ' + error.message, 'error');
         }
       }
+
+      function editClusterLink(id, name, endpoint, builderType, vmRam) {
+        document.getElementById('editId').value = id;
+        document.getElementById('editName').value = name;
+        document.getElementById('editEndpoint').value = endpoint;
+        document.getElementById('editBuilderType').value = builderType;
+        document.getElementById('editCredentials').value = '';
+        document.getElementById('editVmRam').value = vmRam || '';
+        toggleVmRam('editVmRamGroup', builderType);
+        document.getElementById('editModal').style.display = 'flex';
+      }
+
+      document.getElementById('editForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const formData = {
+          name: document.getElementById('editName').value,
+          builderType: document.getElementById('editBuilderType').value,
+          endpoint: document.getElementById('editEndpoint').value,
+          credentials: document.getElementById('editCredentials').value,
+          vmRam: document.getElementById('editVmRam').value
+        };
+
+        try {
+          const response = await fetch(`/api/cluster-links/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData)
+          });
+          const data = await response.json();
+          if (response.ok) {
+            closeEditModal();
+            showMessage('Cluster link updated successfully!', 'success');
+            setTimeout(() => location.reload(), 1000);
+          } else {
+            showMessage(data.error || 'Failed to update cluster link', 'error');
+          }
+        } catch (error) {
+          showMessage('Error: ' + error.message, 'error');
+        }
+      });
+
+      function closeEditModal() {
+        document.getElementById('editModal').style.display = 'none';
+      }
+
+      async function exportClusters() {
+        try {
+          const response = await fetch('/api/cluster-links/export');
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'cluster-links-export.json';
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+        } catch (error) {
+          showMessage('Export failed: ' + error.message, 'error');
+        }
+      }
+
+      async function importClusters(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        try {
+          const text = await file.text();
+          const links = JSON.parse(text);
+          const payload = Array.isArray(links) ? links : links.links || [];
+
+          const response = await fetch('/api/cluster-links/import', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ links: payload })
+          });
+          const data = await response.json();
+          if (response.ok) {
+            showMessage(`Import complete: ${data.added} added, ${data.skipped} skipped.`, 'success');
+            setTimeout(() => location.reload(), 1500);
+          } else {
+            showMessage(data.error || 'Import failed', 'error');
+          }
+        } catch (error) {
+          showMessage('Import error: ' + error.message, 'error');
+        }
+        input.value = '';
+      }
       
+      function toggleVmRam(groupId, builderType) {
+        const group = document.getElementById(groupId);
+        if (group) group.style.display = builderType === 'tensorflow' ? 'block' : 'none';
+      }
+
       function showMessage(text, type) {
         const messageDiv = document.getElementById('message');
         messageDiv.className = 'message ' + type;

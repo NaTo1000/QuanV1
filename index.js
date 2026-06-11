@@ -4,9 +4,97 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
+// Quantum & AI modules
+const {
+  silenceNoiseVortex, nonagonTopology, mapCircuitToNonagon,
+  computeGeodesicSilencing, deterministicReasoningEval,
+} = require('./nonagonal-vortex');
+const { swarm }            = require('./rag-swarm');
+const { QuadBrainOrchestrator } = require('./quad-brain');
+const vault                = require('./blockchain-vault');
+const {
+  harmonicEngine, digitalRoot, vortexSequence, carrierHarmonics,
+  harmonise369, SOLFEGGIO, BASE_TRIAD, CARRIER_HZ, reverseEngineer,
+  reinventTopology, quantumPath, classicalPath, mergeOutcomes,
+} = require('./harmonic-engine');
+const nvidiaPipeline       = require('./nvidia-pipeline');
+
+// Load static JSON corpora
+function loadJSON(file) {
+  try { return JSON.parse(fs.readFileSync(path.join(__dirname, file), 'utf8')); }
+  catch { return {}; }
+}
+const curriculum      = loadJSON('quantum-curriculum.json');
+const circuits        = loadJSON('quantum-circuit-scenarios.json');
+const backends        = loadJSON('quantum-backends.json');
+const qctrlLib        = loadJSON('qctrl-pennylane-library.json');
+const bananasJokes    = loadJSON('bananas-jokes.json');
+const bananasContent  = loadJSON('bananas-content.json');
+const bananasGames    = loadJSON('bananas-games.json');
+
+// Initialise RAG swarm index (background, non-blocking)
+swarm.init();
+
+// Shared corpus for QuadBrain (flatten all knowledge to {id, text} docs)
+function buildSharedCorpus() {
+  const docs = [];
+  // Curriculum concepts
+  if (curriculum.concepts) {
+    Object.entries(curriculum.concepts).forEach(([k, c]) => {
+      const ddmText = Object.values(c.ddm || {}).join(' ');
+      docs.push({ id: `concept_${k}`, text: `${k} ${c.title || ''} ${ddmText}` });
+    });
+  }
+  // Circuit names
+  (circuits.circuits || []).forEach((c, i) => {
+    docs.push({ id: `circuit_${c.id || i}`, text: `${c.name || ''} ${c.description || ''}` });
+  });
+  // Backend names
+  Object.entries(backends.backends || {}).forEach(([id, b]) => {
+    docs.push({ id: `backend_${id}`, text: `${b.name} ${b.provider} ${(b.best_for || []).join(' ')}` });
+  });
+  // Library ops
+  function walkOps(obj, prefix) {
+    if (!obj || typeof obj !== 'object') return;
+    if (obj.ddm) {
+      const ddmText = Object.values(obj.ddm).join(' ');
+      docs.push({ id: `op_${prefix}`, text: `${obj.full_name || prefix} ${ddmText}` });
+      return;
+    }
+    Object.entries(obj).forEach(([k, v]) => walkOps(v, prefix ? `${prefix}_${k}` : k));
+  }
+  walkOps(qctrlLib.qctrl_operations || {});
+  walkOps(qctrlLib.pennylane_operations || {});
+  Object.entries(qctrlLib.key_papers || {}).forEach(([id, p]) => {
+    docs.push({ id: `paper_${id}`, text: `${p.title} ${p.authors} ${p.hotkey_summary || ''} ${p.ddm_short || ''}` });
+  });
+  return docs;
+}
+const quadBrain = new QuadBrainOrchestrator(buildSharedCorpus());
+
+// Handle --version flag so `npm test` can exit cleanly
+if (process.argv.includes('--version')) {
+  const pkg = require('./package.json');
+  console.log(`${pkg.name} v${pkg.version}`);
+  process.exit(0);
+}
+
 const app = express();
 const haikus = require('./haikus.json');
 const port = process.env.PORT || 3000;
+
+// Security headers middleware
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'"
+  );
+  next();
+});
 
 // Cross-platform compatibility check
 console.log('='.repeat(50));
@@ -58,7 +146,7 @@ app.get('/api/cluster-links', (req, res) => {
 
 // API endpoint to create a new cluster link
 app.post('/api/cluster-links', (req, res) => {
-  const { name, endpoint, credentials, builderType } = req.body;
+  const { name, endpoint, credentials, builderType, vmRam } = req.body;
   
   if (!name || !endpoint) {
     return res.status(400).json({ error: 'Name and endpoint are required' });
@@ -77,6 +165,7 @@ app.post('/api/cluster-links', (req, res) => {
     endpoint,
     credentials: credentials || '',
     builderType: builderType || 'generic',
+    vmRam: vmRam || '',
     createdAt: new Date().toISOString(),
     status: 'active'
   };
@@ -100,6 +189,99 @@ app.delete('/api/cluster-links/:id', (req, res) => {
 
   writeClusterLinks(filteredLinks);
   res.json({ message: 'Cluster link deleted successfully' });
+});
+
+// API endpoint to update a cluster link
+app.put('/api/cluster-links/:id', (req, res) => {
+  const { id } = req.params;
+  const { name, endpoint, credentials, builderType, vmRam } = req.body;
+
+  if (!name || !endpoint) {
+    return res.status(400).json({ error: 'Name and endpoint are required' });
+  }
+
+  const links = readClusterLinks();
+  const index = links.findIndex(link => link.id === id);
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'Cluster link not found' });
+  }
+
+  // Check for duplicate name (excluding the link being updated)
+  if (links.some(link => link.name === name && link.id !== id)) {
+    return res.status(400).json({ error: 'A cluster link with this name already exists' });
+  }
+
+  links[index] = {
+    ...links[index],
+    name,
+    endpoint,
+    credentials: credentials || '',
+    builderType: builderType || 'generic',
+    vmRam: vmRam || '',
+    updatedAt: new Date().toISOString()
+  };
+
+  writeClusterLinks(links);
+  res.json(links[index]);
+});
+
+// API endpoint to export cluster links as JSON
+app.get('/api/cluster-links/export', (req, res) => {
+  const links = readClusterLinks();
+  // Strip credentials from export for security
+  const exportData = links.map(({ credentials, ...rest }) => rest);
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', 'attachment; filename="cluster-links-export.json"');
+  res.json(exportData);
+});
+
+// API endpoint to import cluster links from JSON
+app.post('/api/cluster-links/import', (req, res) => {
+  const { links: incoming } = req.body;
+
+  if (!Array.isArray(incoming)) {
+    return res.status(400).json({ error: 'Request body must contain a "links" array' });
+  }
+
+  const existing = readClusterLinks();
+  let added = 0;
+  let skipped = 0;
+
+  for (const item of incoming) {
+    if (!item.name || !item.endpoint) {
+      skipped++;
+      continue;
+    }
+    if (existing.some(link => link.name === item.name)) {
+      skipped++;
+      continue;
+    }
+    existing.push({
+      id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
+      name: item.name,
+      endpoint: item.endpoint,
+      credentials: '',
+      builderType: item.builderType || 'generic',
+      vmRam: item.vmRam || '',
+      createdAt: new Date().toISOString(),
+      status: 'active'
+    });
+    added++;
+  }
+
+  writeClusterLinks(existing);
+  res.json({ added, skipped, total: existing.length });
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    version: require('./package.json').version
+  });
 });
 
 // Cluster link configuration page
@@ -259,6 +441,381 @@ app.get('/api/system-info', (req, res) => {
     pathSeparator: path.sep,
     lineEnding: os.EOL === '\r\n' ? 'CRLF (Windows)' : 'LF (Unix/Mac)'
   });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// QUANTUM SCHOOL routes
+// ═══════════════════════════════════════════════════════════════════════════════
+app.get('/quantum-school', (req, res) => {
+  res.render('quantum-school', { curriculum, qctrlLib });
+});
+app.get('/api/quantum/concepts', (req, res) => {
+  res.json({ stages: curriculum.pipeline_stages || [], concepts: curriculum.concepts || {} });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// QUANTUM ANALYZER routes
+// ═══════════════════════════════════════════════════════════════════════════════
+app.get('/quantum-analyzer', (req, res) => {
+  res.render('quantum-analyzer', { circuits, backends, qctrlLib });
+});
+app.get('/api/quantum/circuits', (req, res) => {
+  const list = (circuits.circuits || []).map(c => ({
+    id: c.id, name: c.name, description: c.description, qubits: c.qubits,
+  }));
+  res.json(list);
+});
+app.get('/api/quantum/circuits/:id', (req, res) => {
+  const c = (circuits.circuits || []).find(c => String(c.id) === req.params.id);
+  if (!c) return res.status(404).json({ error: 'Circuit not found' });
+  res.json(c);
+});
+app.get('/api/quantum/hardware', (req, res) => {
+  res.json(circuits.hardware_profiles || backends.backends || {});
+});
+app.get('/api/quantum/backends', (req, res) => {
+  res.json(backends);
+});
+app.get('/api/quantum/hotkeys', (req, res) => {
+  res.json({ map: qctrlLib.hotkey_map || {}, operations: qctrlLib.pennylane_operations || {} });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// QUANTUM PIPELINE routes
+// ═══════════════════════════════════════════════════════════════════════════════
+app.get('/quantum-pipeline', (req, res) => {
+  res.render('quantum-pipeline', { backends });
+});
+app.get('/api/pipeline/templates', (req, res) => {
+  res.json(backends.pipeline_templates || {});
+});
+app.post('/api/pipeline/route', (req, res) => {
+  const { circuit, algorithm, qubitCount, budget } = req.body;
+  const rules  = (backends.routing_strategy || {}).auto_rules || [];
+  const bList  = Object.values(backends.backends || {});
+  const matches = rules.filter(r => {
+    if (r.condition.includes('algorithm') && algorithm && r.condition.includes(algorithm)) return true;
+    if (r.condition.includes('qubits > 50') && qubitCount > 50) return true;
+    if (r.condition.includes('budget') && budget === 'free') return true;
+    return false;
+  });
+  const recommended = matches.length
+    ? matches[0]
+    : { recommend: 'pennylane_lightning_qubit', reason: 'Default: free local simulation' };
+  res.json({ recommended, allMatches: matches, availableBackends: bList.map(b => ({ id: b.id, name: b.name })) });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BLOCKCHAIN VAULT routes
+// ═══════════════════════════════════════════════════════════════════════════════
+app.get('/quantum-rag-vault', (req, res) => {
+  const summary = vault.getChainSummary();
+  const ragStatus = swarm.status();
+  res.render('quantum-rag-vault', { vaultSummary: summary, ragStatus });
+});
+app.get('/api/vault/summary', (req, res) => res.json(vault.getChainSummary()));
+app.get('/api/vault/chain/:location', (req, res) => {
+  const loc = req.params.location.toUpperCase();
+  if (!vault.VAULT_LOCATIONS.includes(loc)) return res.status(400).json({ error: 'Unknown vault location' });
+  res.json(vault.getChain(loc));
+});
+app.get('/api/vault/verify', (req, res) => res.json(vault.verifyAllVaults()));
+app.post('/api/vault/write', (req, res) => {
+  const { data, type } = req.body;
+  if (!data) return res.status(400).json({ error: 'data field required' });
+  const results = vault.writeToAllVaults(data, type || 'RECORD');
+  res.json({ written: results });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TRI-RAG SWARM routes
+// ═══════════════════════════════════════════════════════════════════════════════
+app.get('/api/rag/status', (req, res) => res.json(swarm.status()));
+app.post('/api/rag/query', async (req, res) => {
+  const { query, topK } = req.body;
+  if (!query) return res.status(400).json({ error: 'query field required' });
+  try {
+    const result = await swarm.query(query, topK || 5);
+    // Persist to vault
+    vault.writeToAllVaults({ type: 'RAG_QUERY', query, topResult: result.topResult?.id }, 'RAG');
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// QUAD BRAIN OCTO-INFERENCE routes
+// ═══════════════════════════════════════════════════════════════════════════════
+app.get('/quantum-vortex', (req, res) => {
+  res.render('quantum-vortex', {
+    brainStatus: quadBrain.status(),
+    harmonicRef: harmonicEngine.reference(),
+  });
+});
+app.get('/api/brain/status', (req, res) => res.json(quadBrain.status()));
+app.post('/api/brain/query', async (req, res) => {
+  const { query } = req.body;
+  if (!query) return res.status(400).json({ error: 'query field required' });
+  try {
+    const result = await quadBrain.query(query);
+    vault.writeToAllVaults({ type: 'BRAIN_QUERY', query, winner: result.predictiveSymbiosis.winner }, 'INFERENCE');
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HARMONIC ENGINE routes  (369Hz quantum-classical parallel + reverse engineering)
+// ═══════════════════════════════════════════════════════════════════════════════
+app.get('/api/harmonic/reference', (req, res) => res.json(harmonicEngine.reference()));
+app.get('/api/harmonic/status',    (req, res) => res.json(harmonicEngine.status()));
+
+app.post('/api/harmonic/run', async (req, res) => {
+  const { vector, topology, labels } = req.body;
+  if (!Array.isArray(vector) || vector.length === 0) {
+    return res.status(400).json({ error: 'vector must be a non-empty number array' });
+  }
+  try {
+    const result = await harmonicEngine.run(
+      vector.map(Number),
+      topology || {},
+      labels   || [],
+    );
+    vault.writeToAllVaults({ type: 'HARMONIC_RUN', axis: result.tesla369Summary.dominantAxis }, 'HARMONIC');
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/harmonic/parallel', async (req, res) => {
+  /* Run quantum and classical paths separately then merge */
+  const { vector } = req.body;
+  if (!Array.isArray(vector) || vector.length === 0) {
+    return res.status(400).json({ error: 'vector required' });
+  }
+  const input = vector.map(Number);
+  const [qRes, cRes] = await Promise.all([
+    Promise.resolve(quantumPath(input)),
+    Promise.resolve(classicalPath(input)),
+  ]);
+  const merged   = mergeOutcomes(qRes, cRes);
+  const reversed = reverseEngineer(merged.merged, []);
+  res.json({ quantumPath: qRes, classicalPath: cRes, merged, reverseEngineering: reversed });
+});
+
+app.post('/api/harmonic/topology', (req, res) => {
+  const { nodes, edges } = req.body;
+  if (!Array.isArray(nodes)) return res.status(400).json({ error: 'nodes array required' });
+  const result = reinventTopology({ nodes, edges: edges || [] });
+  vault.writeToAllVaults({ type: 'TOPOLOGY_REINVENTION', nodeCount: nodes.length, score: result.overallHarmonicScore }, 'HARMONIC');
+  res.json(result);
+});
+
+app.post('/api/harmonic/harmonise', (req, res) => {
+  const { weights } = req.body;
+  if (!Array.isArray(weights)) return res.status(400).json({ error: 'weights array required' });
+  res.json({ harmonised: harmonise369(weights.map(Number)), carrier: CARRIER_HZ, solfeggio: SOLFEGGIO });
+});
+
+app.post('/api/harmonic/harmonise', (req, res) => {
+  const { weights } = req.body;
+  if (!Array.isArray(weights)) return res.status(400).json({ error: 'weights array required' });
+  res.json({ harmonised: harmonise369(weights.map(Number)), carrier: CARRIER_HZ, solfeggio: SOLFEGGIO });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NONAGONAL VORTEX — 369Hz Geodesic Noise Silencer routes
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Precomputed topology (no request data needed)
+app.get('/api/nonagonal/topology', (req, res) => {
+  res.json({
+    vertices     : nonagonTopology.vertices,
+    teslaIndices : [2, 5, 8],
+    teslaLabels  : [3, 6, 9],
+    arcHops      : nonagonTopology.arcHops,
+    geoLength    : nonagonTopology.geoLength,
+    teslaProximity: nonagonTopology.teslaProximity,
+    carrierHz    : 369,
+    description  : 'Nonagonal (9-vertex) geodesic vortex. Tesla silence anchors at vertices 3, 6, 9.',
+  });
+});
+
+// Silence a specific circuit (by id, looked up from the JSON corpus)
+app.post('/api/nonagonal/evaluate', (req, res) => {
+  const { circuitId } = req.body;
+  if (!circuitId) return res.status(400).json({ error: 'circuitId required' });
+  const circuit = (circuits.circuits || []).find(c => String(c.id) === String(circuitId));
+  if (!circuit) return res.status(404).json({ error: 'Circuit not found' });
+  try {
+    const result = silenceNoiseVortex(circuit);
+    vault.writeToAllVaults({
+      type: 'NONAGONAL_SILENCE',
+      circuitId,
+      determinismScore: result.summary.determinismScore,
+      meanSuppression : result.summary.meanSuppression,
+    }, 'NONAGONAL');
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Silence a raw circuit payload (custom circuits not in the JSON corpus)
+app.post('/api/nonagonal/silence', (req, res) => {
+  const { circuit } = req.body;
+  if (!circuit || typeof circuit !== 'object') {
+    return res.status(400).json({ error: 'circuit object required' });
+  }
+  try {
+    const result = silenceNoiseVortex(circuit);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Gate-level silencing only (no reasoning re-eval) — useful for real-time animation
+app.post('/api/nonagonal/gate-map', (req, res) => {
+  const { circuit } = req.body;
+  if (!circuit) return res.status(400).json({ error: 'circuit object required' });
+  try {
+    const gateMap  = mapCircuitToNonagon(circuit);
+    const silenced = computeGeodesicSilencing(gateMap);
+    res.json({
+      gateCount        : silenced.length,
+      silenceSignature : Array.from({ length: 9 }, (_, k) => {
+        const gates = silenced.filter(g => g.node === k);
+        return gates.length ? gates.reduce((a, g) => a + g.sigma, 0) / gates.length : 0;
+      }),
+      gates: silenced,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Deterministic reasoning re-evaluation only (expects pre-silenced gate data)
+app.post('/api/nonagonal/reasoning', (req, res) => {
+  const { circuit, silencingData } = req.body;
+  if (!circuit || !Array.isArray(silencingData)) {
+    return res.status(400).json({ error: 'circuit and silencingData array required' });
+  }
+  try {
+    const result = deterministicReasoningEval(circuit, silencingData);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NVIDIA TensorFlow INFERENCE PIPELINE routes
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Page
+app.get('/nvidia-pipeline', (req, res) => {
+  // Bootstrap nodes from TensorFlow cluster links on every page load
+  const clusterLinks = readClusterLinks();
+  nvidiaPipeline.bootstrapFromClusterLinks(clusterLinks);
+  res.render('nvidia-pipeline', {
+    report:      nvidiaPipeline.clusterReport(),
+    nodes:       nvidiaPipeline.listNodes(),
+    jobs:        nvidiaPipeline.listJobs(),
+    gpuTiers:    nvidiaPipeline.GPU_TIERS,
+    lbStrategies: nvidiaPipeline.LB_STRATEGIES,
+    precisionModes: nvidiaPipeline.PRECISION_MODES,
+  });
+});
+
+// Cluster health report
+app.get('/api/nvidia/report', (req, res) => {
+  res.json(nvidiaPipeline.clusterReport());
+});
+
+// List nodes
+app.get('/api/nvidia/nodes', (req, res) => {
+  res.json(nvidiaPipeline.listNodes());
+});
+
+// Register a new GPU node
+app.post('/api/nvidia/nodes', (req, res) => {
+  const { name, endpoint, gpuModel, gpuCount, vmRam, precision } = req.body;
+  try {
+    const node = nvidiaPipeline.registerNode({ name, endpoint, gpuModel, gpuCount, vmRam, precision });
+    res.status(201).json(node);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Deregister a node
+app.delete('/api/nvidia/nodes/:id', (req, res) => {
+  const removed = nvidiaPipeline.deregisterNode(req.params.id);
+  if (!removed) return res.status(404).json({ error: 'Node not found' });
+  res.json({ message: 'Node removed' });
+});
+
+// List jobs
+app.get('/api/nvidia/jobs', (req, res) => {
+  const { status } = req.query;
+  res.json(nvidiaPipeline.listJobs(status || null));
+});
+
+// Submit an inference job
+app.post('/api/nvidia/jobs', (req, res) => {
+  const { modelName, modelVersion, batchSize, precision, strategy, inputShape, modelSizeGB } = req.body;
+  try {
+    const job = nvidiaPipeline.createInferenceJob({
+      modelName, modelVersion, batchSize, precision, strategy, inputShape, modelSizeGB,
+    });
+    // Simulate async execution: start immediately, complete after a mock latency
+    nvidiaPipeline.startJob(job.id);
+    const mockLatency = Math.round(10 + Math.random() * 90); // 10–100 ms mock
+    setTimeout(() => nvidiaPipeline.completeJob(job.id, true, mockLatency), mockLatency);
+    res.status(202).json(job);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Get a specific job
+app.get('/api/nvidia/jobs/:id', (req, res) => {
+  const job = nvidiaPipeline.getJob(req.params.id);
+  if (!job) return res.status(404).json({ error: 'Job not found' });
+  res.json(job);
+});
+
+// Bootstrap nodes from existing TensorFlow cluster links
+app.post('/api/nvidia/bootstrap', (req, res) => {
+  const clusterLinks = readClusterLinks();
+  const registered = nvidiaPipeline.bootstrapFromClusterLinks(clusterLinks);
+  res.json({ bootstrapped: registered.length, nodes: registered });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BANANAS AI — Interactive companion for sick kids
+// ═══════════════════════════════════════════════════════════════════════════════
+app.get('/bananas', (req, res) => {
+  res.render('bananas', {
+    jokes:   bananasJokes,
+    content: bananasContent,
+    games:   bananasGames,
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not found' });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err.message);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 // Start server with cross-platform error handling

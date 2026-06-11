@@ -1,0 +1,478 @@
+{
+  "version": "3.0.0",
+  "title": "Q-CTRL + PennyLane + Scientific Literature Master Library",
+  "description": "Complete operation library for Q-CTRL Boulder Opal and Fire Opal, all PennyLane gates and transforms, with hotkey mappings and DDM breakdowns for every operation",
+  "hotkey_map": {
+    "legend": "Press the key to open the full DDM breakdown for that operation",
+    "keys": {
+      "H": "hadamard",
+      "X": "pauli_x",
+      "Y": "pauli_y",
+      "Z": "pauli_z",
+      "C": "cnot",
+      "S": "phase_s",
+      "T": "t_gate",
+      "R": "rotation_xyz",
+      "G": "grover_diffuser",
+      "F": "qft_butterfly",
+      "V": "vqe_ansatz",
+      "Q": "qaoa_mixer",
+      "E": "entanglement_entropy",
+      "B": "bloch_sphere",
+      "D": "decoherence_t1t2",
+      "N": "noise_channels",
+      "P": "phase_kickback",
+      "A": "amplitude_amplification",
+      "O": "optimal_control_grape",
+      "W": "dd_sequences",
+      "K": "clifford_gates",
+      "L": "lindblad_master",
+      "M": "measurement_postulate",
+      "I": "quantum_interference",
+      "U": "unitary_decomposition"
+    }
+  },
+  "qctrl_operations": {
+    "boulder_opal": {
+      "description": "Q-CTRL Boulder Opal professional optimal control toolkit",
+      "categories": {
+        "pulse_optimization": {
+          "grape": {
+            "id": "grape",
+            "hotkey": "O",
+            "full_name": "Gradient Ascent Pulse Engineering",
+            "qctrl_function": "boulderopal.optimizers.grape()",
+            "paper": { "title": "Optimal control of coupled spin dynamics: design of NMR pulse sequences by gradient ascent algorithms", "authors": "Khaneja et al.", "year": 2005, "arxiv": "10.1016/j.jmr.2004.11.004" },
+            "ddm": {
+              "level_1_intuition": "GPS navigation: you want to drive from A to B. GRAPE says — at each second, look at how much closer you get for each small steering adjustment. Steer in the best direction. Repeat until you arrive.",
+              "level_2_bridge": "You're shaping a laser or microwave pulse in time. The 'route' is the pulse waveform. The 'destination' is a target quantum gate. GRAPE computes which part of the waveform to adjust to improve the gate the most.",
+              "level_3_formal": "GRAPE is a gradient-based optimization for quantum control. It iteratively adjusts a piecewise-constant control pulse u(t) to maximize gate fidelity F = |Tr(U†_target U_realized)|²/d², computing gradients via forward/backward propagation.",
+              "level_4_math": "Maximize: F(u) = |⟨U_target, U(T)⟩|²/d² where U(T) = T[exp(-i∫₀ᵀ H(t)dt)], H(t) = H₀ + Σₖ uₖ(t)Hₖ. Gradient: ∂F/∂uₖ(j) = 2Re[⟨P(j)|iHₖΔt|X(j)⟩] where X(j) is forward propagator, P(j) is backward propagator (co-state).",
+              "level_5_qctrl": "Boulder Opal implements GRAPE with automatic differentiation, robustness constraints (RGRAPE), and pulse smoothness penalties. Outperforms standard GRAPE by enforcing hardware constraints in optimization."
+            },
+            "qctrl_code": "import boulderopal as bo\nresult = bo.optimizers.grape(\n    cost_function=bo.cost_functions.infidelity,\n    variables={'duration': 100e-9, 'drive': initial_pulse},\n    optimization_count=100\n)",
+            "real_world_impact": "Typical CX gate: 98% → 99.5% fidelity. On IBM Eagle with Fire Opal: up to 10,000× improvement in algorithm success."
+          },
+          "crab": {
+            "id": "crab",
+            "full_name": "Chopped RAndom Basis",
+            "paper": { "title": "Chopped random-basis quantum optimization", "authors": "Doria, Calarco, Montangero", "year": 2011, "arxiv": "arXiv:1003.3750" },
+            "ddm": {
+              "level_1_intuition": "Instead of adjusting the GPS route turn-by-turn, you describe the whole journey as a song (frequency components). You randomly try different songs and keep the best one.",
+              "level_2_bridge": "Your pulse is represented as a sum of sinusoids with random frequencies. Optimization happens over these frequency amplitudes — a much lower-dimensional and smoother search space than GRAPE.",
+              "level_3_formal": "CRAB parameterizes controls as u(t) = Σₙ [aₙcos(ωₙt) + bₙsin(ωₙt)] with random ωₙ. Optimize over {aₙ, bₙ}. Use Nelder-Mead or L-BFGS on this lower-dimensional problem.",
+              "level_4_math": "u(t) = Σₙ₌₁ᴺ (aₙcos(ωₙt) + bₙsin(ωₙt)) · envelope(t), where ωₙ ~ Uniform(ω_min, ω_max). N ≪ timesteps in GRAPE. This exploits the quantum speed limit: optimal pulses are band-limited.",
+              "level_5_qctrl": "dCRAB (dressed CRAB) adds superconvergence restart by randomizing frequencies iteratively. Boulder Opal supports CRAB/dCRAB as fallback when gradient computation is expensive."
+            }
+          },
+          "drag": {
+            "id": "drag",
+            "full_name": "Derivative Removal via Adiabatic Gate",
+            "paper": { "title": "Optimal Quantum Control Using Randomized Benchmarking", "authors": "Motzoi et al.", "year": 2009, "arxiv": "arXiv:0901.0534" },
+            "ddm": {
+              "level_1_intuition": "When you brake a car hard, the passengers lurch forward. DRAG adds a tiny sideways correction force at the same time so everyone stays in their seats. In qubits, it prevents accidental leakage into unwanted energy levels.",
+              "level_2_bridge": "Transmon qubits are not perfect 2-level systems — there is a third |2⟩ level. Driving the qubit too fast causes leakage into |2⟩. DRAG adds a derivative term to the Q quadrature to cancel this error.",
+              "level_3_formal": "DRAG adds an out-of-phase pulse component: Q(t) = -λ dI(t)/dt / α, where I(t) is in-phase drive, α is anharmonicity, λ is DRAG coefficient (~0.5). This suppresses |0⟩↔|2⟩ and |1⟩↔|2⟩ transitions.",
+              "level_4_math": "H = ωq/2 σz + α/2|2⟩⟨2| + [Ω_I(t)σ_x + Ω_Q(t)σ_y]/2, with Ω_Q(t) = -λ/α · dΩ_I/dt. In the rotating frame, this removes first-order leakage to ℝ(|2⟩).",
+              "level_5_qctrl": "Fire Opal automatically applies DRAG to all single-qubit gates. Boulder Opal provides DRAG coefficient optimization as part of the gate design routine."
+            },
+            "pennylane_equivalent": "qml.DRAG(theta, phi, delta, wires=[0])"
+          },
+          "robust_control": {
+            "id": "robust_control",
+            "full_name": "Robust Optimal Control (Noise-Robust Pulses)",
+            "ddm": {
+              "level_1_intuition": "You're a tightrope walker. A normal pulse gets you across perfectly in calm conditions. A ROBUST pulse gets you across even if the wind is blowing — it works despite small errors in your equipment.",
+              "level_2_bridge": "Quantum hardware has uncertainty: the qubit frequency drifts, the control amplitude is imperfect. Robust pulses sacrifice a tiny bit of peak fidelity to gain immunity to these fluctuations.",
+              "level_3_formal": "Robust GRAPE minimizes F_robust = F_nominal - λ · Σᵢ ||∂F/∂δᵢ||², where δᵢ are perturbation parameters. The gradient penalty term forces the pulse to be flat near the optimum w.r.t. each noise source.",
+              "level_4_math": "Filter function formalism: F_φ(ω) = |∫₀ᵀ y(t)e^{iωt}dt|² quantifies susceptibility to noise at frequency ω. Minimize ∫ S_φ(ω)F_φ(ω)dω simultaneously with gate infidelity. S_φ(ω) is the noise power spectral density.",
+              "level_5_qctrl": "This is Q-CTRL's core innovation. Boulder Opal uses filter function gradient descent to design pulses that suppress noise at specific frequencies. Fire Opal applies this automatically."
+            }
+          }
+        },
+        "characterization": {
+          "noise_spectroscopy": {
+            "id": "noise_spectroscopy",
+            "full_name": "Quantum Noise Spectroscopy",
+            "ddm": {
+              "level_1_intuition": "Like an audiologist measuring your hearing: they play tones at different frequencies to find where you're deaf. Noise spectroscopy plays control signals at different frequencies to map where your qubit is most sensitive to noise.",
+              "level_2_bridge": "Every qubit has a noise 'fingerprint' — frequencies where the environment disturbs it most. Measuring this lets you design pulses that avoid those frequencies.",
+              "level_3_formal": "Apply a sequence of Ramsey-type experiments with control modulated at different frequencies ω. Measure dephasing rate vs. ω. The result is the noise power spectral density S(ω) of the qubit's environment.",
+              "level_4_math": "S_z(ω) = ∫₋∞^∞ ⟨B_z(t)B_z(0)⟩e^{-iωt}dt, measured via: χ(t) = exp(-∫₀^∞ S_z(ω)F_φ(ω,t)/ω² dω), where χ(t) is qubit coherence decay and F_φ is filter function of DD sequence.",
+              "level_5_qctrl": "Boulder Opal automates noise spectroscopy protocols and returns calibrated noise models used as input to subsequent robust pulse design."
+            }
+          },
+          "hamiltonian_learning": {
+            "id": "hamiltonian_learning",
+            "full_name": "Hamiltonian Parameter Estimation",
+            "ddm": {
+              "level_1_intuition": "You received a mystery instrument with no manual. You play it and listen carefully to figure out exactly what strings it has and their exact tension. Hamiltonian learning plays control pulses and measures responses to learn the exact equations governing your qubit.",
+              "level_2_bridge": "Real qubits differ from their spec sheets. Hamiltonian learning experiments precisely measure qubit frequency, anharmonicity, coupling strengths, and drift — essential for accurate gate calibration.",
+              "level_3_formal": "Prepare known states, apply known controls, measure outcomes. Use Bayesian inference or maximum likelihood to infer H parameters. Repeat with increasingly informative experiments (adaptive design).",
+              "level_4_math": "P(data|H) = ∏ᵢ Tr(Mᵢ ρ_H), where ρ_H is state evolved under H, Mᵢ are POVM elements. Maximum likelihood: Ĥ = argmax_H Σᵢ log P(data_i|H). Bayesian: P(H|data) ∝ P(data|H)·P(H).",
+              "level_5_qctrl": "Boulder Opal provides automated Hamiltonian learning workflows with adaptive experiment selection. Results feed directly into GRAPE optimization."
+            }
+          }
+        },
+        "dynamical_decoupling": {
+          "hahn_echo": {
+            "id": "hahn_echo",
+            "hotkey": "W",
+            "full_name": "Hahn Echo",
+            "ddm": {
+              "level_1_intuition": "You're in a race but your watch runs slightly wrong. Halfway through, someone reverses time for a moment — you end back exactly where you started, as if you never drifted. Hahn echo reverses qubit phase drift halfway through evolution.",
+              "level_2_bridge": "Your qubit accumulates random phase due to slow noise. A π pulse in the middle of the evolution flips the accumulated phase, which then unwinds over the second half — perfect refocusing for static or slowly varying noise.",
+              "level_3_formal": "Sequence: τ — π_x — τ — measure. The π pulse maps |+⟩ → |-⟩, reversing phase accumulation. Cancels noise components with correlation time longer than 2τ.",
+              "level_4_math": "Coherence decay: W(2τ) = exp(-χ(2τ)), where χ(2τ) = (4/π) ∫₀^∞ S(ω)sin⁴(ωτ/2)/ω² dω. Hahn echo filter: F_HE(ω) = 8sin⁴(ωτ/2) ↔ suppresses DC and low-frequency noise vs. free induction decay.",
+              "level_5_qctrl": "Boulder Opal designs optimal DD sequences beyond Hahn echo by treating the entire sequence as an optimization problem in the filter function framework."
+            }
+          },
+          "cpmg": {
+            "id": "cpmg",
+            "full_name": "Carr-Purcell-Meiboom-Gill",
+            "ddm": {
+              "level_1_intuition": "Instead of one time-reversal, you apply many corrections at regular intervals — like a GPS tracker that continuously updates your position instead of correcting once at the halfway point.",
+              "level_2_bridge": "Multiple π pulses (π-τ-π-τ-...) suppress noise more aggressively than a single Hahn echo. More pulses = better noise filtering at low frequencies, but each pulse adds its own error.",
+              "level_3_formal": "Apply N π pulses at times t_j = (2j-1)τ/N, j=1..N. Filter function: F_N(ω) = |1 + 2Σⱼ(-1)ʲe^{iωtⱼ}|² · sin²(ωτ). Higher N → sharper low-frequency cutoff.",
+              "level_4_math": "F_CPMG(ω) = (4sin²(ωτ/(2N)))/(cos²(ωτ/(2N))) for N pulses, total time τ. Coherence time extension: T₂_CPMG = T₂_HE · N^(1-α/(1+α)) for noise with spectral exponent α.",
+              "level_5_qctrl": "Fire Opal automatically applies optimal CPMG-style decoupling during idle periods in circuits. Boulder Opal optimizes pulse spacing beyond uniform CPMG."
+            }
+          },
+          "uhrig_dd": {
+            "id": "uhrig_dd",
+            "full_name": "Uhrig Dynamical Decoupling (UDD)",
+            "paper": { "title": "Keeping a Quantum Bit Alive by Optimized π-Pulse Sequences", "authors": "Uhrig", "year": 2007, "arxiv": "arXiv:0706.3866" },
+            "ddm": {
+              "level_1_intuition": "CPMG corrects at equal intervals. UDD figures out the mathematically optimal times to place its corrections — like a musician who knows exactly which beats to emphasize for maximum effect.",
+              "level_2_bridge": "For a qubit with dephasing noise (σ_z environment), UDD places π pulses at t_j = T·sin²(jπ/(2N+2)) — non-uniformly spaced. This concentrates all filter function zeros at ω=0, maximally suppressing slow noise.",
+              "level_3_formal": "UDD positions: t_j = T·sin²(jπ/(2N+2)) for j=1..N. This cancels dephasing to N-th order in a Taylor expansion of coherence. Optimal for Ohmically coupled baths.",
+              "level_4_math": "UDD condition: ∫₀ᵀ y(t)tᵏdt = 0 for k=1..N, where y(t) = ±1 is the modulation function. Solution: t_j = Tsin²(jπ/2(N+1)). Filter: F_UDD(ω) = |Σⱼ₌₀ᴺ⁺¹ (-1)ʲ e^{iωtⱼ}|².",
+              "level_5_qctrl": "Boulder Opal supports UDD as a starting point for further optimization under hardware constraints. For amplitude noise, CDD (Concatenated DD) is often preferred."
+            }
+          }
+        }
+      }
+    },
+    "fire_opal": {
+      "description": "Q-CTRL Fire Opal automated error suppression — drop-in Qiskit/Cirq compatible",
+      "usage": "import fire_opal as fo\nresult = fo.execute(circuits=qiskit_circuits, shot_count=100, credentials=ibm_creds)",
+      "what_it_does": "Automatically recompiles circuits into hardware-optimal pulse sequences using Boulder Opal's algorithms, without any user configuration. Provides >10x typical error reduction.",
+      "key_features": {
+        "automated_compilation": "Zero-config conversion from gate circuit to calibrated pulses",
+        "crosstalk_suppression": "Measures and cancels qubit-qubit crosstalk during compilation",
+        "dd_insertion": "Automatically inserts dynamical decoupling during idle windows",
+        "readout_mitigation": "Built-in M3 readout correction applied post-execution",
+        "batching": "Automatically batches multiple circuits for efficiency"
+      }
+    }
+  },
+  "pennylane_operations": {
+    "description": "Complete PennyLane gate and transform library with DDM breakdowns",
+    "single_qubit_gates": {
+      "hadamard": {
+        "id": "hadamard",
+        "hotkey": "H",
+        "pennylane": "qml.Hadamard(wires=[0])",
+        "qiskit": "qc.h(0)",
+        "cirq": "cirq.H(q[0])",
+        "matrix": "1/√2 · [[1, 1], [1, -1]]",
+        "ddm": {
+          "level_1_intuition": "A coin on a table is either heads or tails. The Hadamard gate is like spinning the coin perfectly — now it's BOTH heads and tails at the same time with equal probability. You only know which one it is when you look at it.",
+          "level_2_bridge": "In binary logic, a bit is 0 or 1. The Hadamard makes a qubit |0⟩ into |+⟩ = (|0⟩+|1⟩)/√2 — a perfect superposition. The key word is phase: H also encodes a phase difference between |0⟩ and |1⟩ components.",
+          "level_3_formal": "The Hadamard gate H maps: H|0⟩ = |+⟩ = (|0⟩+|1⟩)/√2, H|1⟩ = |-⟩ = (|0⟩-|1⟩)/√2. H is its own inverse: H² = I. It transforms the Z-basis to the X-basis on the Bloch sphere.",
+          "level_4_math": "H = (X + Z)/√2 = 1/√2 · [[1, 1],[1, -1]]. Bloch sphere: H rotates π around the axis n̂ = (X+Z)/√2. Eigenvectors: |+⟩ (eigenvalue +1), |-⟩ (eigenvalue -1).",
+          "level_5_qctrl": "In Q-CTRL pulse terms: H is implemented as a composite pulse Rz(π/2)·Rx(π/2)·Rz(π/2). Fire Opal optimizes the pulse shape to maximize fidelity under hardware noise."
+        },
+        "classical_analogy": "Fourier transform: H is a quantum Fourier transform on 1 qubit",
+        "real_world_metric": { "ibm_heron_fidelity": 0.9998, "ionq_aria_fidelity": 0.9997, "gate_time_ibm_ns": 25 },
+        "used_in": ["Grover's algorithm (diffuser)", "QFT", "Bell state preparation", "Quantum teleportation", "Bernstein-Vazirani"],
+        "pennylane_autodiff": "Supported — gradient: dH/dθ computed via parameter-shift rule"
+      },
+      "pauli_x": {
+        "id": "pauli_x",
+        "hotkey": "X",
+        "pennylane": "qml.PauliX(wires=[0])",
+        "matrix": "[[0, 1], [1, 0]]",
+        "ddm": {
+          "level_1_intuition": "The NOT gate. If you have a light switch that's off, X turns it on. If it's on, X turns it off. For a qubit in superposition, X flips the amplitudes.",
+          "level_2_bridge": "X is a classical NOT gate extended to quantum: X|0⟩=|1⟩, X|1⟩=|0⟩. It's a π rotation around the X-axis of the Bloch sphere.",
+          "level_3_formal": "PauliX = σ_x: X|0⟩=|1⟩, X|1⟩=|0⟩. Eigenvalues ±1. Eigenvectors: |+⟩=(|0⟩+|1⟩)/√2 (+1), |-⟩=(|0⟩-|1⟩)/√2 (-1).",
+          "level_4_math": "X = [[0,1],[1,0]] = σ_x. As rotation: X = e^{iπ/2} · Rₓ(π) = e^{iπ/2} · [[0,-i],[-i,0]]? No: Rₓ(π)=−iX. Actual X: X=HZH. Eigenspectrum: spec={+1:|+⟩, -1:|-⟩}.",
+          "level_5_qctrl": "Implemented as a resonant drive pulse at the qubit frequency for exactly a π rotation. DRAG correction added to suppress leakage."
+        }
+      },
+      "rotation_xyz": {
+        "id": "rotation_xyz",
+        "hotkey": "R",
+        "pennylane": "qml.RX(theta, wires=[0]) / qml.RY(theta, wires=[0]) / qml.RZ(phi, wires=[0])",
+        "ddm": {
+          "level_1_intuition": "Think of a globe. X, Y, Z rotations are spinning the globe around different axes — longitude axis, equator axis, or polar axis. Any gate can be built from 3 such rotations.",
+          "level_2_bridge": "Rₓ(θ) rotates the Bloch sphere state by angle θ around the X-axis. This physically corresponds to driving the qubit for a specific time at a specific amplitude.",
+          "level_3_formal": "Rₓ(θ) = exp(-iθX/2) = cos(θ/2)I − i·sin(θ/2)X. Similarly for Y, Z. Any single-qubit gate U = e^{iα}Rz(β)Ry(γ)Rz(δ) (Euler decomposition).",
+          "level_4_math": "Rₓ(θ) = [[cos(θ/2), -i·sin(θ/2)],[-i·sin(θ/2), cos(θ/2)]]. Rᵧ(θ) = [[cos(θ/2), -sin(θ/2)],[sin(θ/2), cos(θ/2)]]. Rz(φ) = [[e^{-iφ/2}, 0],[0, e^{iφ/2}]].",
+          "level_5_qctrl": "Rz is virtual (frame rotation, zero physical time). Rₓ/Rᵧ require real physical pulses. Boulder Opal designs calibration-robust pulse shapes for arbitrary Rₓ(θ)."
+        },
+        "pennylane_autodiff": "Supported — gradient: d/dθ via parameter-shift rule: ∂f/∂θ = [f(θ+π/2) - f(θ-π/2)] / 2"
+      },
+      "phase_s": {
+        "id": "phase_s",
+        "hotkey": "S",
+        "pennylane": "qml.S(wires=[0])",
+        "matrix": "[[1, 0], [0, i]]",
+        "ddm": {
+          "level_1_intuition": "S rotates the |1⟩ component by 90° on the complex plane (multiplies by i). It's like rotating a dial a quarter turn.",
+          "level_2_bridge": "S = Z^(1/2): it's the square root of the Z gate. S|0⟩=|0⟩, S|1⟩=i|1⟩. Two S gates equal one Z gate.",
+          "level_3_formal": "S gate = diag(1, i). Phase gate P(π/2). Part of the Clifford group. Used in Clifford circuits, stabilizer simulations.",
+          "level_4_math": "S = [[1,0],[0,e^{iπ/2}]] = [[1,0],[0,i]]. S = T². S is Clifford: maps Paulis to Paulis under conjugation. SXS† = Y, SYS† = -X, SZS† = Z.",
+          "level_5_qctrl": "Virtual gate — implemented as Rz(π/2). Zero hardware time. Free in terms of gate fidelity."
+        }
+      },
+      "t_gate": {
+        "id": "t_gate",
+        "hotkey": "T",
+        "pennylane": "qml.T(wires=[0])",
+        "matrix": "[[1, 0], [0, e^{iπ/4}]]",
+        "ddm": {
+          "level_1_intuition": "The T gate is the 45° rotation, the S gate's little sibling. It is the most expensive gate in quantum computing because fault-tolerant computers can't do it directly — they must 'magic state distill' it.",
+          "level_2_bridge": "T is outside the Clifford group, making it the key to universal quantum computation. T-gate count is how we measure algorithm complexity in fault-tolerant settings.",
+          "level_3_formal": "T = diag(1, e^{iπ/4}) = [[1,0],[0,e^{iπ/4}]]. With Clifford gates, T enables universal quantum computation. T-count is a key resource metric for fault-tolerant algorithms.",
+          "level_4_math": "T = P(π/4) = Rz(π/4) · e^{iπ/8}. In FT quantum computing: T is implemented via |T⟩=T|+⟩ magic states via gate teleportation. T† = diag(1, e^{-iπ/4}).",
+          "level_5_qctrl": "On NISQ hardware, T is a physical gate (small rotation). On FT hardware, T-count drives magic state factory overhead. Boulder Opal can optimize T-gate pulse sequences for minimum leakage."
+        }
+      }
+    },
+    "two_qubit_gates": {
+      "cnot": {
+        "id": "cnot",
+        "hotkey": "C",
+        "pennylane": "qml.CNOT(wires=[0, 1])",
+        "qiskit": "qc.cx(0, 1)",
+        "matrix": "[[1,0,0,0],[0,1,0,0],[0,0,0,1],[0,0,1,0]]",
+        "ddm": {
+          "level_1_intuition": "A light switch controlled by another light switch. If the control switch (qubit 0) is ON, the target switch (qubit 1) flips. If control is OFF, target does nothing. This creates quantum entanglement when control is in superposition.",
+          "level_2_bridge": "CNOT(|control⟩⊗|target⟩): flips target iff control=|1⟩. When control is in superposition (|+⟩), the result is an entangled Bell state. This cannot be described by two separate qubits independently.",
+          "level_3_formal": "CNOT |c,t⟩ → |c, t⊕c⟩. Controlled-X gate. Eigenstates of CNOT: |++⟩, |-+⟩ (eigenvalue +1); |+-⟩, |--⟩ (eigenvalue -1). CNOT·(H⊗I)·CNOT = Bell basis preparation.",
+          "level_4_math": "CNOT = |0⟩⟨0|⊗I + |1⟩⟨1|⊗X = [[1,0,0,0],[0,1,0,0],[0,0,0,1],[0,0,1,0]]. Circuit identity: CNOT = (I⊗H)·CZ·(I⊗H). Key for entanglement: CNOT·(H⊗I)|00⟩ = (|00⟩+|11⟩)/√2 = |Φ+⟩.",
+          "level_5_qctrl": "Most expensive native hardware gate (CX/ECR on IBM: ~400ns, error 0.5-2%). Fire Opal optimizes the cross-resonance pulse underlying CX to minimize leakage and residual ZZ coupling."
+        },
+        "real_world_metric": { "ibm_eagle_fidelity": 0.9895, "ibm_heron_fidelity": 0.9975, "ionq_aria_fidelity": 0.9970, "gate_time_ibm_ns": 400, "gate_time_ionq_us": 600 }
+      },
+      "cz": {
+        "id": "cz",
+        "pennylane": "qml.CZ(wires=[0, 1])",
+        "matrix": "diag(1, 1, 1, -1)",
+        "ddm": {
+          "level_1_intuition": "Both switches must be ON to get a phase flip. Like a security door that requires both keys simultaneously — if either key alone, nothing happens. Only when both are |1⟩ does the quantum phase shift by 180°.",
+          "level_2_bridge": "CZ applies a -1 phase only to the |11⟩ state. It's symmetric (control and target are interchangeable). CZ = CNOT = (I⊗H)·CZ·(I⊗H).",
+          "level_3_formal": "CZ |c,t⟩: applies -1 phase iff c=t=1. Matrix: diag(1,1,1,-1). Native gate on many superconducting platforms (Rigetti, Google). Equivalent to CNOT up to Hadamards.",
+          "level_4_math": "CZ = |00⟩⟨00| + |01⟩⟨01| + |10⟩⟨10| - |11⟩⟨11| = diag(1,1,1,-1). Relation: CNOT = (I⊗H)·CZ·(I⊗H). Both are entangling gates with equal entangling power.",
+          "level_5_qctrl": "Native gate on Rigetti Aspen and Google Sycamore. Achieved via controlled Z interaction in the transverse-field Ising model. Q-CTRL optimizes the parametric pulse for Rigetti's tunable coupler."
+        }
+      }
+    },
+    "variational_algorithms": {
+      "vqe_ansatz": {
+        "id": "vqe_ansatz",
+        "hotkey": "V",
+        "full_name": "Variational Quantum Eigensolver Ansatz",
+        "pennylane": "qml.StronglyEntanglingLayers(weights, wires=range(n))",
+        "ddm": {
+          "level_1_intuition": "You're designing a search pattern to find the lowest valley in a mountain range. You guess a starting location (ansatz), use quantum mechanics to estimate the valley height, then nudge in the downhill direction. Repeat until you find the bottom.",
+          "level_2_bridge": "VQE finds the ground state energy of a molecule. The ansatz is a parameterized circuit that prepares quantum states. Classical optimizer adjusts parameters. Quantum computer evaluates energy expectation ⟨ψ|H|ψ⟩.",
+          "level_3_formal": "VQE minimizes E(θ) = ⟨ψ(θ)|H|ψ(θ)⟩ over parameters θ. By variational principle, E(θ) ≥ E_ground. Ansatz types: UCCSD (chemistry-inspired), HEA (hardware-efficient), MERA, etc.",
+          "level_4_math": "Minimize: ⟨ψ(θ)|H|ψ(θ)⟩ = Σᵢ cᵢ⟨ψ|Pᵢ|ψ⟩, H = Σᵢ cᵢPᵢ (Pauli decomposition). Gradient: ∂E/∂θₖ = [E(θₖ+π/2) - E(θₖ-π/2)]/2 (parameter-shift rule). Optimizer: ADAM, BFGS, SPSA.",
+          "level_5_qctrl": "Fire Opal can improve VQE convergence by reducing measurement noise. Boulder Opal designs noise-robust ansatz gates. Q-CTRL's BOULDER OPAL paper shows 7× faster VQE convergence."
+        },
+        "pennylane_code": "@qml.qnode(dev)\ndef vqe_circuit(params):\n    qml.StronglyEntanglingLayers(params, wires=range(n_qubits))\n    return qml.expval(H)\n\nopt = qml.AdamOptimizer(stepsize=0.1)\nfor step in range(200):\n    params, cost = opt.step_and_cost(vqe_circuit, params)\n    print(f'Step {step}: E = {cost:.6f}')"
+      },
+      "qaoa_mixer": {
+        "id": "qaoa_mixer",
+        "hotkey": "Q",
+        "full_name": "QAOA Phase + Mixer Circuit",
+        "pennylane": "qml.qaoa.cost_layer(gamma, H_C) + qml.qaoa.mixer_layer(beta, H_M)",
+        "ddm": {
+          "level_1_intuition": "QAOA solves optimization problems. Imagine a puzzle where you shake it (phase layer) to loosen bad configurations, then stir it (mixer layer) to explore new configurations. Repeat p times, tuning shake/stir intensities to find the optimal solution.",
+          "level_2_bridge": "QAOA for MaxCut: phase layer applies e^{-iγ Hcost} (encodes graph edges into quantum phases), mixer layer applies e^{-iβ Hmixer} (diffuses between solutions). γ,β angles are optimized classically.",
+          "level_3_formal": "QAOA state: |p,γ,β⟩ = e^{-iβpHM}e^{-iγpHC}...e^{-iβ1HM}e^{-iγ1HC}|+⟩^n. Objective: max_γ,β ⟨p,γ,β|HC|p,γ,β⟩. At p→∞, converges to exact solution.",
+          "level_4_math": "HC = Σ_(u,v)∈E (I - ZuZv)/2 (MaxCut Hamiltonian). HM = Σᵢ Xᵢ (transverse field). Phase layer: e^{-iγHC} = ∏_(u,v) e^{iγZuZv/2}. Mixer: e^{-iβHM} = ∏ᵢ e^{-iβXᵢ} = ∏ᵢ Rx(2β)ᵢ.",
+          "level_5_qctrl": "Q-CTRL has demonstrated improved QAOA performance using noise-robust angles and pulse optimization. Fire Opal reduces circuit error rates that degrade QAOA approximation ratios."
+        }
+      }
+    },
+    "quantum_transforms": {
+      "qft_butterfly": {
+        "id": "qft_butterfly",
+        "hotkey": "F",
+        "full_name": "Quantum Fourier Transform",
+        "pennylane": "qml.QFT(wires=range(n))",
+        "ddm": {
+          "level_1_intuition": "QFT is a musical chord analyzer. You input a song (quantum state), and QFT instantly tells you which pure notes are in it and at what volumes. Classical FFT does the same thing for computers — QFT does it on quantum amplitudes.",
+          "level_2_bridge": "QFT maps computational basis states to frequency basis: |j⟩ → (1/√N)Σₖ e^{2πijk/N}|k⟩. This is the DFT (Discrete Fourier Transform) operating on quantum amplitudes — exponentially faster when the state encodes a periodic function.",
+          "level_3_formal": "QFT_N: |j⟩ → (1/√N)Σₖ₌₀^{N-1} e^{2πijk/N}|k⟩. Built from Hadamard + controlled-R_k gates in O(n²) gates where N=2ⁿ. Core subroutine of Shor's, QPE, HHL.",
+          "level_4_math": "QFT|j⟩ = (1/√N)⊗ₗ₌₁ⁿ [|0⟩ + e^{2πij/2ˡ}|1⟩]. Circuit: H on q[0], then CR_k for k=2..n, swap qubits. Total gates: n + (n-1) + ... + 1 = n(n+1)/2. T-count: O(n²) for exact, O(n log n) approximate.",
+          "level_5_qctrl": "QFT fidelity degrades rapidly with qubit count due to small rotation errors. Q-CTRL optimizes the controlled-R_k pulses to maximize fidelity for large QFT circuits."
+        }
+      }
+    },
+    "noise_and_error": {
+      "decoherence_t1t2": {
+        "id": "decoherence_t1t2",
+        "hotkey": "D",
+        "full_name": "T1 Relaxation and T2 Dephasing",
+        "pennylane": "qml.AmplitudeDamping(gamma, wires=[0]) / qml.PhaseDamping(gamma, wires=[0])",
+        "ddm": {
+          "level_1_intuition": "T1 is like a battery dying — the qubit loses energy and falls to |0⟩. T2 is like a spinning top wobbling — the qubit's phase drifts away from where you started. T2 ≤ 2·T1 always.",
+          "level_2_bridge": "T1 (energy relaxation): qubit |1⟩ → |0⟩ spontaneously, exponentially with time constant T1. T2 (dephasing): superposition (|0⟩+|1⟩)/√2 → mixed state, coherence decays as e^{-t/T2}. T2* includes inhomogeneous broadening.",
+          "level_3_formal": "Lindblad channels: L1 = √(1/T1) σ-, L2 = √(1/T2) σz/2. Kraus for amplitude damping: K0=[[1,0],[0,√(1-γ)]], K1=[[0,√γ],[0,0]], γ=1-e^{-t/T1}. Dephasing: K0=[[1,0],[0,√(1-λ)]], K1=[[0,0],[0,√λ]], λ=1-e^{-t/T2}.",
+          "level_4_math": "Bloch vector decay: ⟨Mx(t)⟩ = e^{-t/T2}⟨Mx(0)⟩, ⟨Mz(t)⟩ = (⟨Mz(0)⟩-M0)e^{-t/T1}+M0. Relation: 1/T2 = 1/(2T1) + 1/Tφ where Tφ is pure dephasing. Gate fidelity limit: F_max ≈ exp(-t_gate/(2T1) - t_gate/T2).",
+          "level_5_qctrl": "Q-CTRL maximizes gate fidelity by: (1) minimizing pulse duration, (2) using DD sequences during idle times, (3) designing noise-spectral-density-matched filter functions. Fire Opal applies all three automatically."
+        },
+        "real_world_values": {
+          "IBM_Eagle_T1_us": 250,
+          "IBM_Heron_T1_us": 400,
+          "IonQ_Aria_T1_s": 100,
+          "Quantinuum_H2_T1_hr": 1,
+          "IBM_Eagle_T2_us": 180,
+          "IBM_Heron_T2_us": 300,
+          "IonQ_Aria_T2_s": 1
+        }
+      },
+      "noise_channels": {
+        "id": "noise_channels",
+        "hotkey": "N",
+        "full_name": "Quantum Error Channels",
+        "ddm": {
+          "level_1_intuition": "Noise channels are the ways the universe accidentally messes with your qubit: it can flip your bit (bit flip), flip your phase (phase flip), rotate it a tiny bit (rotation error), or gradually mix your pure state into static (depolarizing).",
+          "level_2_bridge": "Each error type has a mathematical description (Kraus operators). Knowing which channels dominate your hardware lets you design circuits and pulses that avoid or correct those specific errors.",
+          "level_3_formal": "Kraus representation: ε(ρ) = Σₖ KₖρKₖ†, Σₖ Kₖ†Kₖ = I. Common channels: depolarizing, amplitude damping, phase damping, bit flip, phase flip, bit-phase flip.",
+          "level_4_math": "Depolarizing: ε(ρ) = (1-p)ρ + p/3(XρX + YρY + ZρZ). Amplitude damping: K0=[[1,0],[0,√(1-γ)]], K1=[[0,√γ],[0,0]]. Pauli channel: ε(ρ) = p0·ρ + px·XρX + py·YρY + pz·ZρZ.",
+          "level_5_qctrl": "Q-CTRL noise spectroscopy identifies the specific channels and magnitudes on your hardware. This feeds into robust pulse design that minimizes sensitivity to those exact channels."
+        },
+        "pennylane_operations": [
+          "qml.DepolarizingChannel(p, wires=[0])",
+          "qml.AmplitudeDamping(gamma, wires=[0])",
+          "qml.PhaseDamping(gamma, wires=[0])",
+          "qml.BitFlip(p, wires=[0])",
+          "qml.PhaseFlip(p, wires=[0])",
+          "qml.GeneralizedAmplitudeDamping(p, gamma, wires=[0])",
+          "qml.ThermalRelaxationError(pe, tfid, trel, dt, wires=[0])",
+          "qml.QubitChannel(K_list, wires=[0])"
+        ]
+      },
+      "lindblad_master": {
+        "id": "lindblad_master",
+        "hotkey": "L",
+        "full_name": "Lindblad Master Equation",
+        "ddm": {
+          "level_1_intuition": "A fish tank slowly getting dirty. The fish is your quantum state. The dirt is noise from the environment. The Lindblad equation is the exact formula describing how the water gets cloudier over time — every splash, every ripple, every bit of turbulence.",
+          "level_2_bridge": "The Schrödinger equation governs isolated systems. Lindblad extends it to open quantum systems — where the qubit is connected to a noisy environment. It describes how the density matrix ρ evolves under both Hamiltonian and noise processes.",
+          "level_3_formal": "Lindblad equation: dρ/dt = -i[H,ρ] + Σₖ γₖ(LₖρLₖ† - (Lₖ†Lₖρ + ρLₖ†Lₖ)/2). Lₖ are jump operators (noise), γₖ are rates. Completely positive and trace-preserving.",
+          "level_4_math": "dρ/dt = Lρ where L is the Lindbladian superoperator. L = -i[H,·] + Σₖ γₖ D[Lₖ] where D[L]ρ = LρL† - (L†Lρ + ρL†L)/2 is the dissipator. Steady state: Lρ_ss = 0.",
+          "level_5_qctrl": "Boulder Opal solves the Lindblad master equation for open quantum system simulation. This is used to compute gate fidelity under realistic noise during pulse optimization."
+        }
+      }
+    },
+    "measurement": {
+      "measurement_postulate": {
+        "id": "measurement_postulate",
+        "hotkey": "M",
+        "full_name": "Quantum Measurement",
+        "pennylane": "qml.measure(wires=[0]) / qml.expval(qml.PauliZ(0))",
+        "ddm": {
+          "level_1_intuition": "You have a coin spinning in the air — both heads and tails at once. When you catch it (measure it), it INSTANTLY becomes one or the other. The act of looking collapses all the superposition.",
+          "level_2_bridge": "Before measurement: qubit is α|0⟩+β|1⟩. After measuring in Z-basis: get |0⟩ with probability |α|², |1⟩ with probability |β|². The state 'collapses'. You can't un-measure.",
+          "level_3_formal": "Projective measurement in basis {|0⟩,|1⟩}: outcome 0 with prob p0=|⟨0|ψ⟩|², post-state |0⟩. POVM for non-projective: {Mₖ}, Σ Mₖ†Mₖ=I, prob of k: Tr(Mₖ†Mₖ ρ).",
+          "level_4_math": "Expectation value: ⟨A⟩ = Tr(Aρ). Variance: (ΔA)² = ⟨A²⟩-⟨A⟩². Heisenberg: ΔAΔB ≥ |⟨[A,B]⟩|/2. Weak measurement: K=[[1,0],[0,√(1-γ)]] (partial collapse, gain partial information).",
+          "level_5_qctrl": "Readout errors are a major noise source. Q-CTRL Fire Opal applies M3 readout error mitigation: calibrates the confusion matrix (P(report k|true j)) and inverts it to correct measured distributions."
+        }
+      }
+    },
+    "entanglement": {
+      "entanglement_entropy": {
+        "id": "entanglement_entropy",
+        "hotkey": "E",
+        "full_name": "Entanglement Entropy",
+        "pennylane": "qml.mutual_info(wires0=[0], wires1=[1], alpha=1)",
+        "ddm": {
+          "level_1_intuition": "Two best friends who always order the same meal, even when dining at separate restaurants on opposite sides of the world — without any communication. Entanglement entropy measures HOW deeply two qubits are linked in this spooky way.",
+          "level_2_bridge": "A pure state is entangled if it cannot be written as |A⟩⊗|B⟩. Entropy of entanglement S = -Tr(ρ_A log ρ_A) measures this: S=0 (product state), S=1 ebit (maximally entangled Bell state).",
+          "level_3_formal": "Von Neumann entropy: S(ρ_A) = -Tr(ρ_A log ρ_A), ρ_A = Tr_B(|ψ⟩⟨ψ|). For |Φ+⟩: ρ_A = I/2, S = 1 ebit. Rényi entropy: Sₙ = (1/(1-n))log Tr(ρⁿ).",
+          "level_4_math": "Schmidt decomposition: |ψ⟩ = Σᵢ λᵢ|uᵢ⟩|vᵢ⟩ with Σᵢ λᵢ²=1. Entanglement entropy: S = -Σᵢ λᵢ²log(λᵢ²). For Bell state: λ₁=λ₂=1/√2, S = log(2) = 1 ebit. Tensor networks parametrize by entanglement bond dimension.",
+          "level_5_qctrl": "High entanglement circuits require many 2-qubit gates, multiplying error. Q-CTRL's tensor-network-inspired circuit decomposition minimizes entanglement growth to improve algorithm performance."
+        }
+      }
+    }
+  },
+  "key_papers": {
+    "shor_1994": {
+      "title": "Algorithms for Quantum Computation: Discrete Logarithms and Factoring",
+      "authors": "Peter Shor",
+      "year": 1994,
+      "venue": "FOCS 1994",
+      "arxiv": "quant-ph/9508027",
+      "hotkey_summary": "Factoring N-bit integers in O(n³) quantum steps vs classical O(exp(n^1/3)). Uses QPE + QFT to find period of f(x)=aˣ mod N.",
+      "key_equation": "r = period of a^x mod N → p = gcd(a^{r/2}+1, N), q = gcd(a^{r/2}-1, N)",
+      "ddm_short": "Find the period of a repeating function → use QFT to detect the period → use classical math to factor N"
+    },
+    "grover_1996": {
+      "title": "A Fast Quantum Mechanical Algorithm for Database Search",
+      "authors": "Lov Grover",
+      "year": 1996,
+      "arxiv": "quant-ph/9605043",
+      "hotkey_summary": "Search N unsorted items in O(√N) queries vs classical O(N). Amplitude amplification: O(√N/M) for M solutions.",
+      "key_equation": "Iterations needed: k ≈ π/4 · √(N/M)",
+      "ddm_short": "Start all equal → oracle marks the answer → inversion amplifies the marked item → repeat √N times"
+    },
+    "harrow_hassidim_lloyd_2009": {
+      "title": "Quantum Algorithm for Linear Systems of Equations (HHL)",
+      "authors": "Harrow, Hassidim, Lloyd",
+      "year": 2009,
+      "arxiv": "arXiv:0811.3171",
+      "hotkey_summary": "Solve Ax=b in O(log(N)·κ²/ε) quantum steps vs classical O(N·κ) for s-sparse A. Exponential speedup for well-conditioned sparse systems.",
+      "key_equation": "Outputs |x⟩ ∝ A⁻¹|b⟩ using QPE on e^{iAt} + ancilla rotation by 1/λ + uncompute",
+      "ddm_short": "Load b into quantum state → QPE finds eigenvalues → rotate ancilla by 1/eigenvalue → uncompute → x encoded in amplitudes"
+    },
+    "preskill_2018_nisq": {
+      "title": "Quantum Computing in the NISQ Era and Beyond",
+      "authors": "John Preskill",
+      "year": 2018,
+      "arxiv": "arXiv:1801.00862",
+      "hotkey_summary": "Defines NISQ (Noisy Intermediate-Scale Quantum): 50-100+ qubits, no error correction. Discusses quantum advantage prospects and limitations.",
+      "key_insight": "Quantum advantage without error correction requires circuits shallow enough that noise doesn't overwhelm the signal",
+      "ddm_short": "Current computers: 50-1000 noisy qubits. Too small for Shor/Grover. Use VQE/QAOA to find practical advantage before full fault tolerance."
+    },
+    "qctrl_fire_opal_2022": {
+      "title": "Demonstrating 10000x performance improvements in quantum error suppression",
+      "authors": "Ball et al., Q-CTRL",
+      "year": 2022,
+      "arxiv": "arXiv:2211.07680",
+      "hotkey_summary": "Fire Opal demonstrates >10,000× improvement on IBM hardware for random circuit sampling. Key technique: automated optimal pulse design replacing default calibration pulses.",
+      "ddm_short": "Replace IBM's default square pulses with Q-CTRL's noise-optimized shaped pulses → 10,000× better algorithm success on real hardware"
+    },
+    "surface_code_fowler": {
+      "title": "Surface codes: Towards practical large-scale quantum computation",
+      "authors": "Fowler, Martinis et al.",
+      "year": 2012,
+      "arxiv": "arXiv:1208.0928",
+      "hotkey_summary": "Surface code threshold: ~1% physical error rate. 1000 physical qubits per logical qubit at p=0.1%. Practical FT quantum computing roadmap.",
+      "key_equation": "p_logical ≈ (p_physical/p_threshold)^{(d+1)/2} where d is code distance",
+      "ddm_short": "Arrange qubits in 2D grid → syndrome measurement reveals errors without disturbing logical qubit → threshold: if hardware < 1% error, the code protects"
+    },
+    "vqe_peruzzo_2014": {
+      "title": "A variational eigenvalue solver on a photonic chip",
+      "authors": "Peruzzo et al.",
+      "year": 2014,
+      "arxiv": "arXiv:1304.3061",
+      "hotkey_summary": "First experimental VQE demonstration. Found He-H+ ground state energy on photonic chip. Hybrid quantum-classical optimization paradigm.",
+      "ddm_short": "Parameterized circuit + classical optimizer = hybrid algorithm finding molecular ground state without QPE. The foundation of quantum chemistry on NISQ hardware."
+    },
+    "pennylane_2022": {
+      "title": "PennyLane: Automatic differentiation of hybrid quantum-classical computations",
+      "authors": "Bergholm et al., Xanadu",
+      "year": 2022,
+      "arxiv": "arXiv:1811.04968",
+      "hotkey_summary": "PennyLane framework: differentiable quantum programming. Parameter-shift rule enables exact gradient computation. Native PyTorch/JAX/TF integration.",
+      "ddm_short": "Quantum circuits as differentiable functions → autograd computes gradients → train quantum circuits like neural networks"
+    }
+  }
+}

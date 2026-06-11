@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Analyzer — QuanV1</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/pages.css">
+  <style>
+    :root { --bg:#0a0a1a; --panel:#111128; --border:#2a2a4a; --text:#e2e8f0; --accent:#7c3aed; }
+    body { background:var(--bg); color:var(--text); font-family:'Segoe UI',sans-serif; margin:0; }
+    .analyzer-layout { display:grid; grid-template-columns:320px 1fr; min-height:calc(100vh - 56px); }
+    /* Left sidebar */
+    .sidebar { background:var(--panel); border-right:1px solid var(--border); padding:18px; overflow-y:auto; }
+    .sidebar h3 { margin:0 0 12px; font-size:13px; text-transform:uppercase; letter-spacing:.08em; opacity:.6; }
+    .select-full { width:100%; padding:10px; background:#0d0d22; border:1px solid var(--border); color:var(--text); border-radius:6px; font-size:13px; margin-bottom:14px; }
+    /* Metrics */
+    .metric-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
+    .metric-card { background:#0d0d22; border-radius:8px; padding:10px; text-align:center; }
+    .metric-val { font-size:22px; font-weight:900; color:#a78bfa; }
+    .metric-lbl { font-size:10px; opacity:.5; }
+    /* Nonagonal silence panel */
+    .silence-panel { background:#0d0d22; border:1px solid #f59e0b44; border-radius:8px; padding:12px; margin-bottom:14px; }
+    .silence-panel h4 { margin:0 0 8px; font-size:12px; color:#fcd34d; }
+    .silence-bar-row { display:flex; align-items:center; gap:6px; margin-bottom:4px; }
+    .silence-bar-track { flex:1; height:8px; background:#1e1e3f; border-radius:4px; overflow:hidden; }
+    .silence-bar-fill  { height:100%; background:linear-gradient(90deg,#f59e0b,#fcd34d); border-radius:4px; transition:width .4s; }
+    /* Main content */
+    .main-content { padding:20px; overflow-y:auto; }
+    /* SVG mesh */
+    #mesh-svg { width:100%; max-height:340px; background:#0a0a1a; border:1px solid var(--border); border-radius:10px; display:block; }
+    /* Reasoning panel */
+    .reasoning-panel { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; margin-top:18px; }
+    .step-list { display:flex; flex-direction:column; gap:8px; max-height:340px; overflow-y:auto; }
+    .step-item { padding:10px 14px; border-radius:7px; border:1px solid var(--border); cursor:pointer; transition:border-color .2s; font-size:13px; }
+    .step-item:hover, .step-item.active { border-color:var(--accent); background:#1a1040; }
+    .step-item .step-label { font-weight:700; font-size:11px; opacity:.5; }
+    .step-item .step-tech  { font-size:12px; margin-top:4px; }
+    .step-item .step-lay   { font-size:11px; opacity:.6; font-style:italic; margin-top:2px; }
+    .step-item .step-det   { font-size:11px; color:#34d399; margin-top:3px; display:none; }
+    .step-item.active .step-det { display:block; }
+    /* Hotkey modal */
+    #hotkey-modal { position:fixed; inset:0; background:rgba(0,0,0,.75); display:none; align-items:center; justify-content:center; z-index:100; }
+    #hotkey-modal.open { display:flex; }
+    .hotkey-box { background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:28px; max-width:560px; width:90%; max-height:80vh; overflow-y:auto; }
+    .hotkey-box h3 { margin:0 0 14px; }
+    .hotkey-close { position:absolute; top:12px; right:16px; cursor:pointer; font-size:20px; }
+    .hotkey-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(80px,1fr)); gap:8px; margin-bottom:16px; }
+    .hotkey-chip { background:#2a2a4a; border-radius:6px; padding:8px 6px; text-align:center; cursor:pointer; transition:background .2s; }
+    .hotkey-chip:hover, .hotkey-chip.active { background:var(--accent); }
+    .hotkey-chip .key { font-size:18px; font-weight:900; }
+    .hotkey-chip .name { font-size:9px; opacity:.6; }
+    .op-ddm { font-size:13px; line-height:1.7; }
+    /* Hardware selector */
+    .hw-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+    .hw-btn { padding:6px 12px; border-radius:6px; border:1px solid var(--border); background:var(--panel); color:var(--text); cursor:pointer; font-size:11px; transition:all .2s; }
+    .hw-btn:hover, .hw-btn.active { background:var(--accent); border-color:var(--accent); }
+    /* Gate legend */
+    .gate-legend { display:flex; gap:12px; flex-wrap:wrap; font-size:11px; margin-bottom:12px; }
+    .legend-item { display:flex; align-items:center; gap:4px; }
+    .legend-dot { width:12px; height:12px; border-radius:3px; }
+  </style>
+</head>
+<body>
+<nav class="main-nav">
+  <div class="nav-container">
+    <h1 class="nav-title">QuanV1</h1>
+    <ul class="nav-menu">
+      <li><a href="/" class="nav-link">🏠 Home</a></li>
+      <li><a href="/cluster-config" class="nav-link">⚙️ Clusters</a></li>
+      <li><a href="/quantum-school" class="nav-link">🎓 School</a></li>
+      <li><a href="/quantum-analyzer" class="nav-link active">🔬 Analyzer</a></li>
+      <li><a href="/quantum-pipeline" class="nav-link">🔗 Pipeline</a></li>
+      <li><a href="/quantum-rag-vault" class="nav-link">🔐 Vault</a></li>
+      <li><a href="/quantum-vortex" class="nav-link">🌀 Vortex</a></li>
+        <li><a href="/nvidia-pipeline" class="nav-link">🟢 NVIDIA</a></li>
+        <li><a href="/bananas" class="nav-link nav-banana">🍌 Bananas AI</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div id="hotkey-modal">
+  <div class="hotkey-box" style="position:relative;">
+    <span class="hotkey-close" onclick="closeHotkey()">✕</span>
+    <h3 id="hk-title">Hotkey Reference</h3>
+    <div class="hotkey-grid" id="hk-grid"></div>
+    <hr style="border-color:var(--border); margin:12px 0;">
+    <div class="op-ddm" id="hk-detail"></div>
+  </div>
+</div>
+
+<div class="analyzer-layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h3>Circuit</h3>
+    <select class="select-full" id="circuit-select" onchange="loadCircuit(this.value)">
+      <option value="">— select circuit —</option>
+    </select>
+
+    <h3>Hardware Profile</h3>
+    <div class="hw-row" id="hw-row"></div>
+
+    <h3>Metrics</h3>
+    <div class="metric-grid">
+      <div class="metric-card"><div class="metric-val" id="m-qubits">—</div><div class="metric-lbl">Qubits</div></div>
+      <div class="metric-card"><div class="metric-val" id="m-gates">—</div><div class="metric-lbl">Gates</div></div>
+      <div class="metric-card"><div class="metric-val" id="m-fid">—</div><div class="metric-lbl">Fidelity</div></div>
+      <div class="metric-card"><div class="metric-val" id="m-err">—</div><div class="metric-lbl">Error</div></div>
+    </div>
+
+    <!-- 369Hz Nonagonal Silence Panel -->
+    <div class="silence-panel">
+      <h4>🌀 Nonagonal Silence (369Hz)</h4>
+      <div id="silence-loading" style="font-size:11px; opacity:.5;">Load a circuit to analyse noise silencing.</div>
+      <div id="silence-bars" style="display:none;">
+        <div style="font-size:11px; opacity:.6; margin-bottom:6px;">Tesla-node suppression per vertex (3,6,9 = anchors):</div>
+        <!-- filled by JS -->
+      </div>
+      <div id="silence-summary" style="font-size:11px; margin-top:8px; color:#fcd34d;"></div>
+      <button onclick="runSilencer()" id="silence-btn" style="display:none; margin-top:8px; width:100%; padding:8px; background:#78350f; border:1px solid #f59e0b; color:#fcd34d; border-radius:6px; cursor:pointer; font-size:12px;">⚡ Run 369Hz Silencer</button>
+    </div>
+
+    <h3>Hotkeys</h3>
+    <div style="font-size:12px; opacity:.6; line-height:1.7;">
+      Press any key to reveal its quantum gate DDM breakdown.<br>
+      <b style="color:#a78bfa;">H</b>=Hadamard &nbsp;
+      <b style="color:#a78bfa;">C</b>=CNOT &nbsp;
+      <b style="color:#a78bfa;">F</b>=QFT &nbsp;
+      <b style="color:#a78bfa;">V</b>=VQE &nbsp;
+      <b style="color:#a78bfa;">G</b>=Grover &nbsp;
+      <b style="color:#a78bfa;">T</b>=Toffoli &nbsp;
+      <b style="color:#a78bfa;">S</b>=SWAP<br>
+      <button onclick="openHotkey()" style="margin-top:8px; width:100%; padding:8px; background:var(--accent); border:none; color:#fff; border-radius:6px; cursor:pointer; font-size:12px;">Open Hotkey Panel</button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main-content">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h2 style="margin:0;" id="circuit-name">🔬 Quantum Circuit Analyzer</h2>
+      <div class="gate-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div>Single-qubit</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6;"></div>Entangling</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div>Measurement</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;"></div>Rotation</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div>High error</div>
+      </div>
+    </div>
+
+    <!-- SVG stochastic mesh -->
+    <svg id="mesh-svg" viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
+      <text x="450" y="155" text-anchor="middle" fill="#4a4a6a" font-size="18">Select a circuit to render the stochastic mesh.</text>
+    </svg>
+
+    <!-- Agentic reasoning -->
+    <div class="reasoning-panel">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h3 style="margin:0;">🤖 Agentic Reasoning</h3>
+        <span style="font-size:12px; opacity:.5;">Click a step to see deterministic re-evaluation</span>
+      </div>
+      <div class="step-list" id="step-list">
+        <div style="opacity:.4; font-size:13px; text-align:center; padding:20px;">Load a circuit above.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+let currentCircuit = null;
+let silenceResult  = null;
+let hwProfiles     = [];
+let selectedHW     = null;
+let hotkeys        = {};
+
+const GATE_COLORS = {
+  H:'#3b82f6', X:'#3b82f6', Y:'#3b82f6', Z:'#3b82f6', S:'#3b82f6', T:'#3b82f6',
+  CNOT:'#8b5cf6', CX:'#8b5cf6', CZ:'#8b5cf6', CCX:'#8b5cf6', SWAP:'#8b5cf6',
+  RX:'#f59e0b', RY:'#f59e0b', RZ:'#f59e0b', P:'#f59e0b',
+  M:'#10b981', MEASURE:'#10b981',
+};
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+async function init() {
+  const [cList, hw, hk] = await Promise.all([
+    fetch('/api/quantum/circuits').then(r => r.json()),
+    fetch('/api/quantum/hardware').then(r => r.json()),
+    fetch('/api/quantum/hotkeys').then(r => r.json()),
+  ]);
+
+  // Circuit selector
+  const sel = document.getElementById('circuit-select');
+  (Array.isArray(cList) ? cList : []).forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id; opt.textContent = `${c.name} (${c.qubits} qubits)`;
+    sel.appendChild(opt);
+  });
+
+  // Hardware buttons
+  hwProfiles = Array.isArray(hw) ? hw : Object.values(hw);
+  const hwRow = document.getElementById('hw-row');
+  hwProfiles.slice(0, 6).forEach((p, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'hw-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = p.name || p.id || `HW${i}`;
+    btn.onclick = () => {
+      document.querySelectorAll('.hw-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedHW = p;
+      if (currentCircuit) updateMetrics();
+    };
+    hwRow.appendChild(btn);
+    if (i === 0) selectedHW = p;
+  });
+
+  // Hotkeys
+  hotkeys = hk.map || {};
+  buildHotkeyGrid(hk);
+
+  // Keyboard listener
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    const op = hotkeys[e.key.toUpperCase()];
+    if (op) { openHotkeyForOp(e.key.toUpperCase(), op, hk.operations || {}); }
+  });
+}
+
+// ── Load circuit ──────────────────────────────────────────────────────────────
+async function loadCircuit(id) {
+  if (!id) return;
+  const circuit = await fetch(`/api/quantum/circuits/${id}`).then(r => r.json());
+  currentCircuit = circuit;
+  silenceResult  = null;
+
+  document.getElementById('circuit-name').textContent = `🔬 ${circuit.name}`;
+  updateMetrics();
+  renderMeshSVG(circuit);
+  renderReasoning(circuit, null);
+
+  // Show silence button
+  document.getElementById('silence-loading').textContent = `Ready — ${(circuit.agentic_reasoning||[]).length} reasoning steps found.`;
+  document.getElementById('silence-btn').style.display = 'block';
+  document.getElementById('silence-bars').style.display = 'none';
+  document.getElementById('silence-summary').textContent = '';
+}
+
+function updateMetrics() {
+  const c  = currentCircuit;
+  const hw = selectedHW || {};
+  document.getElementById('m-qubits').textContent = c?.qubits || '—';
+  const stepCount = (c?.agentic_reasoning||[]).reduce((a,s) => a + (s.gates?.length||1), 0);
+  document.getElementById('m-gates').textContent  = stepCount || '—';
+  document.getElementById('m-fid').textContent    = hw.two_qubit_gate_fidelity ? (hw.two_qubit_gate_fidelity*100).toFixed(1)+'%' : '—';
+  document.getElementById('m-err').textContent    = hw.average_gate_error      ? (hw.average_gate_error*100).toFixed(2)+'%' : '—';
+}
+
+// ── SVG stochastic mesh ───────────────────────────────────────────────────────
+function renderMeshSVG(circuit) {
+  const svg = document.getElementById('mesh-svg');
+  const mesh = circuit.stochastic_mesh;
+  const nodes = mesh?.nodes || [];
+  const edges = mesh?.edges || mesh?.topology?.edges || [];
+
+  if (!nodes.length) {
+    svg.innerHTML = `<text x="450" y="155" text-anchor="middle" fill="#4a4a6a" font-size="16">No stochastic mesh data for this circuit.</text>`;
+    return;
+  }
+
+  const W = 900, H = 300, PAD = 60;
+  // Position nodes in a grid
+  const cols = Math.ceil(Math.sqrt(nodes.length));
+  const colW = (W - PAD*2) / Math.max(cols - 1, 1);
+  const rowH = (H - PAD*2) / Math.max(Math.ceil(nodes.length / cols) - 1, 1);
+
+  const pos = nodes.map((n, i) => ({
+    x: PAD + (i % cols) * colW,
+    y: PAD + Math.floor(i / cols) * rowH,
+    ...n,
+  }));
+
+  let html = '';
+
+  // Edges
+  edges.forEach(e => {
+    const src = pos.find(p => p.id === e.source || p.index === e.source);
+    const tgt = pos.find(p => p.id === e.target || p.index === e.target);
+    if (!src || !tgt) return;
+    const err = e.error_rate || 0.01;
+    const col = err > 0.05 ? '#ef4444' : err > 0.02 ? '#f59e0b' : '#10b981';
+    html += `<line x1="${src.x}" y1="${src.y}" x2="${tgt.x}" y2="${tgt.y}" stroke="${col}" stroke-width="${1+err*10}" opacity="0.6"/>`;
+  });
+
+  // Nodes
+  pos.forEach(p => {
+    const gateType = (p.gate || p.type || '').toUpperCase();
+    const col = GATE_COLORS[gateType] || '#6d28d9';
+    html += `<circle cx="${p.x}" cy="${p.y}" r="14" fill="${col}" fill-opacity="0.85" stroke="#fff" stroke-width="1.5"/>`;
+    html += `<text x="${p.x}" y="${p.y+4}" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">${(p.gate||p.label||p.id||'?').toString().slice(0,4)}</text>`;
+    // Qubit label
+    if (p.qubit !== undefined) {
+      html += `<text x="${p.x}" y="${p.y-18}" text-anchor="middle" fill="#a78bfa" font-size="9">q${p.qubit}</text>`;
+    }
+  });
+
+  svg.innerHTML = html;
+}
+
+// ── Agentic reasoning ─────────────────────────────────────────────────────────
+function renderReasoning(circuit, silenced) {
+  const list = document.getElementById('step-list');
+  const steps = circuit?.agentic_reasoning || [];
+  if (!steps.length) {
+    list.innerHTML = '<div style="opacity:.4; text-align:center; padding:20px; font-size:13px;">No reasoning steps available.</div>';
+    return;
+  }
+
+  list.innerHTML = steps.map((s, i) => {
+    const sr = silenced?.steps?.[i];
+    const detText = sr
+      ? `🔇 ${sr.silenceTag} — ${sr.suppressionPct || (sr.meanSuppression*100).toFixed(1)+'%'} suppressed · conf: ${(sr.boostedConfidence*100).toFixed(1)}% · ${sr.laymanDeterministic?.slice(0,120)}…`
+      : '';
+    return `<div class="step-item" onclick="selectStep(this, ${i})">
+      <div class="step-label">Step ${i+1} · ${s.gate||s.title||''}</div>
+      <div class="step-tech">${s.technical_description||s.description||''}</div>
+      <div class="step-lay">${s.layman_description||s.layman||''}</div>
+      ${sr ? `<div class="step-det">${detText}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function selectStep(el, i) {
+  document.querySelectorAll('.step-item').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ── 369Hz Nonagonal Silencer ──────────────────────────────────────────────────
+async function runSilencer() {
+  if (!currentCircuit) return;
+  document.getElementById('silence-btn').textContent = '⏳ Silencing…';
+  document.getElementById('silence-btn').disabled = true;
+
+  try {
+    const res = await fetch('/api/nonagonal/silence', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ circuit: currentCircuit }),
+    }).then(r => r.json());
+
+    silenceResult = res;
+
+    // Render per-node bars
+    const barsEl = document.getElementById('silence-bars');
+    barsEl.style.display = 'block';
+    barsEl.innerHTML = `<div style="font-size:11px; opacity:.6; margin-bottom:6px;">Tesla-node suppression per vertex (3,6,9 = anchors):</div>` +
+      (res.silenceSignature || []).map((v, k) => {
+        const isTesla = [2,5,8].includes(k);
+        const pct = (v * 100).toFixed(0);
+        return `<div class="silence-bar-row">
+          <span style="font-size:10px; width:16px; color:${isTesla ? '#fcd34d' : '#a0a0c0'};">${k+1}${isTesla ? '★' : ''}</span>
+          <div class="silence-bar-track"><div class="silence-bar-fill" style="width:${pct}%; background:${isTesla ? 'linear-gradient(90deg,#f59e0b,#fcd34d)' : 'linear-gradient(90deg,#6d28d9,#a78bfa)'}"></div></div>
+          <span style="font-size:10px; width:30px;">${pct}%</span>
+        </div>`;
+      }).join('');
+
+    document.getElementById('silence-summary').textContent =
+      `Mean suppression: ${(res.summary?.meanSuppression*100).toFixed(1)}% · ` +
+      `Residual noise: ${(res.summary?.residualNoise*100).toFixed(3)}% · ` +
+      `Det. score: ${(res.summary?.determinismScore*100).toFixed(1)}%`;
+    document.getElementById('silence-loading').textContent = res.interpretation?.slice(0, 160) + '…';
+
+    // Re-render reasoning with silenced data
+    renderReasoning(currentCircuit, res.reasoning);
+
+  } catch (err) {
+    document.getElementById('silence-summary').textContent = 'Error: ' + err.message;
+  } finally {
+    document.getElementById('silence-btn').textContent = '⚡ Re-Run 369Hz Silencer';
+    document.getElementById('silence-btn').disabled = false;
+  }
+}
+
+// ── Hotkey panel ──────────────────────────────────────────────────────────────
+function buildHotkeyGrid(hk) {
+  const grid = document.getElementById('hk-grid');
+  grid.innerHTML = '';
+  Object.entries(hk.map || {}).forEach(([key, opId]) => {
+    const chip = document.createElement('div');
+    chip.className = 'hotkey-chip';
+    chip.innerHTML = `<div class="key">${key}</div><div class="name">${opId.toString().slice(0,8)}</div>`;
+    chip.onclick = () => openHotkeyForOp(key, opId, hk.operations || {});
+    grid.appendChild(chip);
+  });
+}
+
+function openHotkey() { document.getElementById('hotkey-modal').classList.add('open'); }
+function closeHotkey() { document.getElementById('hotkey-modal').classList.remove('open'); }
+
+function openHotkeyForOp(key, opId, ops) {
+  openHotkey();
+  document.querySelectorAll('.hotkey-chip').forEach(c => c.classList.remove('active'));
+  const op = ops[opId] || ops[Object.keys(ops).find(k => k.toLowerCase() === opId.toString().toLowerCase())] || null;
+  document.getElementById('hk-title').textContent = `${key} → ${opId}`;
+  const det = document.getElementById('hk-detail');
+  if (op) {
+    const ddm = op.ddm || {};
+    det.innerHTML = Object.entries(ddm).map(([level, text]) =>
+      `<div style="margin-bottom:10px;"><b style="color:#a78bfa; text-transform:uppercase; font-size:10px;">${level}</b><br>${text}</div>`
+    ).join('') || `<p>${op.full_name || op.description || opId}</p>`;
+  } else {
+    det.textContent = `No DDM data found for "${opId}".`;
+  }
+}
+
+document.getElementById('hotkey-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('hotkey-modal')) closeHotkey();
+});
+
+init();
+</script>
+</body>
+</html>
