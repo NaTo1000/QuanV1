@@ -69,26 +69,67 @@ docker run -d \
 
 ## Docker Compose Configuration
 
-The included `docker-compose.yml` provides:
+The included `docker-compose.yml` provides a **clustered deployment** with:
+- **3 app instances** for high availability and load distribution
+- **Nginx load balancer** for traffic distribution across instances
 - Automatic restart policy
-- Health checks
-- Volume management
+- Health checks on all services
+- Shared volume for data persistence
 - Network isolation
+
+### Cluster Architecture
+```
+                    ┌─────────────────┐
+                    │   Client/User   │
+                    └────────┬────────┘
+                             │
+                             ▼
+                    ┌─────────────────┐
+                    │  Nginx (Port 80)│
+                    │  Load Balancer  │
+                    └────────┬────────┘
+                             │
+          ┌──────────────────┼──────────────────┐
+          │                  │                  │
+          ▼                  ▼                  ▼
+   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+   │  App Node 1 │    │  App Node 2 │    │  App Node 3 │
+   │  (Port 3000)│    │  (Port 3000)│    │  (Port 3000)│
+   └──────┬──────┘    └──────┬──────┘    └──────┬──────┘
+          │                  │                  │
+          └──────────────────┼──────────────────┘
+                             │
+                    ┌────────▼────────┐
+                    │  Shared Volume  │
+                    │  (cluster-data) │
+                    └─────────────────┘
+```
 
 ### Commands
 ```bash
-# Start services
+# Start the cluster
 docker-compose up -d
 
-# View logs
+# View logs from all services
 docker-compose logs -f
 
-# Stop services
+# View logs from specific service
+docker-compose logs -f quanv1-app-1
+
+# Stop the cluster
 docker-compose down
 
 # Rebuild and restart
 docker-compose up -d --build
+
+# Scale specific services (if needed)
+docker-compose up -d --scale quanv1-app-1=1 --scale quanv1-app-2=1 --scale quanv1-app-3=1
 ```
+
+### Access Points
+- **Application**: http://localhost (through load balancer)
+- **Health Check**: http://localhost/health
+- **System Info**: http://localhost/api/system-info
 
 ## CI/CD Integration
 

@@ -1,20 +1,91 @@
-version: '3.8'
-
 services:
-  quanv1:
+  # Nginx Load Balancer
+  nginx:
+    image: nginx:alpine
+    container_name: quanv1-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - quanv1-app-1
+      - quanv1-app-2
+      - quanv1-app-3
+    networks:
+      - quanv1-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  # App Instance 1
+  quanv1-app-1:
     build:
       context: .
       dockerfile: Dockerfile
     image: nato1000/quanv1:latest
-    container_name: quanv1-app
+    container_name: quanv1-app-1
     restart: unless-stopped
-    ports:
-      - "3000:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - INSTANCE_ID=1
+      - DATA_DIR=/app/data
     volumes:
-      # Persist cluster links data
+      # Shared volume for cluster-links.json data file
+      - cluster-data:/app/data
+    networks:
+      - quanv1-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  # App Instance 2
+  quanv1-app-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nato1000/quanv1:latest
+    container_name: quanv1-app-2
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - INSTANCE_ID=2
+      - DATA_DIR=/app/data
+    volumes:
+      # Shared volume for cluster-links.json data file
+      - cluster-data:/app/data
+    networks:
+      - quanv1-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  # App Instance 3
+  quanv1-app-3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nato1000/quanv1:latest
+    container_name: quanv1-app-3
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - INSTANCE_ID=3
+      - DATA_DIR=/app/data
+    volumes:
+      # Shared volume for cluster-links.json data file
       - cluster-data:/app/data
     networks:
       - quanv1-network
